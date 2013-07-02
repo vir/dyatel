@@ -1,0 +1,339 @@
+
+CREATE DOMAIN phone AS TEXT NOT NULL CHECK( VALUE ~ E'^\\d+$' );
+
+CREATE TABLE users (
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	alias TEXT NULL CHECK(alias ~ E'^\\w+$'),
+	domain TEXT NOT NULL,
+	password TEXT NOT NULL,
+	descr TEXT NULL,
+	lastreg TIMESTAMP WITH TIME ZONE,
+	lastip INET,
+	nat_support BOOLEAN,
+	nat_port_support BOOLEAN
+);
+
+CREATE TABLE regs (
+	userid INTEGER NOT NULL REFERENCES users(id),
+	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	location TEXT NOT NULL,
+	expires TIMESTAMP WITH TIME ZONE,
+	device TEXT,
+	driver TEXT,
+	ip_transport TEXT,
+	ip_host INET,
+	ip_port INTEGER,
+	audio BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE subscriptions (
+	id BIGSERIAL PRIMARY KEY,
+	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	notifier TEXT NOT NULL,
+	subscriber TEXT NOT NULL,
+	operation TEXT NOT NULL,
+	data TEXT,
+	notifyto TEXT,
+	expires INTERVAL
+);
+
+CREATE OR REPLACE FUNCTION userrec(username TEXT) RETURNS SETOF users AS $$
+DECLARE
+	n TEXT;
+	d TEXT;
+	pos INTEGER;
+BEGIN
+	pos := position('@' in username);
+	IF pos > 0 THEN
+		n := substring(username for pos - 1);
+		d := substring(username from pos + 1);
+		RETURN QUERY SELECT * FROM users WHERE num = n AND domain = d;
+	ELSE
+		RETURN QUERY SELECT * FROM users WHERE num = username LIMIT 1;
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL STRICT STABLE;
+
+CREATE OR REPLACE FUNCTION userid(username TEXT) RETURNS INTEGER AS $$
+	SELECT id FROM userrec($1);
+$$ LANGUAGE SQL STRICT STABLE;
+
+CREATE OR REPLACE FUNCTION user_register(regnum TEXT, loc TEXT, exp TEXT, dev TEXT, drv TEXT, ipt TEXT, iph INET, ipp INTEGER) RETURNS VOID AS $$
+DECLARE
+	uid INTEGER;
+	expint TIMESTAMP WITH TIME ZONE;
+BEGIN
+	uid := userid(regnum);
+	IF uid IS NULL THEN
+		RAISE EXCEPTION 'User % not found', regnum;
+	END IF;
+	IF exp IS NOT NULL AND exp <> '' THEN
+		expint := CURRENT_TIMESTAMP + (exp::TEXT || ' s')::INTERVAL;
+	END IF;
+	DELETE FROM regs WHERE userid = uid AND location = loc;
+	INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio)
+		VALUES (uid, CURRENT_TIMESTAMP, loc, expint, dev, drv, ipt, iph, ipp, drv <> 'jabber');
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION user_unregister(regnum TEXT, loc TEXT) RETURNS VOID AS $$
+BEGIN
+	DELETE FROM regs WHERE userid = (SELECT id FROM users WHERE num = regnum) AND location = loc;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION regs_expired_list() RETURNS TABLE(username TEXT, data TEXT, device TEXT, driver TEXT, ip_transport TEXT, ip_host INET, ip_port INTEGER, reason TEXT) AS $$
+	SELECT users.num AS username, location AS data, device, driver, ip_transport, ip_host, ip_port, 'expired'::TEXT AS reason
+		FROM regs INNER JOIN users ON users.id = regs.userid
+		WHERE expires < CURRENT_TIMESTAMP;
+$$ LANGUAGE SQL;
+
+
+-- Jabber roster
+CREATE TABLE roster(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	contact TEXT NOT NULL,
+	subscription TEXT,
+	label TEXT,
+	groups TEXT
+);
+
+-- Jabber vCards
+CREATE TABLE vcards(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	vcard xml
+);
+
+CREATE OR REPLACE FUNCTION vcard_get(usename TEXT) RETURNS XML AS $$
+	SELECT vcard FROM vcards WHERE uid = userid($1)
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION vcard_set(username TEXT, vc XML) RETURNS VOID AS $$
+DECLARE
+	id INTEGER;
+BEGIN
+	id := userid($1);
+	UPDATE vcards SET vcard = $2 WHERE uid = id;
+	IF NOT FOUND THEN
+		INSERT INTO vcards(uid, vcard) VALUES (id, $2);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION vcard_del(username TEXT) RETURNS VOID AS $$
+	DELETE FROM vcards WHERE uid = userid($1);
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION roster_set_subs(username TEXT, ctct TEXT, subs TEXT) RETURNS VOID AS $$
+DECLARE
+	id INTEGER;
+BEGIN
+	id := userid($1);
+	UPDATE roster SET subscription = $3 WHERE uid = id AND contact = ctct;
+	IF NOT FOUND THEN
+		INSERT INTO roster(uid, contact, subscription) VALUES (id, ctct, subs);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION roster_set_name(username TEXT, ctct TEXT, name TEXT, grps TEXT) RETURNS VOID AS $$
+DECLARE
+	id INTEGER;
+BEGIN
+	id := userid($1);
+	UPDATE roster SET label = $3, groups = $4 WHERE uid = id AND contact = ctct;
+	IF NOT FOUND THEN
+		INSERT INTO roster(uid, contact, label, groups) VALUES (id, ctct, $3, $4);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION roster_set_full(username TEXT, ctct TEXT, subs TEXT, name TEXT, grps TEXT) RETURNS VOID AS $$
+DECLARE
+	id INTEGER;
+BEGIN
+	id := userid($1);
+	UPDATE roster SET subscription = subs, label = name, groups = grps WHERE uid = id AND contact = ctct;
+	IF NOT FOUND THEN
+		INSERT INTO roster(uid, contact, subscription, label, groups) VALUES (id, ctct, subs, name, grps);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE TABLE offlinemsgs(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	ts BIGINT NOT NULL,
+	msg XML NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION offlinechat_get(username TEXT) RETURNS TABLE(username TEXT, "time" TEXT, "xml" XML) AS $$
+	SELECT num || '@' || domain, ts::TEXT, msg
+		FROM offlinemsgs o INNER JOIN userrec($1) u ON u.id = o.uid
+		ORDER BY ts;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION offlinechat_add(username TEXT, message XML, tstamp BIGINT, maxcount INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	id INTEGER;
+	n INTEGER;
+BEGIN
+	id := userid(username);
+	IF maxcount <> 0 THEN
+		SELECT INTO n COUNT(*) FROM offlinemsgs WHERE uid = id;
+		IF n >= maxcount THEN
+			RAISE NOTICE 'User % already has % moffline messages while % is allowed', username, n, maxcount;
+			RETURN 0;
+		END IF;
+	END IF;
+	INSERT INTO offlinemsgs(uid, ts, msg) VALUES (id, tstamp, message);
+	RETURN 1;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION offlinechat_del(username TEXT) RETURNS VOID AS $$
+	DELETE FROM offlinemsgs WHERE uid = userid($1);
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION offlinechat_expire(maxts BIGINT) RETURNS VOID AS $$
+	DELETE FROM offlinemsgs WHERE ts < $1;
+$$ LANGUAGE SQL;
+
+-- private data support --
+CREATE TABLE privdata(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	tag TEXT NOT NULL,
+	xmlns TEXT NOT NULL,
+	data XML
+);
+
+CREATE OR REPLACE FUNCTION privdata_get(username TEXT, datatag TEXT, datans TEXT) RETURNS XML AS $$
+	SELECT data FROM privdata WHERE uid = userid($1) AND tag = $2 AND xmlns = $3;
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION privdata_set(username TEXT, datatag TEXT, datans TEXT, dataxml XML) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(username);
+	UPDATE privdata SET data = dataxml WHERE uid = u AND tag = datatag AND xmlns = datans;
+	IF NOT FOUND THEN
+		INSERT INTO privdata(uid, tag, xmlns, data) VALUES (u, datatag, datans, dataxml);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION privdata_clear(username TEXT) RETURNS VOID AS $$
+	DELETE FROM privdata WHERE uid = userid($1);
+$$ LANGUAGE SQL;
+
+-- requires yate modification a769565
+--  51cdc1ec7322aa09930c6a473e456adf95949daf
+CREATE OR REPLACE FUNCTION caps_update(contct TEXT, has_audio BOOLEAN) RETURNS VOID AS $$
+	UPDATE regs SET audio = $2 WHERE location = $1
+$$ LANGUAGE SQL;
+
+
+CREATE TABLE ipnetworks (
+	net CIDR NOT NULL UNIQUE,
+	id INTEGER NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION ipnetwork(ip INET) RETURNS INTEGER AS $$
+	SELECT COALESCE((SELECT id FROM ipnetworks WHERE net >> $1 ORDER BY masklen(net) DESC LIMIT 1), 0);
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION rtp_forward_possible(a1 INET, a2 INET) RETURNS TEXT AS $$
+	SELECT CASE WHEN ipnetwork($1) = ipnetwork($2) THEN 'yes' ELSE 'no' END;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION regs_all_routes_for_user(uid INTEGER, ip INET, rtp_forward_in TEXT DEFAULT 'no')
+                RETURNS TABLE(n BIGINT, location TEXT, rtp_forward TEXT) AS $$
+        SELECT ROW_NUMBER() OVER(),
+                        CASE WHEN location LIKE (driver || '/%') THEN location ELSE driver || '/' || location END,
+                        CASE WHEN $3 = 'possible' THEN rtp_forward_possible($2, ip_host) ELSE 'no' END
+                FROM regs WHERE userid = $1 AND audio ORDER BY ts;
+$$ LANGUAGE SQL;
+
+-- routing functions requires the following upstream yate modifications:
+--  988c55b7c9e19815956f73a9ad3c641f7ae96879 - transposedb
+--  51cdc1ec7322aa09930c6a473e456adf95949daf - hstore
+CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	clr RECORD;
+	cld RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+BEGIN
+	clr := userrec(caller_arg);
+	cld := userrec(called_arg);
+
+	res := 'location => fork';
+	cntr := 0;
+	FOR t IN SELECT * FROM regs WHERE userid = cld.id AND audio LOOP
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, t.location);
+		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
+	END LOOP;
+
+	IF cntr = 0 THEN
+		res := 'location => "", error => "offline"';
+	END IF;
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
+CREATE OR REPLACE FUNCTION route_reg(called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+BEGIN
+	res := 'location => fork';
+	cntr := 0;
+	FOR t IN SELECT * FROM regs WHERE userid = userid(called_arg) AND audio LOOP
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, t.location);
+		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
+	END LOOP;
+
+	IF cntr = 0 THEN
+		res := 'location => "", error => "offline"';
+	END IF;
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward');
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
+CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
+
+CREATE TABLE callgroups(
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	descr TEXT,
+	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
+	rotary_last INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE callgrpmembers(
+	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
+	ord INTEGER,
+	num PHONE NOT NULL
+);
+
+
+-- vim: ft=sql

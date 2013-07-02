@@ -1,0 +1,3 @@
+CREATE USER yate WITH PASSWORD 'yate';
+CREATE DATABASE yate OWNER yate ENCODING 'UTF-8';
+\c yate yate

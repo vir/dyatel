@@ -1,0 +1,4 @@
+
+. /usr/share/dbconfig-common/dpkg/config.mysql 
+dbc_go dyatel $@
+
