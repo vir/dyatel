@@ -1,0 +1,9 @@
+DIR=/usr/share/dbconfig-common/data/dyatel/install/pgsql
+UP=/usr/share/dbconfig-common/data/dyatel/upgrade/pgsql/VERSION
+
+all:
+
+install:
+	install -d ${DESTDIR}${DIR}
+	install -m 644 initdb.sql ${DESTDIR}${DIR}
+

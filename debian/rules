@@ -9,14 +9,13 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+configure: configure.in
+	autoconf
 
-
-
-
-configure: configure-stamp
-configure-stamp:
+configure-stamp: configure
 	dh_testdir
 	# Add here commands to configure the package.
+	./configure $(confflags) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
 	touch configure-stamp
 
 build: build-stamp
