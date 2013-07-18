@@ -1,4 +1,3 @@
-
 CREATE DOMAIN phone AS TEXT NOT NULL CHECK( VALUE ~ E'^\\d+$' );
 
 CREATE TABLE users (
