@@ -1,0 +1,15 @@
+[% META title = 'Users list' %]
+
+<table id="userlist">
+[% FOREACH user IN users %]
+<tr>
+	<td><input type="checkbox" name="sel" value="[% user.id %]" /></td>
+	<td><a href="[% user.id %]">[% user.num %]</a></td>
+	<td>[% user.alias %]</td>
+	<td>[% user.domain %]</td>
+	<td>[% user.descr %]</td>
+</tr>
+[% END %]
+</table>
+
+

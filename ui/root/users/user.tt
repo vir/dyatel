@@ -1,0 +1,18 @@
+
+[% # USE Dumper(Indent=1) -%]
+[% # Dumper.dump(user) %]
+
+[% META title = 'User' %]
+
+<dl>
+	<dt>Num</dt><dd>[% user.num %]</dd>
+	<dt>Alias</dt><dd>[% user.alias %]@[% user.domain %]</dd>
+	<dt>Password</dt><dd>[% user.password %]</dd>
+	<dt>Last registered</dt><dd>[% user.lastreg %]</dd>
+	<dt>Last IP</dt><dd>[% user.lastip %]</dd>
+	<dt>Description</dt><dd><textarea name="descr">[% user.descr %]</textarea></dd>
+	<dt>NAT support</dt><dd><input type="checkbox" [% use.nat_support ? "checked" : "" %]</dd>
+	<dt>NAT port support</dt><dd><input type="checkbox" [% use.nat_port_support ? "checked" : "" %]</dd>
+</dl>
+
+
