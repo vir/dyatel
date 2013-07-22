@@ -1,0 +1,18 @@
+
+[% META title = 'User deletion' %]
+
+<form method="post">
+<dl>
+	<dt>Num</dt><dd>[% user.num %]</dd>
+[% IF user.alias && user.domain %]
+	<dt>Alias</dt><dd>[% user.alias %]@[% user.domain %]</dd>
+[% END %]
+	<dt>Last registered</dt><dd>[% user.lastreg | html %]</dd>
+	<dt>Last IP</dt><dd>[% user.lastip | html %]</dd>
+	<dt>Description</dt><dd>[% user.descr | html %]</dd>
+</dl>
+<input type="submit" name="delete" value="Really Delete" />
+<input type="submit" name="cancel" value="Cancel" />
+</form>
+
+
