@@ -70,7 +70,7 @@ sub user :LocalRegex('^(\d+)$')
 	} elsif($c->request->params->{delete}) {
 		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $uid }));
 	}
-	$c->stash(user => $user, template => 'users/user.tt');
+	$c->stash(user => $user, provision => $user->provisions->all, regs => $user->regs->all, template => 'users/user.tt');
 }
 
 sub create :Local :Args(0)

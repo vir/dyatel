@@ -19,8 +19,11 @@
 <div id="bodyblock">
 <div id="menu">
     <ul>
-        <li><a href="[% c.uri_for('/directory') %]">Directory</a></li>
         <li><a href="[% c.uri_for('/users/list') %]">Users</a></li>
+        <li><a href="[% c.uri_for('/provisions/') %]">Provisions</a></li>
+	<li><hr /></li>
+
+        <li><a href="[% c.uri_for('/directory') %]">Directory</a></li>
         <li><a href="[% c.uri_for('/trunks/list') %]">Trunks</a></li>
         <li>Groups<ul>
             <li><a href="[% c.uri_for('/groups/list') %]">PBX Groups</a></li>

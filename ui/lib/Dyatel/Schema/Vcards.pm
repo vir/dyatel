@@ -5,7 +5,7 @@ use warnings;
 
 use base 'DBIx::Class';
 
-__PACKAGE__->load_components("Core");
+__PACKAGE__->load_components("InflateColumn::Serializer", "Core");
 __PACKAGE__->table("vcards");
 __PACKAGE__->add_columns(
   "uid",
@@ -16,8 +16,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-19 13:00:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:o2I17suZRHBeVAiR4SQ55w
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-24 15:44:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QJj3KRX5sybrkEpKEAJ9VA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

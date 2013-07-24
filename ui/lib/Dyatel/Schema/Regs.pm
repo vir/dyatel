@@ -5,7 +5,7 @@ use warnings;
 
 use base 'DBIx::Class';
 
-__PACKAGE__->load_components("Core");
+__PACKAGE__->load_components("InflateColumn::Serializer", "Core");
 __PACKAGE__->table("regs");
 __PACKAGE__->add_columns(
   "userid",
@@ -72,9 +72,11 @@ __PACKAGE__->add_columns(
 __PACKAGE__->belongs_to("userid", "Dyatel::Schema::Users", { id => "userid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-19 13:00:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W9UzS581lRv9rJGD1/K2ZA
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-24 15:44:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+g4SRR2oYr05y1yrLpGCWg
 
+# add primary key to make DBIx::* happy
+__PACKAGE__->set_primary_key(qw/userid location/);
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;

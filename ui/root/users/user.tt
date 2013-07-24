@@ -1,6 +1,6 @@
 
-[% # USE Dumper(Indent=1) -%]
-[% # Dumper.dump(user) %]
+[% USE Dumper(Indent=1) -%]
+[%# Dumper.dump(user) %]
 
 [% META title = 'User' %]
 
@@ -21,4 +21,26 @@
 [% END %]
 </form>
 
+<div id="user-provision">
+<h1>Provisioned devices</h1>
+<table>
+[% FOREACH p IN provision %]
+<tr><td><a href="/provisions/[% p.id %]">[% p.hw %]</a></td><td><a href="/provisions/[% p.id %]">[% p.devtype %]</a></td></tr>
+[% END %]
+</table>
+</div>
+
+<div id="user-regs">
+<h1>Active registrations</h1>
+<table>
+[% FOREACH r IN regs %]
+<tr><td>[% r.ts %]</td><td>[% r.location %]</td><td>[% r.expires %]</td><td>[% r.device %]</td><td>[% r.driver %]</td><td>[% r.ip_transport %]</td><td>[% r.ip_host %]:[% r.ip_port %]</td><td>[% r.audio %]</td></tr>
+</td></tr>
+[% END %]
+</table>
+</div>
+
+<pre>
+[% Dumper.dump(user) %]
+</pre>
 

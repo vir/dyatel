@@ -337,6 +337,7 @@ CREATE TABLE callgrpmembers(
 
 
 CREATE TABLE provision (
+	id SERIAL PRIMARY KEY,
 	uid INTEGER REFERENCES users(id) ON DELETE CASCADE,
 	hw MACADDR,
 	devtype TEXT,
