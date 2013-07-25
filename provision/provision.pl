@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2013-07-25 09:29:36 +0400
+# Last modified: 2013-07-25 13:09:50 +0400
 #
 
 use strict;
@@ -66,7 +66,7 @@ sub provision
 	my $output = '';
 
 	my $conffn = $tpl.'.conf';
-	die "$conffn not found\n" unless -f $conffn;
+#	die "$conffn not found\n" unless -f $conffn;
 	$tt->process($conffn, $vars, \$output) || die $tt->error(), "\n";
 
 #	$output =~ s#\s+$##s;

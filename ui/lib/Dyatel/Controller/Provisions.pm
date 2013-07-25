@@ -38,7 +38,7 @@ sub provisions :Chained('/') :PathPart('provisions') :CaptureArgs(1)
 	my($self, $c, $id) = @_;
 	warn "Dyatel::Controller::Provisions::base($self, $c, $id)\n";
 	$c->log->debug("Dyatel::Controller::Provisions::base($self, $c, $id)");
-	$c->stash(obj => $c->model('DB::Provision')->find($id));
+	$c->stash(obj => $c->model('DB::Provision')->find($id), tpls => $c->model('FS::ProvisionTpls')->list);
 }
 
 use Data::Dumper;
@@ -46,7 +46,11 @@ use Data::Dumper;
 sub show :Chained('provisions') PathPart('') Args(0)
 {
 	my($self, $c) = @_;
-#	my $o = $c->stash->{obj};
+	if($c->request->params->{save}) {
+		my $o = $c->stash->{obj};
+		$o->update({ hw => $c->request->params->{hw}, devtype => $c->request->params->{devtype} });
+		$c->response->redirect('/'.$c->request->path);
+	}
 	$c->stash(template => 'provisions/show.tt');
 }
 
