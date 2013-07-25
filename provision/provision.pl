@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2013-07-22 09:23:49 +0400
+# Last modified: 2013-07-25 09:29:36 +0400
 #
 
 use strict;
@@ -47,11 +47,16 @@ while(my $row = $sth->fetchrow_hashref())
 		hw => $row->{hw},
 		%{ Pg::hstore::decode($row->{params}) },
 	);
-	provision($row->{devtype}, {
-		params => \%params,
-		user => $user,
-		conf => $myconf,
-	});
+	eval {
+		provision($row->{devtype}, {
+			params => \%params,
+			user => $user,
+			conf => $myconf,
+		});
+	};
+	if($@) {
+		warn "User $user->{id} \"$user->{descr}\" ERROR: $@";
+	}
 }
 
 sub provision
@@ -59,7 +64,10 @@ sub provision
 	my($tpl, $vars) = @_;
 	print Dumper(\@_) if $opts{d};
 	my $output = '';
-	$tt->process($tpl.'.conf', $vars, \$output) || die $tt->error(), "\n";
+
+	my $conffn = $tpl.'.conf';
+	die "$conffn not found\n" unless -f $conffn;
+	$tt->process($conffn, $vars, \$output) || die $tt->error(), "\n";
 
 #	$output =~ s#\s+$##s;
 #	print "=== $tpl.conf ===\n$output\n=== === ===\n" if $opts{d};
