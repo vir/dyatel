@@ -1,10 +1,10 @@
 
+SUBDIRS=database ui provision ivr
 all:
 	( cd ui; perl Makefile.PL SITEPREFIX=/usr )
-	$(MAKE) -C ui
+	for d in ${SUBDIRS}; do $(MAKE) -C $$d; done
 
 install:
-	$(MAKE) -C database/ install
-	$(MAKE) -C ui install
+	for d in ${SUBDIRS}; do $(MAKE) -C $$d install; done
 
 

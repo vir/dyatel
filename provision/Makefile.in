@@ -1,9 +1,15 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
 
 all:
 
 install:
-	install -d ${DESTDIR}@datadir@/dyatel/templates
-	install -m 644 templates/* ${DESTDIR}@datadir@/dyatel/templates
-	install -m 755 dyatel-provision ${DESTDIR}@bindir@
+	install -d ${DESTDIR}@datarootdir@/dyatel/templates
+	install -m 644 templates/* ${DESTDIR}@datarootdir@/dyatel/templates/
+	install -d ${DESTDIR}@bindir@
+	install -m 755 dyatel-provision ${DESTDIR}@bindir@/
 
 

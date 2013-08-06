@@ -1,0 +1,382 @@
+#!/usr/bin/perl
+#
+package Yate::IVR::FSM;
+use utf8;
+use strict;
+use warnings;
+use Carp;
+
+sub new
+{
+	my $class = shift;
+	my($table, $start) = @_;
+	croak "Usage: Yate::IVR::FSM-new([ [ 'state1', 'event1', 'action', 'next_state' ], ... ])" unless(ref($table) eq 'ARRAY');
+	$start //= 'start';
+	my $self = bless { fsm_table => $table }, ref($class)||$class;
+	$self->set_state($start);
+	return $self;
+}
+
+sub event
+{
+	my $self = shift;
+	my($ev) = @_;
+	$self->debug('State: '.$self->{fsm_state}.' Event: '.$ev);
+	my $a = $self->{fsm_curstate}{$ev};
+	unless($a) { # Two more catch-all events: 'default' and 'dtmf'
+		if($ev =~ /^dtmf_(.*)/ && $self->{fsm_curstate}{dtmf}) {
+			$self->{lastdtmf} = $1;
+			$a = $self->{fsm_curstate}{dtmf};
+		} elsif($ev ne 'enter') {
+			$a = $self->{fsm_curstate}{default};
+		}
+		return undef unless $a;
+	}
+	my($action, $next_state) = @$a;
+	my $r;
+	if($action && ref($action) && ref($action) eq 'ARRAY') {
+		$self->debug("Action: ".join('|', @$action)." Next state: ".($next_state//'nothing'));
+		local $_;
+		$r ||= $self->action($_) foreach(@$action);
+	} else {
+		$self->debug("`--> Action: ".($action//'nothing')." Next state: ".($next_state//'nothing'));
+		$r = $self->action($action) if defined $action;
+	}
+	if($next_state && $next_state ne $self->{fsm_state}) {
+		$self->set_state($next_state);
+		$self->event('enter');
+	}
+	return $r;
+}
+
+sub action
+{
+	my $self = shift;
+	warn ref($self)."::action(@_)";
+}
+
+sub set_state
+{
+	my $self = shift;
+	my($state) = @_;
+	my $c = $self ->{fsm_curstate} = { };
+	foreach my $row(@{ $self->{fsm_table} })
+	{
+		next if defined($row->[0]) && $row->[0] ne $state;
+		$c->{$row->[1]} = [ $row->[2], $row->[3] ];
+	}
+	carp "Empty state $state" unless keys %$c;
+	$self->{fsm_state} = $state;
+}
+
+package Yate::IVR::Call;
+use strict;
+use warnings;
+use base qw/ Yate::IVR::FSM /;
+use vars qw( %registry );
+use constant COPYPARAMS => qw/ id caller called billid format formats answered /;
+
+sub new
+{
+	my $class = shift;
+	my($msg, $name, $table) = @_;
+	my $id = $msg->param('id');
+	my $self = $class->Yate::IVR::FSM::new($table);
+	$self->{yate} = $msg;
+	$self->{name} = $name;
+	foreach my $k(COPYPARAMS) {
+		$self->{$k} = $msg->param($k);
+	}
+	warn "Channel id $id already in registry" if $registry{$id};
+	$registry{$id} = $self;
+#	$self->debug("New call from ".$self->{caller});
+	return $self;
+}
+
+sub yate { return shift->{yate}; }
+
+sub find
+{
+	shift eq __PACKAGE__ or die;
+	my($msg) = @_;
+	foreach my $k(qw( id targetid )) {
+		my $id = $msg->param($k);
+		return $registry{$id} if $id && $registry{$id};
+	}
+	return undef;
+}
+
+sub debug
+{
+	my $self = shift;
+	print $self->{name}.' '.$self->{id}.": @_\n";
+}
+
+sub set_dumb
+{
+	my $self = shift;
+	my($msg) = @_;
+	my $dumb = $msg->param('targetid'); # or peerid?
+	$self->{dumb} = $dumb;
+	$registry{$dumb} = $self;
+	$self->debug("New call from $self->{caller} to $self->{called} ($self->{id} to $self->{dumb})");
+	$self->event('enter');
+}
+
+# === === === Message handlers === === ===
+
+sub disconnected
+{
+	my $self = shift;
+	my($msg) = @_;
+	return if $msg->param('id') =~ /^dumb/; # skip slave channels disconnection
+	$self->debug("Channel ".$msg->param('id')." disconnected");
+#	$self->event('disconnect');
+	$self->destruct;
+}
+
+sub dtmf
+{
+	my $self = shift;
+	my($msg) = @_;
+	foreach my $digit(split(//, $msg->param('text'))) {
+		$digit = 'star' if $digit eq '*';
+		$digit = 'hash' if $digit eq '#';
+		$self->event('dtmf_'.$digit) 
+	}
+}
+
+sub notify
+{
+	my $self = shift;
+	$self->event('finished');
+}
+
+sub timer
+{
+	my $self = shift;
+	if(defined $self->{timer}) {
+		if(0 >= int(--$self->{timer})) {
+			delete $self->{timer};
+			$self->event('timeout');
+		}
+	}
+}
+
+sub broadcast_engine_timer
+{
+	my $m = shift; local $_;
+	my %seen;
+	my @bc;
+	foreach my $obj(values %registry) {
+		next if !$obj || $seen{$obj}++;
+		push @bc, $obj;
+	}
+	$_->timer($m) foreach @bc;
+#	print "REG: ".join(', ', sort keys %registry)."\n";
+}
+
+sub destruct
+{
+	my $self = shift;
+	foreach my $k(qw( id targetid dumb )) {
+		delete $registry{$self->{$k}} if $self->{$k} && $registry{$self->{$k}} && $registry{$self->{$k}} == $self;
+	}
+	if($self->{dumb}) {
+		$self->yate->message('chan.masquerade', undef, undef,
+			message => "chan.hangup",
+			id      => $self->{dumb},
+			reason  => "IVR $self->{name} termination",
+		);
+	}
+}
+
+# === === === Actions === === ===
+
+sub action
+{
+	my $self = shift;
+	my($action) = @_;
+	if(ref($action)) {
+		die "Wrong action $action" unless ref($action) eq 'CODE';
+		return &$action;
+	}
+	my($sub, $arg) = split(/\s+/, $action, 2);
+	$arg //= '';
+	eval "\$self->action_$sub('$arg')";
+	die "Action $action failed: $@" if $@;
+}
+
+sub action_answer
+{
+	my $self = shift;
+	return if $self->{answered} eq 'true';
+	$self->yate->message('call.answered', undef, undef,
+		id => $self->{dumb},
+		targetid => $self->{id},
+	);
+}
+
+sub action_playtone
+{
+	my $self = shift;
+	my($tone) = @_;
+	$tone //= 'dial';
+	$self->yate->message('chan.masquerade', undef, undef,
+		message => "chan.attach",
+		id      => $self->{dumb},
+		source  => "tone/$tone",
+	);
+}
+
+sub action_playfile
+{
+	my $self = shift;
+	my($file) = @_;
+	die "action_playfile: filename required" unless $file;
+	$self->yate->message('chan.masquerade', undef, undef,
+		message => "chan.attach",
+		id      => $self->{dumb},
+		source  => "wave/play/$file",
+		notify  => $self->{dumb},
+	);
+}
+
+sub action_switch
+{
+	my $self = shift;
+	my($num) = @_;
+	$num = $self->{collected} unless defined($num) && length($num);
+	$self->debug("Switching call to $num");
+	$self->yate->message('chan.masquerade', undef, undef,
+		map({ $_ => $self->{$_} } COPYPARAMS),
+		message => 'call.execute',
+		callto => 'lateroute/'.$num,
+	);
+	$self->destruct;
+}
+
+sub action_flush
+{
+	my $self = shift;
+	$self->{collected} = '';
+}
+
+sub action_collect
+{
+	my $self = shift;
+	my($digit) = @_;
+	$digit = delete $self->{lastdtmf} unless defined($digit) && length($digit);
+	$self->{collected} .= $digit;
+	$self->debug("Collected: $self->{collected}");
+}
+
+sub action_timer
+{
+	my $self = shift;
+	my($seconds) = @_;
+	$self->{timer} = 0+$seconds;
+}
+
+sub action_suicide
+{
+	my $self = shift;
+	$self->destruct;
+}
+
+package Yate::IVR;
+use strict;
+use warnings;
+
+our %ivrs;
+
+sub init
+{
+	my($yate) = @_;
+	$yate->setlocal(reenter => 'true');
+	$yate->setlocal(selfwatch  => 'true');
+	$yate->install('call.route', \&call_route_handler, 30);
+	$yate->install_watcher('call.execute', _make_handler(\&Yate::IVR::Call::set_dumb));
+	$yate->install('chan.disconnected', _make_handler(\&Yate::IVR::Call::disconnected));
+	$yate->install('chan.dtmf', _make_handler(\&Yate::IVR::Call::dtmf));
+	$yate->install('chan.notify', _make_handler(\&Yate::IVR::Call::notify));
+	$yate->install('engine.timer', \&Yate::IVR::Call::broadcast_engine_timer);
+}
+
+sub add
+{
+	my %toadd = @_;
+	%ivrs = (%ivrs, %toadd);
+}
+
+sub _make_handler
+{
+	my($fn)= @_;
+	return sub {
+		my $m = shift;
+		my $call = Yate::IVR::Call->find($m);
+		if($call) {
+			$call->$fn($m);
+		}
+		return undef;
+	};
+}
+
+sub call_route_handler
+{
+	my $m = shift;
+	my $called = $m->param('called');
+	my $table = $ivrs{$called};
+	return undef unless $table;
+	Yate::IVR::Call->new($m, $called, $table);
+	$m->param('autoring', 'false');
+	return 'dumb/';
+}
+
+
+package main;
+use strict;
+use warnings;
+use lib '.';
+use Yate;
+use Data::Dumper;
+
+$|=1;
+
+my $table1 = [
+	[ 'start', 'enter', 'answer', 'answered' ],
+	[ 'answered', 'enter', 'playfile /home/vir/menu.au', 'playing' ],
+	[ 'playing', 'finished', 'timer 5', undef ],
+	[ 'playing', 'timeout', 'switch 498', 'finish' ],
+	[ 'playing', 'dtmf_1', 'switch 115', 'finish' ],
+	[ 'playing', 'dtmf_2', 'switch 106', 'finish' ],
+	[ 'playing', 'dtmf_3', 'switch 223', 'finish' ],
+	[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
+];
+
+my $table2 = [
+	[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
+	[ undef, 'timeout', undef, 'error' ],
+	[ 'start', 'enter', ['flush', 'answer', 'timer 15'], 'prompt' ],
+	[ 'prompt', 'enter', 'playfile /home/vir/disa.au', 'firstdigit' ],
+	[ 'firstdigit', 'default', undef, 'error' ],
+	[ 'firstdigit', 'dtmf_1', 'collect 1', 'second' ],
+	[ 'firstdigit', 'dtmf_2', 'collect 2', 'second' ],
+	[ 'firstdigit', 'dtmf_3', 'collect 3', 'second' ],
+	[ 'second', 'dtmf', 'collect', 'third' ],
+	[ 'second', 'default', 'suicide', 'second' ],
+	[ 'third', 'dtmf', ['collect', 'switch'], 'finish' ],
+	[ 'finish', 'enter', 'suicide', undef ],
+	[ 'error', 'enter', 'switch 222', undef ],
+];
+
+my $yate = new Yate(Debug=>0);
+$yate->connect("192.168.1.44:42428");
+Yate::IVR::init($yate);
+Yate::IVR::add(
+	222 => $table1,
+	223 => $table2,
+);
+$yate->listen();
+
+
