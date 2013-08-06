@@ -8,7 +8,7 @@ Homepage: http://github.com/vir/dyatel/
 
 Package: dyatel
 Architecture: any
-Depends: yate, yate-pgsql, dbconfig-common, libpg-hstore-perl
+Depends: yate, yate-pgsql, dbconfig-common, libpg-hstore-perl, supervisor-daemon (>= 1.0.2)
 Recommends: postgresql-client, postgresql-contrib (>= 9.0)
 Suggests: yate-telhw
 Description: My yate-based pbx

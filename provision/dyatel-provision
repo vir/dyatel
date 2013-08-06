@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2013-07-25 13:09:50 +0400
+# Last modified: 2013-08-06 13:56:04 +0400
 #
 
 use strict;
@@ -42,11 +42,10 @@ $sth->execute();
 while(my $row = $sth->fetchrow_hashref())
 {
 	my $user = $dbh->selectrow_hashref("SELECT * FROM users WHERE id = ?", undef, $row->{uid});
-	my %params = (
-		%{ $myconf->{Params} },
-		hw => $row->{hw},
-		%{ Pg::hstore::decode($row->{params}) },
-	);
+	my %params;
+	%params = %{ $myconf->{Params} } if $myconf->{Params};
+	%params = ( %params, hw => $row->{hw} );
+	%params = ( %params, %{ Pg::hstore::decode($row->{params}) } ) if $row->{params};
 	eval {
 		provision($row->{devtype}, {
 			params => \%params,
