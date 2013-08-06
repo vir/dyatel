@@ -1,7 +1,10 @@
 
 all:
+	( cd ui; perl Makefile.PL SITEPREFIX=/usr )
+	$(MAKE) -C ui
 
 install:
 	$(MAKE) -C database/ install
+	$(MAKE) -C ui install
 
 
