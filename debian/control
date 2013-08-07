@@ -11,7 +11,7 @@ Homepage: http://github.com/vir/dyatel/
 Package: dyatel
 Architecture: all
 Depends: dbconfig-common, libcatalyst-modules-perl, libpg-hstore-perl,
- supervisor-daemon (>= 1.0.2), libyate-perl
+ supervisor-daemon (>= 1.0.2), libyate-perl, libconfig-jfdi-perl
 Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0),
  atftpd | tftpd
 Suggests: yate-telhw

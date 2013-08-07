@@ -12,18 +12,16 @@ use Pg::hstore;
 use Config::General;
 use DBI;
 use Getopt::Std;
+use Dyatel::ExtConfig;
 #use Encode;
-use FindBin;
 
-my $conffile = "$FindBin::Bin/../ui/dyatel.conf";
+my $conf = Dyatel::ExtConfig::load();
 
-my %opts; getopts('hdc:', \%opts);
+my %opts; getopts('hd', \%opts);
 if(exists $opts{'h'}) { help(); exit 0; }
 
 eval "require Data::Dumper; import Data::Dumper;" if $opts{d};
-$conffile = $opts{c} if defined $opts{c};
 
-my $conf = { Config::General->new($conffile)->getall() };
 my $myconf = $conf->{Provision};
 my $dbconf = $conf->{Model}{DB}{connect_info};
 my $dbh = DBI->connect($dbconf->{dsn}, $dbconf->{username}, $dbconf->{password}, { AutoCommit => 1 });
