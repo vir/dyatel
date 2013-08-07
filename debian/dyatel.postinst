@@ -29,6 +29,7 @@ case "$1" in
 #        for f in extmodule.conf moh.conf pbxassist.conf pgsqldb.conf queues.conf; do dpkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f; ln -s freesentral/$f /etc/yate/$f; done
 #    update_all
 # XXX XXX XXX XXX XXX
+        ln -s /usr/bin/supervisor /usr/bin/start-dyatel
         ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

@@ -6,5 +6,7 @@ all:
 
 install:
 	for d in ${SUBDIRS}; do $(MAKE) -C $$d install; done
+	install -d ${DESTDIR}@sysconfdir@/dyatel
+	install -m 644 supervisor.conf ${DESTDIR}@sysconfdir@/dyatel/
 
 
