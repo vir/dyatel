@@ -23,8 +23,7 @@ if(exists $opts{'h'}) { help(); exit 0; }
 eval "require Data::Dumper; import Data::Dumper;" if $opts{d};
 
 my $myconf = $conf->{Provision};
-my $dbconf = $conf->{Model}{DB}{connect_info};
-my $dbh = DBI->connect($dbconf->{dsn}, $dbconf->{username}, $dbconf->{password}, { AutoCommit => 1 });
+my $dbh = Dyatel::ExtConfig::dbh;
 
 my $tt = new Template(
 	INCLUDE_PATH => $myconf->{templates},  # or list ref

@@ -5,6 +5,7 @@ use utf8;
 use strict;
 use warnings;
 use Carp;
+use DBI;
 
 sub new
 {
@@ -339,7 +340,8 @@ use strict;
 use warnings;
 use lib '.';
 use Yate;
-use Data::Dumper;
+use Dyatel::ExtConfig;
+
 
 $|=1;
 
@@ -373,10 +375,63 @@ my $table2 = [
 my $yate = new Yate(Debug=>0);
 $yate->connect("192.168.1.44:42428");
 Yate::IVR::init($yate);
-Yate::IVR::add(
-	222 => $table1,
-	223 => $table2,
-);
+#Yate::IVR::add(
+#	222 => $table1,
+#	223 => $table2,
+#);
+
+my $dbh = Dyatel::ExtConfig::dbh();
+
+# Append auto-attendants
+my $sth = $dbh->prepare("SELECT * FROM ivr_aa");
+$sth->execute();
+while(my $h = $sth->fetchrow_hashref) {
+	my $table = [
+		[ 'start', 'enter', 'answer', 'answered' ],
+		[ 'answered', 'enter', 'playfile '.$h->{prompt}, 'playing' ],
+		[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
+	];
+	push @$table, [ 'playing', 'finished', 'timer 5', undef ] if $h->{timeout};
+	push @$table, [ 'playing', 'timeout', 'switch '.$h->{etimeout}, 'finish' ] if defined $h->{etimeout};
+	foreach my $digit(qw( 0 1 2 3 4 5 6 7 8 9 star hash )) {
+		push @$table, [ 'playing', 'dtmf_'.$digit, 'switch '.$h->{"e$digit"}, 'finish' ] if defined $h->{"e$digit"};
+	}
+	Yate::IVR::add($h->{num} => $table);
+}
+
+# Append mini auto-attendants (internal number switch)
+$sth = $dbh->prepare("SELECT * FROM ivr_minidisa");
+$sth->execute();
+my $pos = 1;
+while(my $h = $sth->fetchrow_hashref) {
+	my $table = [
+		[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
+		[ undef, 'timeout', undef, 'error' ],
+		[ 'start', 'enter', ['flush', 'answer', 'timer '.$h->{timeout}], 'prompt' ],
+		[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit'.$pos ],
+		[ 'finish', 'enter', 'suicide', undef ],
+		[ 'error', 'enter', 'switch 222', undef ],
+	];
+
+	if($pos == 1 && $h->{numlen} > 1 && defined($h->{firstdigit}) && length($h->{firstdigit})) {
+		push @$table, [ 'digit'.$pos, 'default', undef, 'error' ];
+		foreach my $d(split(//, $h->{firstdigit})) {
+			push @$table, [ 'digit'.$pos, 'dtmf_'.$d, 'collect '.$d, 'digit'.($pos + 1) ],
+		}
+		++$pos;
+	}
+
+	while($pos <= $h->{numlen}) {
+		if($pos + 1 <= $h->{numlen}) {
+			push @$table, [ 'digit'.$pos, 'dtmf', 'collect', 'digit'.($pos + 1) ]
+		} else {
+			push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'switch'], 'finish' ],
+		}
+		++$pos;
+	}
+	Yate::IVR::add($h->{num} => $table);
+}
+
 $yate->listen();
 
 
