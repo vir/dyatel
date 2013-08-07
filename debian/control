@@ -9,7 +9,7 @@ Standards-Version: 3.7.3
 Homepage: http://github.com/vir/dyatel/
 
 Package: dyatel
-Architecture: any
+Architecture: all
 Depends: dbconfig-common, libcatalyst-modules-perl, libpg-hstore-perl,
  supervisor-daemon (>= 1.0.2), libyate-perl
 Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0),
