@@ -9,6 +9,8 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+DD=$(CURDIR)/debian/dyatel
+
 configure: configure.in
 	autoconf
 
@@ -44,9 +46,10 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/dyatel
-	$(MAKE) DESTDIR=$(CURDIR)/debian/dyatel install
-	find $(CURDIR)/debian/dyatel -name perllocal.pod -delete
-
+	$(MAKE) DESTDIR=$(DD) install
+	find $(DD) -name perllocal.pod -delete
+	mkdir -p $(DD)/etc/dyatel/
+	CF=`find $(DD) -name dyatel.conf -print`; mv $$CF $(DD)/etc/dyatel/; ln -s /etc/dyatel/dyatel.cf $$CF
 
 # Build architecture-independent files here.
 binary-indep: install
