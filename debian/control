@@ -2,14 +2,14 @@ Source: dyatel
 Section: comm
 Priority: optional
 Maintainer: Vasily i. Redkin <vir@ctm.ru>
-Build-Depends: build-essential, debhelper (>= 7), pkg-config, autoconf (>= 2.50)
+Build-Depends: build-essential, debhelper (>= 7), pkg-config, autoconf (>= 2.50), libcatalyst-devel-perl
 Standards-Version: 3.7.3
 Homepage: http://github.com/vir/dyatel/
 
 Package: dyatel
 Architecture: any
-Depends: yate, yate-pgsql, dbconfig-common, libpg-hstore-perl, supervisor-daemon (>= 1.0.2)
-Recommends: postgresql-client, postgresql-contrib (>= 9.0)
+Depends: dbconfig-common, libcatalyst-modules-perl, libpg-hstore-perl, supervisor-daemon (>= 1.0.2), libyate-perl
+Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0)
 Suggests: yate-telhw
 Description: My yate-based pbx
 
