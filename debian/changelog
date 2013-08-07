@@ -1,3 +1,10 @@
+dyatel (0.0.4) UNRELEASED; urgency=low
+
+  * Configuratiion file moved into /etc/dyatel
+  * Supervisor configuration file added
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 07 Aug 2013 18:24:25 +0400
+
 dyatel (0.0.3) UNRELEASED; urgency=low
 
   * Fix ivrs, loading ivrs from database.
