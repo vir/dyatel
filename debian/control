@@ -12,7 +12,8 @@ Package: dyatel
 Architecture: all
 Depends: dbconfig-common, libpg-hstore-perl,
  supervisor-daemon (>= 1.0.2), libyate-perl, libconfig-jfdi-perl,
- libcatalyst-modules-perl, libcatalyst-dispatchtype-regex-perl
+ libcatalyst-modules-perl,
+ libcatalyst-dispatchtype-regex-perl | libcatalyst-perl (<< 5.90030-1)
 Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0),
  atftpd | tftpd
 Suggests: yate-telhw

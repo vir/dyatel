@@ -1,3 +1,9 @@
+dyatel (0.0.5) UNRELEASED; urgency=low
+
+  * Dependencies fixed
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Fri, 09 Aug 2013 11:28:44 +0400
+
 dyatel (0.0.4) UNRELEASED; urgency=low
 
   * Configuratiion file moved into /etc/dyatel
