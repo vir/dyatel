@@ -373,7 +373,7 @@ my $table2 = [
 ];
 
 my $yate = new Yate(Debug=>0);
-$yate->connect("192.168.1.44:42428");
+$yate->connect("127.0.0.1:42428");
 Yate::IVR::init($yate);
 #Yate::IVR::add(
 #	222 => $table1,
