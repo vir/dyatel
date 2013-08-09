@@ -1,3 +1,9 @@
+dyatel (0.0.7) UNRELEASED; urgency=low
+
+  * Yate configs installation. Various fixes.
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Fri, 09 Aug 2013 13:41:24 +0400
+
 dyatel (0.0.6) UNRELEASED; urgency=low
 
   * Init script added. Log dir creation fix.
