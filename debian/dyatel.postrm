@@ -22,13 +22,16 @@ DBCONFFILE=/etc/dyatel/database.conf
 
 case "$1" in
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-        rm /usr/bin/start-dyatel
         ;;
     purge)
         rm -f $DBCONFFILE
-            if which ucf >/dev/null 2>&1; then
-                ucf --purge $DBCONFFILE
-            fi
+        if which ucf >/dev/null 2>&1; then
+            ucf --purge $DBCONFFILE
+        fi
+
+        rm -rf /var/lib/dyatel /var/run/dyatel
+        deluser --system --quiet dyatel
+        delgroup --system --quiet dyatel
         ;;
     *)
         echo "postrm called with unknown argument \`$1'" >&2
