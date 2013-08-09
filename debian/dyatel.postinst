@@ -47,6 +47,12 @@ case "$1" in
             mkdir -p ${DIR}
             dpkg-statoverride --list ${DIR} >/dev/null || chown ${U}:${G} ${DIR}
         done
+
+        if [ -d /srv/tftp && ! -d /srv/tftp/ph ]
+        then
+            mkdir /srv/tftp/ph
+            chown ${U}:${G} /srv/tftp/ph
+        fi
         ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
