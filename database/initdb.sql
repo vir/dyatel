@@ -333,6 +333,8 @@ CREATE TABLE callgrpmembers(
 	ord INTEGER,
 	num PHONE NOT NULL
 );
+CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
+ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
 
 
 
