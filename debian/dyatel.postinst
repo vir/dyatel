@@ -33,7 +33,7 @@ case "$1" in
         for f in extmodule.conf pgsqldb.conf
         do
             dpkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f
-            ln -s ../dyatel/yate/$f /etc/yate/$f
+            ln -sf ../dyatel/yate/$f /etc/yate/$f
         done
 
         if ! getent passwd ${U} >/dev/null; then

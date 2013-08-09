@@ -1,3 +1,9 @@
+dyatel (0.0.10) UNRELEASED; urgency=low
+
+  * Fix upgrade
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Fri, 09 Aug 2013 17:24:55 +0400
+
 dyatel (0.0.9) UNRELEASED; urgency=low
 
   * Create provision output directory upon installation
