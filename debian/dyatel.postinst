@@ -32,12 +32,10 @@ case "$1" in
     configure)
         for f in extmodule.conf pgsqldb.conf
         do
-            pkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f
+            dpkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f
             ln -s ../dyatel/yate/$f /etc/yate/$f
         done
 
-#    update_all
-# XXX XXX XXX XXX XXX
         if ! getent passwd ${U} >/dev/null; then
             echo "Creating user '${U}' and group '${G}'..."
             addgroup --system ${G}
