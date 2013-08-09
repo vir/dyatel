@@ -20,6 +20,10 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
+U=dyatel
+G=dyatel
+H=/var/lib/dyatel
+
 # dbconfig
 . /usr/share/dbconfig-common/dpkg/postinst.pgsql
 dbc_go dyatel $@
@@ -29,7 +33,17 @@ case "$1" in
 #        for f in extmodule.conf moh.conf pbxassist.conf pgsqldb.conf queues.conf; do dpkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f; ln -s freesentral/$f /etc/yate/$f; done
 #    update_all
 # XXX XXX XXX XXX XXX
-        ln -s /usr/bin/supervisor /usr/bin/start-dyatel
+        if ! getent passwd ${U} >/dev/null; then
+            echo "Creating user '${U}' and group '${G}'..."
+            addgroup --system ${G}
+            adduser --system --ingroup ${G} --home ${H} --gecos "Dyael PBX" --shell /bin/sh --disabled-password ${U}
+        fi
+
+        for DIR in ${H} /var/run/dyatel /var/log/dyatel
+        do
+            mkdir -p ${DIR}
+            dpkg-statoverride --list ${DIR} >/dev/null || chown ${U}:${G} ${DIR}
+        done
         ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

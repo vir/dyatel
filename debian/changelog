@@ -1,3 +1,9 @@
+dyatel (0.0.6) UNRELEASED; urgency=low
+
+  * Init script added. Log dir creation fix.
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Fri, 09 Aug 2013 13:04:42 +0400
+
 dyatel (0.0.5) UNRELEASED; urgency=low
 
   * Dependencies fixed

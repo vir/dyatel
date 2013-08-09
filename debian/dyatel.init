@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# dyatel: Startup/shutdown script for the DYATEL server supervisor.
+#
+#   Linux chkconfig stuff:
+#
+# chkconfig: 2345 95 05
+# description: Startup/shutdown script for the Dyatel PBX supervisor.
+#
+# processname: start-dyatel
+# pidfile: /var/run/dyatel/supervisor.pid
+#
+
+### BEGIN INIT INFO
+# Provides:          dyatel
+# Required-Start:    $local_fs postgresql
+# Required-Stop:     $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: DYATEL
+# Description:       DYATEL Server daemons
+### END INIT INFO
+
+#set -e
+
+DAEMON=/usr/bin/start-dyatel
+PIDFILE=/var/run/dyatel/supervisor.pid
+
+test -x $DAEMON && test -r $CONFIG || exit 0
+
+# Source function library.
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+	log_begin_msg "Starting DYATEL server daemons..."
+	pid=$( pidofproc -p $PIDFILE $DAEMON )
+	if [ -n "$pid" ] ; then
+	      log_begin_msg "Already running."
+	      log_end_msg 0
+	      exit 0
+	fi
+	start-stop-daemon --start --quiet --oknodo --exec $DAEMON -b
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping DYATEL server daemons..."
+	start-stop-daemon --stop --quiet --oknodo --retry 10 --exec $DAEMON
+	log_end_msg $?
+	;;
+    force-reload)
+	$0 restart
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    status)
+	status_of_proc -p $PIDFILE $DAEMON ${DAEMON##*/} && exit 0 || exit $?
+	;;
+    *)
+	log_success_msg "Usage: /etc/init.d/dyatel {start|stop|force-reload|restart|status}"
+	exit 1
+	;;
+esac
+
+exit 0
+
