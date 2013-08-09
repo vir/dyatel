@@ -372,8 +372,10 @@ my $table2 = [
 	[ 'error', 'enter', 'switch 222', undef ],
 ];
 
+my $conf = Dyatel::ExtConfig::load()->{Model}{Yate}{extmodule};
+
 my $yate = new Yate(Debug=>0);
-$yate->connect("127.0.0.1:42428");
+$yate->connect($conf->{address}.':'.$conf->{port});
 Yate::IVR::init($yate);
 #Yate::IVR::add(
 #	222 => $table1,
