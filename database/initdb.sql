@@ -39,20 +39,26 @@ CREATE TABLE subscriptions (
 
 CREATE OR REPLACE FUNCTION userrec(username TEXT) RETURNS SETOF users AS $$
 DECLARE
-	n TEXT;
-	d TEXT;
-	pos INTEGER;
+        n TEXT;
+        d TEXT;
+        pos INTEGER;
+        r RECORD;
 BEGIN
-	pos := position('@' in username);
-	IF pos > 0 THEN
-		n := substring(username for pos - 1);
-		d := substring(username from pos + 1);
-		RETURN QUERY SELECT * FROM users WHERE num = n AND domain = d;
-	ELSE
-		RETURN QUERY SELECT * FROM users WHERE num = username LIMIT 1;
-	END IF;
+        pos := position('@' in username);
+        IF pos > 0 THEN
+                n := substring(username for pos - 1);
+                d := substring(username from pos + 1);
+                SELECT * INTO r FROM users WHERE num = n AND domain = d;
+        ELSE
+                SELECT * INTO r FROM users WHERE num = username LIMIT 1;
+        END IF;
+        IF NOT FOUND THEN
+                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN, NULL::TEXT);
+        END IF;
+        RETURN NEXT r;
 END;
 $$ LANGUAGE PlPgSQL STRICT STABLE;
+
 
 CREATE OR REPLACE FUNCTION userid(username TEXT) RETURNS INTEGER AS $$
 	SELECT id FROM userrec($1);
@@ -260,25 +266,29 @@ $$ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
-	clr RECORD;
-	cld RECORD;
+	-- clr RECORD;
+	clduid INTEGER;
 	t RECORD;
 	res HSTORE;
 	cntr INTEGER;
 BEGIN
-	clr := userrec(caller_arg);
-	cld := userrec(called_arg);
+	-- clr := userrec(caller_arg);
+	clduid := userid(called_arg);
+	IF clduid IS NULL THEN
+		RETURN;
+	END IF;
 
 	res := 'location => fork';
 	cntr := 0;
-	FOR t IN SELECT * FROM regs WHERE userid = cld.id AND audio LOOP
+	FOR t IN SELECT * FROM regs WHERE userid = clduid AND expires > 'now' AND audio LOOP
 		cntr := cntr + 1;
 		res := res || hstore('callto.' || cntr, t.location);
 		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
 	END LOOP;
 
 	IF cntr = 0 THEN
-		res := 'location => "", error => "offline"';
+		-- res := 'location => "", error => "offline"';
+		RETURN;
 	END IF;
 	RETURN QUERY SELECT * FROM each(res);
 END;
@@ -310,14 +320,6 @@ $$ LANGUAGE PlPgSQL;
 
 
 
-CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
-BEGIN
-	RETURN QUERY
-		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward');
-END;
-$$ LANGUAGE PlPgSQL;
-
-
 
 CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
 
@@ -328,6 +330,7 @@ CREATE TABLE callgroups(
 	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
 	rotary_last INTEGER NOT NULL DEFAULT 0
 );
+CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
 CREATE TABLE callgrpmembers(
 	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	ord INTEGER,
@@ -335,6 +338,45 @@ CREATE TABLE callgrpmembers(
 );
 CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
+
+
+CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE num = called_arg;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, 'lateroute/' || t.num);
+	END LOOP;
+
+	IF cntr = 0 THEN
+		res := 'location => "", error => "offline"';
+	END IF;
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+	UNION
+		SELECT * FROM callgroups_route(msg->'called');
+END;
+$$ LANGUAGE PlPgSQL;
+
 
 
 

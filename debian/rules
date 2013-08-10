@@ -49,7 +49,7 @@ install: build
 	$(MAKE) DESTDIR=$(DD) install
 	find $(DD) -name perllocal.pod -delete
 	mkdir -p $(DD)/etc/dyatel/
-	CF=`find $(DD) -name dyatel.conf -print`; mv $$CF $(DD)/etc/dyatel/; ln -s /etc/dyatel/dyatel.cf $$CF
+	CF=`find $(DD) -name dyatel.conf -print`; mv $$CF $(DD)/etc/dyatel/; ln -s /etc/dyatel/dyatel.conf $$CF
 
 # Build architecture-independent files here.
 binary-indep: install
