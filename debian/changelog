@@ -1,3 +1,10 @@
+dyatel (0.0.13) UNRELEASED; urgency=low
+
+  * Fixed group routing
+  * No more user password on phones
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Sat, 10 Aug 2013 20:34:52 +0400
+
 dyatel (0.0.12) UNRELEASED; urgency=low
 
   * Provision fix - use translit for display name
