@@ -349,7 +349,7 @@
 
   <!-- Subscriber Information -->
 
-  <Display_Name_1_ ua="na">[% user.descr | xml%]</Display_Name_1_>
+  <Display_Name_1_ ua="na">[% params.displayname | xml %]</Display_Name_1_>
   <User_ID_1_ ua="na">[% user.num %]</User_ID_1_>
   <Password_1_ ua="na">[% user.password | xml %]</Password_1_>
   <Use_Auth_ID_1_ ua="na">No</Use_Auth_ID_1_>
@@ -1927,7 +1927,7 @@
   <!-- General -->
 
   <Station_Name ua="na"></Station_Name>
-  <Station_Display_Name ua="na">419</Station_Display_Name>
+  <Station_Display_Name ua="na">[% params.displayname | xml %]</Station_Display_Name>
   <Voice_Mail_Number ua="na"></Voice_Mail_Number>
   <Text_Logo ua="na"></Text_Logo>
   <BMP_Picture_Download_URL ua="na"></BMP_Picture_Download_URL>

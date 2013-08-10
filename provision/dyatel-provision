@@ -23,7 +23,7 @@ if(exists $opts{'h'}) { help(); exit 0; }
 eval "require Data::Dumper; import Data::Dumper;" if $opts{d};
 
 my $myconf = $conf->{Provision};
-my $dbh = Dyatel::ExtConfig::dbh;
+my $dbh = Dyatel::ExtConfig::dbh();
 
 my $tt = new Template(
 	INCLUDE_PATH => $myconf->{templates},  # or list ref
@@ -43,6 +43,7 @@ while(my $row = $sth->fetchrow_hashref())
 	%params = %{ $myconf->{Params} } if $myconf->{Params};
 	%params = ( %params, hw => $row->{hw} );
 	%params = ( %params, %{ Pg::hstore::decode($row->{params}) } ) if $row->{params};
+	$params{displayname} = translit($user->{descr}) unless defined $params{displayname};
 	eval {
 		provision($row->{devtype}, {
 			params => \%params,
@@ -83,5 +84,38 @@ Usage:
 		-d --- debug mode
 		-c file.conf --- use alternative conf file
 ***
+}
+
+# Convert russian string to translit "encoding"
+sub translit
+{
+  local($_)=@_;
+  s/Сх/S\'h/; s/сх/s\'h/; s/СХ/S\'H/;
+  s/Ш/Sh/g; s/ш/sh/g;
+
+  s/Сцх/Sc\'h/; s/сцх/sc\'h/; s/СЦХ/SC\'H/;
+  s/Щ/Sch/g; s/щ/sch/g;
+
+  s/Цх/C\'h/; s/цх/c\'h/; s/ЦХ/C\'H/;
+  s/Ч/Ch/g; s/ч/ch/g;
+
+  s/Йа/J\'a/; s/йа/j\'a/; s/ЙА/J\'A/;
+  s/Я/Ja/g; s/я/ja/g;
+
+  s/Йо/J\'o/; s/йо/j\'o/; s/ЙО/J\'O/;
+  s/Ё/Jo/g; s/ё/jo/g;
+
+  s/Йу/J\'u/; s/йу/j\'u/; s/ЙУ/J\'U/;
+  s/Ю/Ju/g; s/ю/ju/g;
+
+  s/Э/E\'/g; s/э/e\'/g;
+  s/Е/E/g; s/е/e/g;
+
+  s/Зх/Z\'h/g; s/зх/z\'h/g; s/ЗХ/Z\'H/g;
+  s/Ж/Zh/g; s/ж/zh/g;
+
+  tr/абвгдзийклмнопрстуфхцъыьАБВГДЗИЙКЛМНОПРСТУФХЦЪЫЬ/abvgdzijklmnoprstufhc\"y\'ABVGDZIJKLMNOPRSTUFHC\"Y\'/;
+
+  return $_;
 }
 
