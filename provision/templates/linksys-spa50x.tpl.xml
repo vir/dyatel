@@ -9,7 +9,7 @@
   <Web_Server_Port ua="na">80</Web_Server_Port>
   <Enable_Web_Admin_Access ua="na">Yes</Enable_Web_Admin_Access>
   <Admin_Passwd ua="na">open50222</Admin_Passwd>
-  <User_Password ua="rw">open50222</User_Password>
+  <User_Password ua="rw"></User_Password>
   <Signaling_Protocol ua="na">SIP</Signaling_Protocol> <!-- options: SIP/SPCP -->
   <SPCP_Auto-detect ua="na">No</SPCP_Auto-detect>
   <Phone-UI-readonly ua="na">No</Phone-UI-readonly>
