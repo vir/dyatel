@@ -21,6 +21,9 @@ sub dbh
 	my $myconf = $conf->{Provision};
 	my $dbconf = $conf->{Model}{DB}{connect_info};
 	my $dbh = DBI->connect($dbconf->{dsn}, $dbconf->{username}, $dbconf->{password}, { AutoCommit => 1 });
+	$dbh->do("SET CLIENT_ENCODING TO UNICODE");
+	$dbh->{pg_enable_utf8} = 1;
+	return $dbh;
 }
 
 1;

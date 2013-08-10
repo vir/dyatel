@@ -5,6 +5,7 @@
 # Last modified: 2013-08-06 13:56:04 +0400
 #
 
+use utf8;
 use strict;
 use warnings FATAL => 'uninitialized';
 use Template;
