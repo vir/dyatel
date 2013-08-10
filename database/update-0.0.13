@@ -1,0 +1,24 @@
+
+CREATE OR REPLACE FUNCTION userrec(username TEXT) RETURNS SETOF users AS $$
+DECLARE
+        n TEXT;
+        d TEXT;
+        pos INTEGER;
+        r RECORD;
+BEGIN
+        pos := position('@' in username);
+        IF pos > 0 THEN
+                n := substring(username for pos - 1);
+                d := substring(username from pos + 1);
+                SELECT * INTO r FROM users WHERE num = n AND domain = d;
+        ELSE
+                SELECT * INTO r FROM users WHERE num = username LIMIT 1;
+        END IF;
+        IF NOT FOUND THEN
+                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN);
+        END IF;
+        RETURN NEXT r;
+END;
+$$ LANGUAGE PlPgSQL STRICT STABLE;
+
+
