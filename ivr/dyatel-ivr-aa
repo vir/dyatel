@@ -331,6 +331,7 @@ sub call_route_handler
 	return undef unless $table;
 	Yate::IVR::Call->new($m, $called, $table);
 	$m->param('autoring', 'false');
+	$m->param('tonedetect_in', 'true');
 	return 'dumb/';
 }
 

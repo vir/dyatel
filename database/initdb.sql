@@ -266,34 +266,45 @@ $$ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
+	res HSTORE;
+	cntr INTEGER;
+BEGIN
+	res := '';
+	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
+	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
+DECLARE
 	-- clr RECORD;
 	clduid INTEGER;
 	t RECORD;
-	res HSTORE;
-	cntr INTEGER;
+	--cntr INTEGER;
 BEGIN
 	-- clr := userrec(caller_arg);
 	clduid := userid(called_arg);
 	IF clduid IS NULL THEN
-		RETURN;
+		RETURN QUERY SELECT res, 0;
 	END IF;
 
-	res := 'location => fork';
-	cntr := 0;
+	--cntr := 0;
 	FOR t IN SELECT * FROM regs WHERE userid = clduid AND expires > 'now' AND audio LOOP
 		cntr := cntr + 1;
 		res := res || hstore('callto.' || cntr, t.location);
 		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
 	END LOOP;
 
-	IF cntr = 0 THEN
-		-- res := 'location => "", error => "offline"';
-		RETURN;
-	END IF;
-	RETURN QUERY SELECT * FROM each(res);
+	RETURN QUERY SELECT res, cntr;
 END;
 $$ LANGUAGE PlPgSQL;
-
 
 
 CREATE OR REPLACE FUNCTION route_reg(called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
@@ -340,7 +351,7 @@ CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
 
 
-CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+CREATE OR REPLACE FUNCTION callgroups_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	g RECORD;
@@ -356,8 +367,7 @@ BEGIN
 	res := 'location => fork';
 	cntr := 0;
 	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
-		cntr := cntr + 1;
-		res := res || hstore('callto.' || cntr, 'lateroute/' || t.num);
+		SELECT * INTO res, cntr FROM regs_route_part(caller_arg, t.num, ip_host_arg, formats_arg, rtp_forward_arg, res, cntr);
 	END LOOP;
 
 	IF cntr = 0 THEN
@@ -373,7 +383,7 @@ BEGIN
 	RETURN QUERY
 		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
 	UNION
-		SELECT * FROM callgroups_route(msg->'called');
+		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward');
 END;
 $$ LANGUAGE PlPgSQL;
 

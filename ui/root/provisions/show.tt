@@ -1,0 +1,21 @@
+[% META title = 'Provision' %]
+
+<form method="post">
+<p>User: [% obj.uid.descr | html %] (<a href="/users/[% obj.uid.id %]">[% obj.uid.num %]</a>)</p>
+<p>Hw address: <input type="text" name="hw" value="[% obj.hw %]" /></p>
+
+<p>Device type: <select name="devtype">
+[% FOREACH t IN tpls %]
+<option[% IF t == obj.devtype %] selected="1"[% END %]>[% t %]</option>
+[% END %]
+</select></p>
+<input type="submit" name="save" value="Save" />
+
+<p>Parameters:<dl>
+[% FOREACH p IN obj.params %]
+<dt>[% p.key | html %]</td><dd>[% p.value | html %]</dd>
+[% END %]
+</dl></p>
+</form>
+
+

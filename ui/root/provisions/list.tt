@@ -1,0 +1,14 @@
+[% META title = 'Provisioned devices list' %]
+
+<table>
+<tr><th>Hardware address</th><th>Device</th><th>User</th><th>Phone</th></tr>
+[% FOREACH row IN rows %]
+<tr>
+	<td><a href="[% row.id %]">[% row.hw %]</a></td>
+	<td>[% row.devtype %]</td>
+	<td>[% row.uid.descr %]</td>
+	<td><a href="/users/[% row.uid.id %]">[% row.uid.num %]</a></td>
+</tr>
+[% END %]
+</table>
+
