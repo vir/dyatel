@@ -1,0 +1,62 @@
+
+BEGIN;
+
+ALTER TABLE users ADD media_bypass BOOLEAN DEFAULT FALSE;
+
+
+CREATE OR REPLACE FUNCTION userrec(username TEXT) RETURNS SETOF users AS $$
+DECLARE
+        n TEXT;
+        d TEXT;
+        pos INTEGER;
+        r RECORD;
+BEGIN
+        pos := position('@' in username);
+        IF pos > 0 THEN
+                n := substring(username for pos - 1);
+                d := substring(username from pos + 1);
+                SELECT * INTO r FROM users WHERE num = n AND domain = d;
+        ELSE
+                SELECT * INTO r FROM users WHERE num = username LIMIT 1;
+        END IF;
+        IF NOT FOUND THEN
+                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN, NULL::BOOLEAN);
+        END IF;
+        RETURN NEXT r;
+END;
+$$ LANGUAGE PlPgSQL STRICT STABLE;
+
+
+CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
+	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
+DECLARE
+	clr RECORD;
+	cld RECORD;
+	t RECORD;
+	rtpfw BOOLEAN;
+BEGIN
+	clr := userrec(caller_arg);
+	cld := userrec(called_arg);
+	IF cld.id IS NULL THEN
+		RETURN QUERY SELECT res, 0;
+	END IF;
+
+	rtpfw := COALESCE(clr.media_bypass, TRUE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
+
+	FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, t.location);
+		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
+	END LOOP;
+
+	RETURN QUERY SELECT res, cntr;
+END;
+$$ LANGUAGE PlPgSQL;
+
+DROP FUNCTION rtp_forward_possible(INET, INET);
+DROP FUNCTION regs_all_routes_for_user(INTEGER, INET, TEXT);
+DROP FUNCTION route_reg(TEXT, INET, TEXT, TEXT);
+
+COMMIT;
+
+-- vim: ft=sql

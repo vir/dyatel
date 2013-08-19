@@ -10,7 +10,8 @@ CREATE TABLE users (
 	lastreg TIMESTAMP WITH TIME ZONE,
 	lastip INET,
 	nat_support BOOLEAN,
-	nat_port_support BOOLEAN
+	nat_port_support BOOLEAN,
+	media_bypass BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE regs (
@@ -53,7 +54,7 @@ BEGIN
                 SELECT * INTO r FROM users WHERE num = username LIMIT 1;
         END IF;
         IF NOT FOUND THEN
-                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN);
+                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN, NULL::BOOLEAN);
         END IF;
         RETURN NEXT r;
 END;
@@ -252,14 +253,6 @@ CREATE OR REPLACE FUNCTION rtp_forward_possible(a1 INET, a2 INET) RETURNS TEXT A
 	SELECT CASE WHEN ipnetwork($1) = ipnetwork($2) THEN 'yes' ELSE 'no' END;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION regs_all_routes_for_user(uid INTEGER, ip INET, rtp_forward_in TEXT DEFAULT 'no')
-                RETURNS TABLE(n BIGINT, location TEXT, rtp_forward TEXT) AS $$
-        SELECT ROW_NUMBER() OVER(),
-                        CASE WHEN location LIKE (driver || '/%') THEN location ELSE driver || '/' || location END,
-                        CASE WHEN $3 = 'possible' THEN rtp_forward_possible($2, ip_host) ELSE 'no' END
-                FROM regs WHERE userid = $1 AND audio ORDER BY ts;
-$$ LANGUAGE SQL;
-
 -- routing functions requires the following upstream yate modifications:
 --  988c55b7c9e19815956f73a9ad3c641f7ae96879 - transposedb
 --  51cdc1ec7322aa09930c6a473e456adf95949daf - hstore
@@ -284,22 +277,23 @@ $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
 	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
 DECLARE
-	-- clr RECORD;
-	clduid INTEGER;
+	clr RECORD;
+	cld RECORD;
 	t RECORD;
-	--cntr INTEGER;
+	rtpfw BOOLEAN;
 BEGIN
-	-- clr := userrec(caller_arg);
-	clduid := userid(called_arg);
-	IF clduid IS NULL THEN
+	clr := userrec(caller_arg);
+	cld := userrec(called_arg);
+	IF cld.id IS NULL THEN
 		RETURN QUERY SELECT res, 0;
 	END IF;
 
-	--cntr := 0;
-	FOR t IN SELECT * FROM regs WHERE userid = clduid AND expires > 'now' AND audio LOOP
+	rtpfw := COALESCE(clr.media_bypass, TRUE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
+
+	FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
 		cntr := cntr + 1;
 		res := res || hstore('callto.' || cntr, t.location);
-		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
+		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
 	END LOOP;
 
 	RETURN QUERY SELECT res, cntr;
@@ -307,27 +301,6 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 
-CREATE OR REPLACE FUNCTION route_reg(called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
-	RETURNS TABLE(key TEXT, value TEXT) AS $$
-DECLARE
-	t RECORD;
-	res HSTORE;
-	cntr INTEGER;
-BEGIN
-	res := 'location => fork';
-	cntr := 0;
-	FOR t IN SELECT * FROM regs WHERE userid = userid(called_arg) AND audio LOOP
-		cntr := cntr + 1;
-		res := res || hstore('callto.' || cntr, t.location);
-		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtp_forward_arg = 'possible' THEN rtp_forward_possible(ip_host_arg, t.ip_host) ELSE 'no' END);
-	END LOOP;
-
-	IF cntr = 0 THEN
-		res := 'location => "", error => "offline"';
-	END IF;
-	RETURN QUERY SELECT * FROM each(res);
-END;
-$$ LANGUAGE PlPgSQL;
 
 
 
