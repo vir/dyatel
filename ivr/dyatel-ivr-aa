@@ -74,7 +74,7 @@ package Yate::IVR::Call;
 use strict;
 use warnings;
 use base qw/ Yate::IVR::FSM /;
-use vars qw( %registry );
+use vars qw( %registry %responses );
 use constant COPYPARAMS => qw/ id caller called billid format formats answered /;
 
 sub new
@@ -102,7 +102,11 @@ sub find
 	my($msg) = @_;
 	foreach my $k(qw( id targetid )) {
 		my $id = $msg->param($k);
-		return $registry{$id} if $id && $registry{$id};
+		next unless $id;
+		return $registry{$id} if $registry{$id};
+		if($id =~ /^(fork\/\d+)/) {
+			return $registry{$1} if $registry{$1};
+		}
 	}
 	return undef;
 }
@@ -111,6 +115,17 @@ sub debug
 {
 	my $self = shift;
 	print $self->{name}.' '.$self->{id}.": @_\n";
+}
+
+sub dump
+{
+	my $self = shift;
+	my $t = '';
+	foreach my $k(keys %$self) {
+		$t .= ', ' if length $t;
+		$t .= "$k => ".(defined($self->{$k}) ? $self->{$k} : '(undef)');
+	}
+	return $t;
 }
 
 sub set_dumb
@@ -124,6 +139,17 @@ sub set_dumb
 	$self->event('enter');
 }
 
+sub set_slave
+{
+	my $self = shift;
+	my($msg) = @_;
+	return $self->event('hangup') unless $msg->param('targetid');
+	$self->{slavedumb} = $msg->param('id');
+	$self->{destinationid} = $msg->param('targetid');
+	$registry{$self->{destinationid}} = $self;
+	$registry{$self->{slavedumb}} = $self;
+}
+
 # === === === Message handlers === === ===
 
 sub disconnected
@@ -133,7 +159,23 @@ sub disconnected
 	return if $msg->param('id') =~ /^dumb/; # skip slave channels disconnection
 	$self->debug("Channel ".$msg->param('id')." disconnected");
 #	$self->event('disconnect');
-	$self->destruct;
+	if($msg->param('id') eq $self->{id}) { # our main channel has gone
+		$self->destruct;
+	} elsif($self->{slavedumb}) {
+		my $t = $msg->param('targetid');
+		if($t eq $self->{id} || $t eq $self->{slavedumb}
+				|| ($t =~ /^(fork\/\d+)/ && $self->{destinationid} eq $1)
+		) {
+			$self->debug("Slave hung up");
+			$self->event('hangup');
+		} else {
+			$self->debug("Something hung up");
+			$msg->dumpmsg("Something hung up");
+		}
+	} else {
+		$self->debug("Something hung up");
+		$msg->dumpmsg("Something hung up");
+	}
 }
 
 sub dtmf
@@ -153,6 +195,41 @@ sub notify
 	$self->event('finished');
 }
 
+sub ringing
+{
+	my $self = shift;
+#shift->dumpmsg("$self ringing");
+	$self->event('ringing');
+}
+
+sub answered
+{
+	my $self = shift;
+#shift->dumpmsg("$self answered");
+	if($self->{destinationid} && $self->{destinationid} =~ /^fork\//) {
+		$self->{wait_replace} = sub { shift->event('answered') }; # delay event until real channel is known
+	} else {
+		$self->event('answered');
+	}
+}
+
+sub replace_chan
+{
+	my $self = shift;
+	my($msg) = @_;
+$msg->dumpmsg("$self replace_chan");
+	my $obj = delete $registry{$msg->param('id')};
+	warn "Wrong object in chan.replace handler" unless $obj == $self;
+	$registry{$msg->param('newid')} = $obj;
+	foreach my $k(qw( id targetid dump slavedumb destinationid )) {
+		$obj->{$k} = $msg->param('newid') if $obj->{$k} && $obj->{$k} eq $msg->param('id');
+	}
+	if($self->{wait_replace}) {
+		$self->{wait_replace}->($self); # delayed event
+		delete $self->{wait_replace};
+	}
+}
+
 sub timer
 {
 	my $self = shift;
@@ -164,31 +241,25 @@ sub timer
 	}
 }
 
-sub broadcast_engine_timer
-{
-	my $m = shift; local $_;
-	my %seen;
-	my @bc;
-	foreach my $obj(values %registry) {
-		next if !$obj || $seen{$obj}++;
-		push @bc, $obj;
-	}
-	$_->timer($m) foreach @bc;
-#	print "REG: ".join(', ', sort keys %registry)."\n";
-}
-
 sub destruct
 {
 	my $self = shift;
-	foreach my $k(qw( id targetid dumb )) {
+	foreach my $k(qw( id targetid dumb destinationid slavedumb )) {
 		delete $registry{$self->{$k}} if $self->{$k} && $registry{$self->{$k}} && $registry{$self->{$k}} == $self;
 	}
-	if($self->{dumb}) {
-		$self->yate->message('chan.masquerade', undef, undef,
-			message => "chan.hangup",
-			id      => $self->{dumb},
-			reason  => "IVR $self->{name} termination",
-		);
+	foreach my $k(keys %responses) {
+		if($responses{$k} == $self) {
+			delete $responses{$k};
+			last;
+		}
+	}
+	foreach my $k(qw( dumb slavedumb )) {
+		if($self->{$k}) {
+			$self->yate->message('call.drop', undef, undef,
+				id      => $self->{$k},
+				reason  => "IVR $self->{name} termination",
+			);
+		}
 	}
 }
 
@@ -211,11 +282,12 @@ sub action
 sub action_answer
 {
 	my $self = shift;
-	return if $self->{answered} eq 'true';
+	return if defined($self->{answered}) && $self->{answered} ne 'false';
 	$self->yate->message('call.answered', undef, undef,
 		id => $self->{dumb},
 		targetid => $self->{id},
 	);
+	$self->{answered} = 1;
 }
 
 sub action_playtone
@@ -253,6 +325,7 @@ sub action_switch
 		map({ $_ => $self->{$_} } COPYPARAMS),
 		message => 'call.execute',
 		callto => 'lateroute/'.$num,
+		called => $num,
 	);
 	$self->destruct;
 }
@@ -277,6 +350,52 @@ sub action_timer
 	my $self = shift;
 	my($seconds) = @_;
 	$self->{timer} = 0+$seconds;
+	delete $self->{timer} unless $self->{timer}; # allow timer deletion
+}
+
+sub action_originate
+{
+	my $self = shift;
+	my($num) = @_;
+	$num = $self->{collected} unless defined($num) && length($num);
+	my $msgid = $self->yate->generate_id;
+	$responses{$msgid} = $self;
+	$self->debug("Originating call to $num");
+	$self->yate->message('call.execute', undef, $msgid,
+		caller => $self->{caller},
+		billid => $self->{billid},
+		callto => 'dumb/',
+		target => $num,
+		format => $self->{format},
+		formats => $self->{formats},
+	);
+}
+
+sub action_connect
+{
+	my $self = shift;
+	die "Can't connect - no destinationid" unless $self->{destinationid};
+	$self->yate->message('chan.connect', undef, undef,
+		id => $self->{id},
+		targetid => $self->{destinationid},
+		billid => $self->{billid},
+	);
+	$self->destruct;
+}
+
+sub action_drop
+{
+	my $self = shift;
+	unless($self->{destinationid}) {
+		warn "Nothing to drop";
+		return;
+	}
+	$self->yate->message('call.drop', undef, undef,
+#		id => $self->{destinationid},
+		id => $self->{slavedumb},
+	);
+	delete $registry{delete $self->{destinationid}};
+	delete $registry{delete $self->{slavedumb}};
 }
 
 sub action_suicide
@@ -285,29 +404,59 @@ sub action_suicide
 	$self->destruct;
 }
 
+# === === ===
+
+sub shutdown_all
+{
+	my %a = map { $_ => 1 } values %registry;
+	while(%registry) {
+		my($o) = values %registry;
+		$o->destruct;
+	}
+}
+
+
 package Yate::IVR;
 use strict;
 use warnings;
 
 our %ivrs;
+our @callbacks;
 
 sub init
 {
 	my($yate) = @_;
 	$yate->setlocal(reenter => 'true');
 	$yate->setlocal(selfwatch  => 'true');
-	$yate->install('call.route', \&call_route_handler, 30);
+	$yate->install('call.route', \&_call_route_handler, 30);
 	$yate->install_watcher('call.execute', _make_handler(\&Yate::IVR::Call::set_dumb));
-	$yate->install('chan.disconnected', _make_handler(\&Yate::IVR::Call::disconnected));
+	$yate->install('chan.hangup', _make_handler(\&Yate::IVR::Call::disconnected));
 	$yate->install('chan.dtmf', _make_handler(\&Yate::IVR::Call::dtmf));
 	$yate->install('chan.notify', _make_handler(\&Yate::IVR::Call::notify));
-	$yate->install('engine.timer', \&Yate::IVR::Call::broadcast_engine_timer);
+	$yate->install('call.ringing', _make_handler(\&Yate::IVR::Call::ringing));
+	$yate->install_watcher('call.answered', _make_handler(\&Yate::IVR::Call::answered));
+	$yate->install('chan.replaced', _make_handler(\&Yate::IVR::Call::replace_chan));
+	$yate->install_incoming('call.execute', \&_call_execute_result);
+	$yate->install('engine.timer', \&_broadcast_engine_timer);
 }
 
 sub add
 {
 	my %toadd = @_;
 	%ivrs = (%ivrs, %toadd);
+}
+
+sub flush
+{
+	%ivrs = ();
+}
+
+sub callback
+{
+	my($cb) = @_;
+	if(!@callbacks || $cb != $callbacks[$#callbacks]) {
+		push @callbacks, $cb;
+	}
 }
 
 sub _make_handler
@@ -317,13 +466,14 @@ sub _make_handler
 		my $m = shift;
 		my $call = Yate::IVR::Call->find($m);
 		if($call) {
+#			$m->dumpmsg("Found call $call");
 			$call->$fn($m);
 		}
 		return undef;
 	};
 }
 
-sub call_route_handler
+sub _call_route_handler
 {
 	my $m = shift;
 	my $called = $m->param('called');
@@ -333,6 +483,31 @@ sub call_route_handler
 	$m->param('autoring', 'false');
 	$m->param('tonedetect_in', 'true');
 	return 'dumb/';
+}
+
+sub _call_execute_result
+{
+	my $msg = shift;
+	my $call = delete $Yate::IVR::Call::responses{$msg->header('id')} || return;
+	$call->set_slave($msg);
+}
+
+sub _broadcast_engine_timer
+{
+	my $m = shift; local $_;
+	my %seen;
+	my @bc;
+	foreach my $obj(values %Yate::IVR::Call::registry) {
+		next if !$obj || $seen{$obj}++;
+		push @bc, $obj;
+	}
+	$_->timer($m) foreach @bc;
+#print "REG: ".join(', ', sort keys %Yate::IVR::Call::registry)."\n";
+	my $pcb = 0;
+	while(my $cb = shift @callbacks) {
+		last if $cb == $pcb;
+		push @callbacks, $cb if $cb->();
+	}
 }
 
 
@@ -350,16 +525,23 @@ my $table1 = [
 	[ 'start', 'enter', 'answer', 'answered' ],
 	[ 'answered', 'enter', 'playfile /home/vir/menu.au', 'playing' ],
 	[ 'playing', 'finished', 'timer 5', undef ],
-	[ 'playing', 'timeout', 'switch 498', 'finish' ],
-	[ 'playing', 'dtmf_1', 'switch 115', 'finish' ],
-	[ 'playing', 'dtmf_2', 'switch 106', 'finish' ],
-	[ 'playing', 'dtmf_3', 'switch 223', 'finish' ],
+	[ 'playing', 'timeout', 'originate 247', 'switching' ],
+	[ 'playing', 'dtmf_1', 'originate 266', 'switching' ],
+	[ 'playing', 'dtmf_2', 'originate 262', 'switching' ],
+	[ 'playing', 'dtmf_3', 'originate 268', 'switching' ],
+	[ 'playing', 'dtmf_9', 'switch 851', undef ],
+	[ 'playing', 'dtmf_0', 'switch 887', 'finish' ],
+	[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
+	[ 'switching', 'timeout', 'drop', 'answered' ],
+	[ 'switching', 'dtmf', 'drop', 'answered' ],
+	[ 'switching', 'ringing', 'playtone ring', 'switching' ],
+	[ 'switching', 'answered', 'connect', 'finish' ],
+	[ 'switching', 'hangup', 'drop', 'answered' ],
+	[ 'switching', 'disconnect', 'drop', 'finish' ],
 	[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
 ];
 
 my $table2 = [
-	[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
-	[ undef, 'timeout', undef, 'error' ],
 	[ 'start', 'enter', ['flush', 'answer', 'timer 15'], 'prompt' ],
 	[ 'prompt', 'enter', 'playfile /home/vir/disa.au', 'firstdigit' ],
 	[ 'firstdigit', 'default', undef, 'error' ],
@@ -368,73 +550,139 @@ my $table2 = [
 	[ 'firstdigit', 'dtmf_3', 'collect 3', 'second' ],
 	[ 'second', 'dtmf', 'collect', 'third' ],
 	[ 'second', 'default', 'suicide', 'second' ],
-	[ 'third', 'dtmf', ['collect', 'switch'], 'finish' ],
+	[ 'third', 'dtmf', ['collect', 'originate'], 'switching' ],
+	[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
+	[ 'switching', 'timeout', 'drop', 'prompt' ],
+	[ 'switching', 'dtmf', 'drop', 'prompt' ],
+	[ 'switching', 'ringing', 'playtone ring', 'switching' ],
+	[ 'switching', 'answered', 'connect', 'finish' ],
+	[ 'switching', 'hangup', 'drop', 'prompt' ],
+	[ 'switching', 'disconnect', 'drop', 'finish' ],
 	[ 'finish', 'enter', 'suicide', undef ],
 	[ 'error', 'enter', 'switch 222', undef ],
+	[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
+	[ undef, 'answered', undef, undef ],
+	[ undef, 'timeout', undef, 'error' ],
 ];
 
 my $conf = Dyatel::ExtConfig::load()->{Model}{Yate}{extmodule};
+my $dbh = Dyatel::ExtConfig::dbh();
+$dbh->do('LISTEN ivr');
 
 my $yate = new Yate(Debug=>0);
 $yate->connect($conf->{address}.':'.$conf->{port});
 Yate::IVR::init($yate);
 #Yate::IVR::add(
-#	222 => $table1,
-#	223 => $table2,
+#	852 => $table1,
+#	851 => $table2,
 #);
+load_db();
 
-my $dbh = Dyatel::ExtConfig::dbh();
-
-# Append auto-attendants
-my $sth = $dbh->prepare("SELECT * FROM ivr_aa");
-$sth->execute();
-while(my $h = $sth->fetchrow_hashref) {
-	my $table = [
-		[ 'start', 'enter', 'answer', 'answered' ],
-		[ 'answered', 'enter', 'playfile '.$h->{prompt}, 'playing' ],
-		[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
-	];
-	push @$table, [ 'playing', 'finished', 'timer 5', undef ] if $h->{timeout};
-	push @$table, [ 'playing', 'timeout', 'switch '.$h->{etimeout}, 'finish' ] if defined $h->{etimeout};
-	foreach my $digit(qw( 0 1 2 3 4 5 6 7 8 9 star hash )) {
-		push @$table, [ 'playing', 'dtmf_'.$digit, 'switch '.$h->{"e$digit"}, 'finish' ] if defined $h->{"e$digit"};
-	}
-	Yate::IVR::add($h->{num} => $table);
-}
-
-# Append mini auto-attendants (internal number switch)
-$sth = $dbh->prepare("SELECT * FROM ivr_minidisa");
-$sth->execute();
-my $pos = 1;
-while(my $h = $sth->fetchrow_hashref) {
-	my $table = [
-		[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
-		[ undef, 'timeout', undef, 'error' ],
-		[ 'start', 'enter', ['flush', 'answer', 'timer '.$h->{timeout}], 'prompt' ],
-		[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit'.$pos ],
-		[ 'finish', 'enter', 'suicide', undef ],
-		[ 'error', 'enter', 'switch 222', undef ],
-	];
-
-	if($pos == 1 && $h->{numlen} > 1 && defined($h->{firstdigit}) && length($h->{firstdigit})) {
-		push @$table, [ 'digit'.$pos, 'default', undef, 'error' ];
-		foreach my $d(split(//, $h->{firstdigit})) {
-			push @$table, [ 'digit'.$pos, 'dtmf_'.$d, 'collect '.$d, 'digit'.($pos + 1) ],
-		}
-		++$pos;
-	}
-
-	while($pos <= $h->{numlen}) {
-		if($pos + 1 <= $h->{numlen}) {
-			push @$table, [ 'digit'.$pos, 'dtmf', 'collect', 'digit'.($pos + 1) ]
-		} else {
-			push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'switch'], 'finish' ],
-		}
-		++$pos;
-	}
-	Yate::IVR::add($h->{num} => $table);
-}
-
+$yate->install('engine.timer', \&check_db);
+$SIG{TERM} = sub { Yate::IVR::Call::shutdown_all(); exit 0; };
+$SIG{INT} = $SIG{TERM};
+$SIG{HUP} = sub { Yate::IVR::callback(\&restart); };
 $yate->listen();
+
+sub load_db
+{
+	Yate::IVR::flush();
+	load_aa();
+	load_md();
+}
+
+sub check_db
+{
+	my $n = $dbh->func('pg_notifies');
+	if($n) {
+		my($name, $pid, $payload) = @$n;
+		print "Got database notification $name, reloading all IVRs\n";
+		Yate::IVR::callback(\&load_db);
+	}
+}
+
+sub load_aa
+{
+# Append auto-attendants
+	my $sth = $dbh->prepare("SELECT * FROM ivr_aa");
+	$sth->execute();
+	while(my $h = $sth->fetchrow_hashref) {
+		print "Loading autoattendant $h->{num} ($h->{descr})\n";
+		my $table = [
+			[ 'start', 'enter', 'answer', 'answered' ],
+			[ 'answered', 'enter', 'playfile '.$h->{prompt}, 'playing' ],
+			[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
+			[ 'switching', 'timeout', 'drop', 'answered' ],
+			[ 'switching', 'dtmf', 'drop', 'answered' ],
+			[ 'switching', 'ringing', 'playtone ring', 'switching' ],
+			[ 'switching', 'answered', 'connect', 'finish' ],
+			[ 'switching', 'hangup', 'drop', 'answered' ],
+			[ 'switching', 'disconnect', 'drop', 'finish' ],
+			[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
+		];
+		push @$table, [ 'playing', 'finished', 'timer 5', undef ] if $h->{timeout};
+		push @$table, [ 'playing', 'timeout', 'originate '.$h->{etimeout}, 'switching' ] if defined $h->{etimeout};
+		foreach my $digit(qw( 0 1 2 3 4 5 6 7 8 9 star hash )) {
+			if(defined $h->{"e$digit"}) {
+				if($h->{"e$digit"} =~ /^8/) { # XXX
+					push @$table, [ 'playing', 'dtmf_'.$digit, 'switch '.$h->{"e$digit"}, 'finish' ] 
+				} else {
+					push @$table, [ 'playing', 'dtmf_'.$digit, 'originate '.$h->{"e$digit"}, 'switching' ] 
+				}
+			}
+		}
+		Yate::IVR::add($h->{num} => $table);
+	}
+}
+
+sub load_md
+{
+# Append mini auto-attendants (internal number switch)
+	my $sth = $dbh->prepare("SELECT * FROM ivr_minidisa");
+	$sth->execute();
+	my $pos = 1;
+	while(my $h = $sth->fetchrow_hashref) {
+		print "Loading minidisa $h->{num} ($h->{descr})\n";
+		my $table = [
+			[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
+			[ undef, 'timeout', undef, 'error' ],
+			[ 'start', 'enter', ['flush', 'answer', 'timer '.$h->{timeout}], 'prompt' ],
+			[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit'.$pos ],
+			[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
+			[ 'switching', 'timeout', 'drop', 'prompt' ],
+			[ 'switching', 'dtmf', 'drop', 'prompt' ],
+			[ 'switching', 'ringing', 'playtone ring', 'switching' ],
+			[ 'switching', 'answered', 'connect', 'finish' ],
+			[ 'switching', 'hangup', 'drop', 'prompt' ],
+			[ 'switching', 'disconnect', 'drop', 'finish' ],
+			[ 'finish', 'enter', 'suicide', undef ],
+			[ 'error', 'enter', 'switch 222', undef ],
+		];
+
+		if($pos == 1 && $h->{numlen} > 1 && defined($h->{firstdigit}) && length($h->{firstdigit})) {
+			push @$table, [ 'digit'.$pos, 'default', undef, 'error' ];
+			foreach my $d(split(//, $h->{firstdigit})) {
+				push @$table, [ 'digit'.$pos, 'dtmf_'.$d, 'collect '.$d, 'digit'.($pos + 1) ],
+			}
+			++$pos;
+		}
+
+		while($pos <= $h->{numlen}) {
+			if($pos + 1 <= $h->{numlen}) {
+				push @$table, [ 'digit'.$pos, 'dtmf', 'collect', 'digit'.($pos + 1) ]
+			} else {
+				push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'originate'], 'switching' ],
+			}
+			++$pos;
+		}
+		Yate::IVR::add($h->{num} => $table);
+	}
+}
+
+sub restart
+{
+	exec "$0 @ARGV";
+}
+
 
 
