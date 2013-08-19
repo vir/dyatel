@@ -26,7 +26,7 @@
 DAEMON=/usr/bin/start-dyatel
 PIDFILE=/var/run/dyatel/supervisor.pid
 
-test -x $DAEMON && test -r $CONFIG || exit 0
+test -x $DAEMON || exit 0
 
 # Source function library.
 . /lib/lsb/init-functions
