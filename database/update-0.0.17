@@ -1,0 +1,89 @@
+
+BEGIN;
+
+ALTER TABLE callgroups ADD ringback TEXT NULL;
+ALTER TABLE callgroups ADD maxcall INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE callgroups ADD exitpos PHONE NULL;
+
+CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
+	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
+DECLARE
+	clr RECORD;
+	cld RECORD;
+	t RECORD;
+	rtpfw BOOLEAN;
+BEGIN
+	cld := userrec(called_arg);
+	IF cld.id IS NOT NULL THEN
+		clr := userrec(caller_arg);
+		rtpfw := COALESCE(clr.media_bypass, FALSE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
+
+		FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.location);
+			res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
+		END LOOP;
+	END IF;
+
+	RETURN QUERY SELECT res, cntr;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callgroups_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE num = called_arg;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
+	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
+		SELECT * INTO res, cntr2 FROM regs_route_part(caller_arg, t.num, ip_host_arg, formats_arg, rtp_forward_arg, res, cntr2);
+	END LOOP;
+
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
+	END IF;
+
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+

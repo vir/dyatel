@@ -282,19 +282,17 @@ DECLARE
 	t RECORD;
 	rtpfw BOOLEAN;
 BEGIN
-	clr := userrec(caller_arg);
 	cld := userrec(called_arg);
-	IF cld.id IS NULL THEN
-		RETURN QUERY SELECT res, 0;
+	IF cld.id IS NOT NULL THEN
+		clr := userrec(caller_arg);
+		rtpfw := COALESCE(clr.media_bypass, FALSE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
+
+		FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.location);
+			res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
+		END LOOP;
 	END IF;
-
-	rtpfw := COALESCE(clr.media_bypass, TRUE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
-
-	FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
-		cntr := cntr + 1;
-		res := res || hstore('callto.' || cntr, t.location);
-		res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
-	END LOOP;
 
 	RETURN QUERY SELECT res, cntr;
 END;
@@ -312,7 +310,10 @@ CREATE TABLE callgroups(
 	num PHONE NOT NULL,
 	descr TEXT,
 	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
-	rotary_last INTEGER NOT NULL DEFAULT 0
+	rotary_last INTEGER NOT NULL DEFAULT 0,
+	ringback TEXT NULL,
+	maxcall INTEGER NOT NULL DEFAULT 0,
+	exitpos PHONE NULL
 );
 CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
 CREATE TABLE callgrpmembers(
@@ -331,6 +332,7 @@ DECLARE
 	t RECORD;
 	res HSTORE;
 	cntr INTEGER;
+	cntr2 INTEGER;
 BEGIN
 	SELECT * INTO g FROM callgroups WHERE num = called_arg;
 	IF NOT FOUND THEN
@@ -339,13 +341,40 @@ BEGIN
 
 	res := 'location => fork';
 	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
 	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
-		SELECT * INTO res, cntr FROM regs_route_part(caller_arg, t.num, ip_host_arg, formats_arg, rtp_forward_arg, res, cntr);
+		SELECT * INTO res, cntr2 FROM regs_route_part(caller_arg, t.num, ip_host_arg, formats_arg, rtp_forward_arg, res, cntr2);
 	END LOOP;
 
-	IF cntr = 0 THEN
-		res := 'location => "", error => "offline"';
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
 	END IF;
+
 	RETURN QUERY SELECT * FROM each(res);
 END;
 $$ LANGUAGE PlPgSQL;
