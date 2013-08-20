@@ -164,7 +164,8 @@ sub disconnected
 	} elsif($self->{slavedumb}) {
 		my $t = $msg->param('targetid');
 		if($t eq $self->{id} || $t eq $self->{slavedumb}
-				|| ($t =~ /^(fork\/\d+)/ && $self->{destinationid} eq $1)
+#				|| ($t =~ /^(fork\/\d+)/ && $self->{destinationid} eq $1)
+				|| $t eq $self->{destinationid}
 		) {
 			$self->debug("Slave hung up");
 			$self->event('hangup');
@@ -205,9 +206,12 @@ sub ringing
 sub answered
 {
 	my $self = shift;
+	my($msg) = @_;
 #shift->dumpmsg("$self answered");
 	if($self->{destinationid} && $self->{destinationid} =~ /^fork\//) {
 		$self->{wait_replace} = sub { shift->event('answered') }; # delay event until real channel is known
+	} elsif($msg->param('targetid') eq $self->{id}) {
+		# just ignore it
 	} else {
 		$self->event('answered');
 	}
@@ -656,8 +660,12 @@ sub load_md
 			[ 'switching', 'hangup', 'drop', 'prompt' ],
 			[ 'switching', 'disconnect', 'drop', 'finish' ],
 			[ 'finish', 'enter', 'suicide', undef ],
-			[ 'error', 'enter', 'switch 222', undef ],
 		];
+		if($h->{etimeout}) {
+			push @$table, [ 'error', 'enter', 'switch '.$h->{etimeout}, undef ];
+		} else {
+			push @$table, [ 'error', 'enter', undef, 'finish' ];
+		}
 
 		if($pos == 1 && $h->{numlen} > 1 && defined($h->{firstdigit}) && length($h->{firstdigit})) {
 			push @$table, [ 'digit'.$pos, 'default', undef, 'error' ];
