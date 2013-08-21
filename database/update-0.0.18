@@ -24,6 +24,7 @@ BEGIN
         END IF;
         RETURN NEXT r;
 END;
+$$ LANGUAGE PlPgSQL STRICT STABLE;
 
 -- typo fix
 CREATE OR REPLACE FUNCTION offlinechat_add(username TEXT, message XML, tstamp BIGINT, maxcount INTEGER) RETURNS INTEGER AS $$
