@@ -44,6 +44,7 @@ while(my $row = $sth->fetchrow_hashref())
 	%params = %{ $myconf->{Params} } if $myconf->{Params};
 	%params = ( %params, hw => $row->{hw} );
 	%params = ( %params, %{ Pg::hstore::decode($row->{params}) } ) if $row->{params};
+	$params{displayname} = $user->{dispname} if !defined($params{displayname}) && defined $user->{dispname} && length $user->{dispname};
 	$params{displayname} = translit($user->{descr}) unless defined $params{displayname};
 	eval {
 		provision($row->{devtype}, {
@@ -116,6 +117,8 @@ sub translit
   s/Ж/Zh/g; s/ж/zh/g;
 
   tr/абвгдзийклмнопрстуфхцъыьАБВГДЗИЙКЛМНОПРСТУФХЦЪЫЬ/abvgdzijklmnoprstufhc\"y\'ABVGDZIJKLMNOPRSTUFHC\"Y\'/;
+
+	s/\'//sg; # just in case...
 
   return $_;
 }

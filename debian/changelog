@@ -1,3 +1,9 @@
+dyatel (0.0.18) UNRELEASED; urgency=low
+
+  * Users table: separate Display Name field
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 21 Aug 2013 11:45:08 +0400
+
 dyatel (0.0.17) UNRELEASED; urgency=low
 
   * Groups: fake ringback and exit positions added

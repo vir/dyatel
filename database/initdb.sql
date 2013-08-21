@@ -11,7 +11,8 @@ CREATE TABLE users (
 	lastip INET,
 	nat_support BOOLEAN,
 	nat_port_support BOOLEAN,
-	media_bypass BOOLEAN DEFAULT FALSE
+	media_bypass BOOLEAN DEFAULT FALSE,
+	dispname TEXT NULL
 );
 
 CREATE TABLE regs (
@@ -54,7 +55,7 @@ BEGIN
                 SELECT * INTO r FROM users WHERE num = username LIMIT 1;
         END IF;
         IF NOT FOUND THEN
-                r := ROW( NULL::INTEGER, NULL::PHONE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMP WITH TIME ZONE, NULL::INET, NULL::BOOLEAN, NULL::BOOLEAN, NULL::BOOLEAN);
+		SELECT * INTO r FROM populate_record(NULL::users, '');
         END IF;
         RETURN NEXT r;
 END;
@@ -188,7 +189,7 @@ BEGIN
 	IF maxcount <> 0 THEN
 		SELECT INTO n COUNT(*) FROM offlinemsgs WHERE uid = id;
 		IF n >= maxcount THEN
-			RAISE NOTICE 'User % already has % moffline messages while % is allowed', username, n, maxcount;
+			RAISE NOTICE 'User % already has % offline messages while % is allowed', username, n, maxcount;
 			RETURN 0;
 		END IF;
 	END IF;

@@ -1,0 +1,50 @@
+
+BEGIN;
+
+ALTER TABLE users ADD dispname TEXT NULL;
+
+-- return record full of nulls for unknown user even after users table modifications
+CREATE OR REPLACE FUNCTION userrec(username TEXT) RETURNS SETOF users AS $$
+DECLARE
+        n TEXT;
+        d TEXT;
+        pos INTEGER;
+        r RECORD;
+BEGIN
+        pos := position('@' in username);
+        IF pos > 0 THEN
+                n := substring(username for pos - 1);
+                d := substring(username from pos + 1);
+                SELECT * INTO r FROM users WHERE num = n AND domain = d;
+        ELSE
+                SELECT * INTO r FROM users WHERE num = username LIMIT 1;
+        END IF;
+        IF NOT FOUND THEN
+		SELECT * INTO r FROM populate_record(NULL::users, '');
+        END IF;
+        RETURN NEXT r;
+END;
+
+-- typo fix
+CREATE OR REPLACE FUNCTION offlinechat_add(username TEXT, message XML, tstamp BIGINT, maxcount INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	id INTEGER;
+	n INTEGER;
+BEGIN
+	id := userid(username);
+	IF maxcount <> 0 THEN
+		SELECT INTO n COUNT(*) FROM offlinemsgs WHERE uid = id;
+		IF n >= maxcount THEN
+			RAISE NOTICE 'User % already has % offline messages while % is allowed', username, n, maxcount;
+			RETURN 0;
+		END IF;
+	END IF;
+	INSERT INTO offlinemsgs(uid, ts, msg) VALUES (id, tstamp, message);
+	RETURN 1;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
