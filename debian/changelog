@@ -1,3 +1,9 @@
+dyatel (0.0.20) UNRELEASED; urgency=low
+
+  * Fix database update script (broken in 0.0.18)
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 21 Aug 2013 13:31:49 +0400
+
 dyatel (0.0.19) UNRELEASED; urgency=low
 
   * CDR recording added (table "cdr")
