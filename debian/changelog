@@ -1,3 +1,9 @@
+dyatel (0.0.19) UNRELEASED; urgency=low
+
+  * CDR recording added (table "cdr")
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 21 Aug 2013 13:15:57 +0400
+
 dyatel (0.0.18) UNRELEASED; urgency=low
 
   * Users table: separate Display Name field
