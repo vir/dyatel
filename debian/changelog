@@ -1,3 +1,10 @@
+dyatel (0.0.21) UNRELEASED; urgency=low
+
+  * Added resource subscribtions support
+  * Added linetracker stub
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 21 Aug 2013 17:29:47 +0400
+
 dyatel (0.0.20) UNRELEASED; urgency=low
 
   * Fix database update script (broken in 0.0.18)

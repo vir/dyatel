@@ -1,0 +1,54 @@
+
+BEGIN;
+
+-- Resource subscribtion
+--CREATE TABLE funclog (ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, src VARCHAR(255) NULL, msg TEXT NOT NULL);
+CREATE OR REPLACE FUNCTION subscriptions_subscribe(notifier TEXT, event TEXT, subscriber TEXT, data TEXT, notifyto TEXT, expires INTERVAL) RETURNS SETOF RECORD AS $$
+BEGIN
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_subscribe', 'notifier=' || notifier || ', event=' || event || ', subscriber=' || subscriber || ', data=' || data || ', notifyto=' || notifyto || ', expires=' || expires);
+	INSERT INTO subscriptions(notifier, event, subscriber, data, notifyto, expires) VALUES (notifier, event, subscriber, data, notifyto, expires);
+	RETURN QUERY SELECT notifier, data, subscriber, event, notifyto, currval('subscriptions_id_seq');
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION subscriptions_unsubscribe(notifier_arg TEXT, event_arg TEXT, subscriber_arg TEXT) RETURNS VOID AS $$
+BEGIN
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_unsubscribe', 'notifier=' || notifier || ', event=' || event || ', subscriber=' || subscriber);
+	DELETE FROM subscriptions WHERE notifier = notifier_arg AND event = event_arg AND subscriber = subscriber_arg;
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT) RETURNS SETOF RECORD AS $$
+BEGIN
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_notify', 'notifier=' || notifier_arg || ', event=' || event_arg);
+	RETURN QUERY SELECT notifier, data, subscriber, event, notifyto, id AS notifyseq FROM subscriptions WHERE event = event_arg AND notifier = notifier_arg;
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION subscriptions_expires() RETURNS SETOF RECORD AS $$
+BEGIN
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_expires', 'called');
+	DELETE FROM subscriptions WHERE ts + expires < CURRENT_TIMESTAMP;
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+-- Line tracker (stub)
+CREATE OR REPLACE FUNCTION linetracker_flush() RETURNS VOID AS $$
+BEGIN
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+END;
+$$ LANGUAGE PlPgSQL;
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
