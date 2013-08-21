@@ -16,7 +16,7 @@ Depends: dbconfig-common, libpg-hstore-perl,
  libcatalyst-dispatchtype-regex-perl | libcatalyst-perl (<< 5.90030-1)
 Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0),
  atftpd | tftpd
-Suggests: yate-telhw
+Suggests: yate-telhw, timidity, madplay
 Description: My yate-based pbx
 
 
