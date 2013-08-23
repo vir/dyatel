@@ -1,0 +1,59 @@
+
+BEGIN;
+
+CREATE TABLE linetracker(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	usecount INTEGER NOT NULL DEFAULT 0,
+	direction TEXT,
+	status TEXT,
+	chan TEXT,
+	caller TEXT,
+	called TEXT,
+	billid TEXT
+);
+
+CREATE OR REPLACE FUNCTION linetracker_flush() RETURNS VOID AS $$
+BEGIN
+	DELETE FROM linetracker;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NULL THEN
+		RETURN;
+	END IF;
+
+	UPDATE linetracker SET usecount = usecount + 1, direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+	IF NOT FOUND THEN
+		INSERT INTO linetracker(uid, usecount, direction, status, chan, caller, called, billid) VALUES (u, 1, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+	END IF;
+	NOTIFY linetracker;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	UPDATE linetracker SET usecount = (CASE WHEN usecount > 0 THEN usecount - 1 ELSE 0 END) WHERE uid = u;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
