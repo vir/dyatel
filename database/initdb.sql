@@ -381,15 +381,6 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 
-CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
-BEGIN
-	RETURN QUERY
-		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
-	UNION
-		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward');
-END;
-$$ LANGUAGE PlPgSQL;
-
 
 
 
@@ -524,6 +515,60 @@ DECLARE
 BEGIN
 	u := userid(msg->'external');
 	UPDATE linetracker SET usecount = (CASE WHEN usecount > 0 THEN usecount - 1 ELSE 0 END) WHERE uid = u;
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+-- Call pickup
+CREATE TABLE pickupgroups(
+	id SERIAL PRIMARY KEY,
+	callgrepcopy INTEGER NULL REFERENCES callgroups ON DELETE SET NULL,
+	descr TEXT
+);
+
+CREATE TABLE pickupgrpmembers(
+	id SERIAL PRIMARY KEY,
+	grp INTEGER NOT NULL REFERENCES pickupgroups ON DELETE CASCADE,
+	uid INTEGER REFERENCES users ON DELETE CASCADE
+);
+
+CREATE OR REPLACE FUNCTION pickupgroup_copy_callgoup(pgrp INTEGER, cgrp INTEGER) RETURNS INTEGER AS $$
+BEGIN
+	IF pgrp IS NULL THEN
+		INSERT INTO pickupgroups(descr) VALUES (NULL);
+	END IF;
+	pgrp := lastval();
+	UPDATE pickupgroups SET descr = (SELECT descr FROM callgroups WHERE id = cgrp), callgrepcopy = NULL WHERE id = pgrp;
+	DELETE FROM pickupgrpmembers WHERE grp = pgrp;
+	INSERT INTO pickupgrpmembers(grp, uid) SELECT pgrp, u.id FROM callgrpmembers m INNER JOIN users u ON u.num = m.num WHERE grp = cgrp;
+	RETURN pgrp;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callpickup_route(clrnum TEXT, cldnum TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+BEGIN
+	IF cldnum <> '*8' THEN
+		RETURN;
+	END IF;
+
+	RETURN QUERY SELECT 'location'::TEXT, ('pickup/' || chan)::TEXT
+		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
+		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
+		WHERE usecount > 0 AND direction = 'outgoing' AND status = 'ringing'
+			AND m2.uid = userid(clrnum) LIMIT 1;
+--			AND m2.uid = 180 AND m1.uid = 179;
+END;
+$$ LANGUAGE PlPgSql;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+	UNION
+		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+	UNION
+		SELECT * FROM callpickup_route(msg->'caller', msg->'called');
 END;
 $$ LANGUAGE PlPgSQL;
 
