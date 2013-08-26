@@ -1,6 +1,13 @@
+dyatel (0.0.24) UNRELEASED; urgency=low
+
+  * Call pickup code changed to *1.
+  * SPA dialplan updated
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Mon, 26 Aug 2013 12:31:32 +0400
+
 dyatel (0.0.23) UNRELEASED; urgency=low
 
-  * Call pickup adder (*8)
+  * Call pickup added (*8)
 
  -- Vasily i. Redkin <vir@vir.otvt.ru>  Fri, 23 Aug 2013 17:57:35 +0400
 
