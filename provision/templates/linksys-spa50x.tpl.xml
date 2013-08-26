@@ -22,7 +22,7 @@
   <!-- Internet Connection Type  -->
 
   <Connection_Type ua="rw">DHCP</Connection_Type> <!-- options: DHCP/Static IP -->
-
+[%#
   <!--  Static IP Settings -->
 
   <Static_IP ua="rw"></Static_IP>
@@ -43,6 +43,7 @@
   <Debug_Level ua="na">0</Debug_Level> <!-- options: 0/1/2/3 -->
   <Layer_2_Logging ua="na">No</Layer_2_Logging>
   <Port_Mirroring ua="na">No</Port_Mirroring>
+%]
   <NTP_Enable ua="na">Yes</NTP_Enable>
   <Primary_NTP_Server ua="na">[% params.NTPServer %]</Primary_NTP_Server>
   <Secondary_NTP_Server ua="na"></Secondary_NTP_Server>
@@ -89,9 +90,10 @@
   <Report_Rule ua="na"></Report_Rule>
   <User_Configurable_Resync ua="na">Yes</User_Configurable_Resync>
 
+[%#
   <!-- Firmware Upgrade -->
 
-[%# <!--
+<!--
   <Upgrade_Enable ua="na">Yes</Upgrade_Enable>
   <Upgrade_Error_Retry_Delay ua="na">3600</Upgrade_Error_Retry_Delay>
   <Downgrade_Rev_Limit ua="na"></Downgrade_Rev_Limit>
@@ -160,7 +162,7 @@
   <Dialog_SDP_Enable ua="na">No</Dialog_SDP_Enable>
   <Keep_Referee_When_REFER_Failed ua="na">No</Keep_Referee_When_REFER_Failed>
   <Display_Diversion_Info ua="na">No</Display_Diversion_Info>
-
+[%#
   <!-- SIP Timer Values (sec) -->
 
   <SIP_T1 ua="na">.5</SIP_T1>
@@ -229,7 +231,7 @@
   <G722_Codec_Name ua="na">G722</G722_Codec_Name>
   <L16_Codec_Name ua="na">L16</L16_Codec_Name>
   <EncapRTP_Codec_Name ua="na">encaprtp</EncapRTP_Codec_Name>
-
+%]
   <!-- NAT Support Parameters -->
 
   <Handle_VIA_received ua="na">No</Handle_VIA_received>
@@ -385,7 +387,7 @@
 
   <!-- Dial Plan -->
 
-  <Dial_Plan_1_ ua="na">(*xx|[3469]11|0|00|[2-9]xxxxxx|1xxx[2-9]xxxxxxS0|xxxxxxxxxxxx.)</Dial_Plan_1_>
+  <Dial_Plan_1_ ua="na">[% params.SpaDialPlan %]</Dial_Plan_1_>
   <Caller_ID_Map_1_ ua="na"></Caller_ID_Map_1_>
   <Enable_IP_Dialing_1_ ua="na">Yes</Enable_IP_Dialing_1_>
   <Emergency_Number_1_ ua="na"></Emergency_Number_1_>
@@ -1855,6 +1857,7 @@
   <Emergency_Number_12_ ua="na"></Emergency_Number_12_>
 ### %]
 
+[%#
   <!-- Call Forward -->
 
   <Cfwd_Setting ua="rw">Yes</Cfwd_Setting>
@@ -1873,7 +1876,7 @@
   <Speed_Dial_7 ua="rw"></Speed_Dial_7>
   <Speed_Dial_8 ua="rw"></Speed_Dial_8>
   <Speed_Dial_9 ua="rw"></Speed_Dial_9>
-
+#]
   <!-- Supplementary Services -->
 
   <CW_Setting ua="rw">Yes</CW_Setting>
@@ -1885,8 +1888,8 @@
   <Auto_Answer_Page ua="na">Yes</Auto_Answer_Page>
   <Preferred_Audio_Device ua="rw">Speaker</Preferred_Audio_Device> <!-- options: Speaker/Headset -->
   <Send_Audio_To_Speaker ua="rw">No</Send_Audio_To_Speaker>
-  <Time_Format ua="rw">12hr</Time_Format> <!-- options: 12hr/24hr -->
-  <Date_Format ua="rw">month/day</Date_Format> <!-- options: month/day/day/month -->
+  <Time_Format ua="rw">24hr</Time_Format> <!-- options: 12hr/24hr -->
+  <Date_Format ua="rw">day/month</Date_Format> <!-- options: month/day/day/month -->
   <Miss_Call_Shortcut ua="rw">Yes</Miss_Call_Shortcut>
   <Miss_Call_Banner ua="rw">Yes</Miss_Call_Banner>
   <Accept_Media_Loopback_Request ua="na">automatic</Accept_Media_Loopback_Request> <!-- options: never/automatic/manual -->
@@ -1908,7 +1911,7 @@
   <Log_Missed_Calls_for_EXT_11 ua="na">Yes</Log_Missed_Calls_for_EXT_11>
   <Log_Missed_Calls_for_EXT_12 ua="na">Yes</Log_Missed_Calls_for_EXT_12>
   <Shared_Line_DND_Cfwd_Enable ua="na">Yes</Shared_Line_DND_Cfwd_Enable>
-
+[%#
   <!-- Audio -->
 
   <Ringer_Volume ua="rw">8</Ringer_Volume>
@@ -1923,7 +1926,7 @@
 
   <LCD_Contrast ua="rw">8</LCD_Contrast>
   <Back_Light_Timer ua="na">10 s</Back_Light_Timer> <!-- options: Off/10 s/20 s/30 s/Always On -->
-
+%]
   <!-- General -->
 
   <Station_Name ua="na"></Station_Name>
@@ -2295,21 +2298,26 @@
   <Force_G729a_Code ua="na">*02729</Force_G729a_Code>
 
   <!-- Miscellaneous -->
-
+[%#
   <Set_Local_Date__mm_dd_ ua="na"></Set_Local_Date__mm_dd_>
   <Set_Local_Time__HH_mm_ ua="na"></Set_Local_Time__HH_mm_>
+%]
   <Time_Zone ua="na">GMT+04:00</Time_Zone> <!-- options: GMT-12:00/GMT-11:00/GMT-10:00/GMT-09:00/GMT-08:00/GMT-07:00/GMT-06:00/GMT-05:00/GMT-04:00/GMT-03:30/GMT-03:00/GMT-02:00/GMT-01:00/GMT/GMT+01:00/GMT+02:00/GMT+03:00/GMT+03:30/GMT+04:00/GMT+05:00/GMT+05:30/GMT+05:45/GMT+06:00/GMT+06:30/GMT+07:00/GMT+08:00/GMT+09:00/GMT+09:30/GMT+10:00/GMT+11:00/GMT+12:00/GMT+13:00 -->
   <Time_Offset__HH_mm_ ua="na"></Time_Offset__HH_mm_>
   <Ignore_DHCP_Time_Offset ua="na">Yes</Ignore_DHCP_Time_Offset>
   <Daylight_Saving_Time_Rule ua="na"></Daylight_Saving_Time_Rule>
-  <Daylight_Saving_Time_Enable ua="na">Yes</Daylight_Saving_Time_Enable>
+  <Daylight_Saving_Time_Enable ua="na">No</Daylight_Saving_Time_Enable>
+[%#
   <DTMF_Playback_Level ua="na">-16</DTMF_Playback_Level>
   <DTMF_Playback_Length ua="na">.1</DTMF_Playback_Length>
   <Inband_DTMF_Boost ua="na">12dB</Inband_DTMF_Boost> <!-- options: 0dB/3dB/6dB/9dB/12dB/15dB/18dB -->
   <Dictionary_Server_Script ua="na"></Dictionary_Server_Script>
   <Language_Selection ua="na">English-US</Language_Selection>
-  <Default_Character_Encoding ua="na">ISO-8859-1</Default_Character_Encoding> <!-- options: ISO-8859-1/UTF-8 -->
+%]
+  <Default_Character_Encoding ua="na">UTF-8</Default_Character_Encoding> <!-- options: ISO-8859-1/UTF-8 -->
+[%#
   <Locale ua="na">en-US</Locale> <!-- options: en-US/en-CA/en-AU/en-GB/fr-FR/fr-CA/es-ES/it-IT/de-DE/nn-NO/pt-PT/nl-NL/sv-SE/pt-BZ/es-MX/en-NZ/da-DK -->
+%]
 
   <!-- General -->
 
@@ -2327,6 +2335,7 @@
   <Call_Pickup_Audio_Notification ua="na">No</Call_Pickup_Audio_Notification>
   <Attendant_Console_Font_Size ua="na">10</Attendant_Console_Font_Size> <!-- options: 10/12 -->
   <Attendant_Console_LCD_Contrast ua="na">7</Attendant_Console_LCD_Contrast>
+[%#
 
   <!-- Attendant Key LED Pattern -->
 
@@ -2412,5 +2421,5 @@
   <Unit_2_Key_31 ua="na"></Unit_2_Key_31>
   <Unit_2_Key_32 ua="na"></Unit_2_Key_32>
   <Protect_IVR_FactoryReset ua="na">No</Protect_IVR_FactoryReset>
-
+%]
 </flat-profile>
