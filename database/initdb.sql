@@ -545,10 +545,19 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+CREATE OR REPLACE FUNCTION service_code(srvcname TEXT) RETURNS TEXT AS $$
+BEGIN
+	RETURN CASE
+		WHEN srvcname = 'pickupgroup' THEN '*1'
+		ELSE NULL
+	END;
+END;
+$$ LANGUAGE PlPgSQL STABLE;
+
 CREATE OR REPLACE FUNCTION callpickup_route(clrnum TEXT, cldnum TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 BEGIN
-	IF cldnum <> '*8' THEN
+	IF cldnum <> service_code('pickupgroup') THEN
 		RETURN;
 	END IF;
 

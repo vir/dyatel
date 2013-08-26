@@ -1,0 +1,31 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION service_code(srvcname TEXT) RETURNS TEXT AS $$
+BEGIN
+	RETURN CASE
+		WHEN srvcname = 'pickupgroup' THEN '*1'
+		ELSE NULL
+	END;
+END;
+$$ LANGUAGE PlPgSQL STABLE;
+
+CREATE OR REPLACE FUNCTION callpickup_route(clrnum TEXT, cldnum TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+BEGIN
+	IF cldnum <> service_code('pickupgroup') THEN
+		RETURN;
+	END IF;
+
+	RETURN QUERY SELECT 'location'::TEXT, ('pickup/' || chan)::TEXT
+		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
+		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
+		WHERE usecount > 0 AND direction = 'outgoing' AND status = 'ringing'
+			AND m2.uid = userid(clrnum) LIMIT 1;
+--			AND m2.uid = 180 AND m1.uid = 179;
+END;
+$$ LANGUAGE PlPgSql;
+
+COMMIT;
+-- vim: ft=sql
+
