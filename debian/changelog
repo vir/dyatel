@@ -1,3 +1,10 @@
+dyatel (0.0.25) UNRELEASED; urgency=low
+
+  * Fixed cdr timestamps
+  * Fixed SUBSCRIBE
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Tue, 17 Sep 2013 17:51:36 +0400
+
 dyatel (0.0.24) UNRELEASED; urgency=low
 
   * Call pickup code changed to *1.
