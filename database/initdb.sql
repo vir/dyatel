@@ -438,23 +438,23 @@ ALTER TABLE cdr CLUSTER ON cdr_ts_index;
 
 -- Resource subscribtion
 --CREATE TABLE funclog (ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, src VARCHAR(255) NULL, msg TEXT NOT NULL);
-CREATE OR REPLACE FUNCTION subscriptions_subscribe(notifier TEXT, event TEXT, subscriber TEXT, data TEXT, notifyto TEXT, expires INTERVAL) RETURNS SETOF RECORD AS $$
+CREATE OR REPLACE FUNCTION subscriptions_subscribe(notifier TEXT, operation TEXT, subscriber TEXT, data TEXT, notifyto TEXT, expires INTERVAL) RETURNS SETOF RECORD AS $$
 BEGIN
-	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_subscribe', 'notifier=' || notifier || ', event=' || event || ', subscriber=' || subscriber || ', data=' || data || ', notifyto=' || notifyto || ', expires=' || expires);
-	INSERT INTO subscriptions(notifier, event, subscriber, data, notifyto, expires) VALUES (notifier, event, subscriber, data, notifyto, expires);
-	RETURN QUERY SELECT notifier, data, subscriber, event, notifyto, currval('subscriptions_id_seq');
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_subscribe', 'notifier=' || notifier || ', operation=' || operation || ', subscriber=' || subscriber || ', data=' || data || ', notifyto=' || notifyto || ', expires=' || expires);
+	INSERT INTO subscriptions(notifier, operation, subscriber, data, notifyto, expires) VALUES (notifier, operation, subscriber, data, notifyto, expires);
+	RETURN QUERY SELECT notifier, data, subscriber, operation, notifyto, currval('subscriptions_id_seq');
 END;
 $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION subscriptions_unsubscribe(notifier_arg TEXT, event_arg TEXT, subscriber_arg TEXT) RETURNS VOID AS $$
 BEGIN
-	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_unsubscribe', 'notifier=' || notifier || ', event=' || event || ', subscriber=' || subscriber);
-	DELETE FROM subscriptions WHERE notifier = notifier_arg AND event = event_arg AND subscriber = subscriber_arg;
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_unsubscribe', 'notifier=' || notifier || ', operation=' || operation || ', subscriber=' || subscriber);
+	DELETE FROM subscriptions WHERE notifier = notifier_arg AND operation = event_arg AND subscriber = subscriber_arg;
 END;
 $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT) RETURNS SETOF RECORD AS $$
 BEGIN
-	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_notify', 'notifier=' || notifier_arg || ', event=' || event_arg);
-	RETURN QUERY SELECT notifier, data, subscriber, event, notifyto, id AS notifyseq FROM subscriptions WHERE event = event_arg AND notifier = notifier_arg;
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_notify', 'notifier=' || notifier_arg || ', operation=' || event_arg);
+	RETURN QUERY SELECT notifier, data, subscriber, operation, notifyto, id AS notifyseq FROM subscriptions WHERE operation = event_arg AND notifier = notifier_arg;
 END;
 $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION subscriptions_expires() RETURNS SETOF RECORD AS $$
