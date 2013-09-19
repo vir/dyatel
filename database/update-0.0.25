@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION subscriptions_subscribe(notifier TEXT, event_arg TEXT
 BEGIN
 	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_subscribe', 'notifier=' || notifier || ', operation=' || event_arg || ', subscriber=' || subscriber || ', data=' || data || ', notifyto=' || notifyto || ', expires=' || expires);
 	INSERT INTO subscriptions(notifier, operation, subscriber, data, notifyto, expires) VALUES (notifier, event_arg, subscriber, data, notifyto, expires);
-	RETURN QUERY SELECT notifier, data, subscriber, operation, notifyto, currval('subscriptions_id_seq');
+	RETURN QUERY SELECT notifier, data, subscriber, event_arg, notifyto, currval('subscriptions_id_seq');
 END;
 $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION subscriptions_unsubscribe(notifier_arg TEXT, event_arg TEXT, subscriber_arg TEXT) RETURNS VOID AS $$
