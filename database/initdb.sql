@@ -25,7 +25,8 @@ CREATE TABLE regs (
 	ip_transport TEXT,
 	ip_host INET,
 	ip_port INTEGER,
-	audio BOOLEAN DEFAULT TRUE
+	audio BOOLEAN DEFAULT TRUE,
+	route_params HSTORE;
 );
 
 CREATE TABLE subscriptions (
@@ -66,11 +67,21 @@ CREATE OR REPLACE FUNCTION userid(username TEXT) RETURNS INTEGER AS $$
 	SELECT id FROM userrec($1);
 $$ LANGUAGE SQL STRICT STABLE;
 
-CREATE OR REPLACE FUNCTION user_register(regnum TEXT, loc TEXT, exp TEXT, dev TEXT, drv TEXT, ipt TEXT, iph INET, ipp INTEGER) RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION user_register(msg HSTORE) RETURNS VOID AS $$
 DECLARE
 	uid INTEGER;
 	expint TIMESTAMP WITH TIME ZONE;
+	regnum TEXT;
+	loc TEXT;
+	exp TEXT;
+	drv TEXT;
+	a TEXT[];
+	rp HSTORE;
 BEGIN
+	regnum := msg->'username';
+	loc := msg->'data';
+	exp := msg->'expires';
+	drv := COALESCE(msg->'driver', msg->'module');
 	uid := userid(regnum);
 	IF uid IS NULL THEN
 		RAISE EXCEPTION 'User % not found', regnum;
@@ -78,9 +89,14 @@ BEGIN
 	IF exp IS NOT NULL AND exp <> '' THEN
 		expint := CURRENT_TIMESTAMP + (exp::TEXT || ' s')::INTERVAL;
 	END IF;
+	IF COALESCE(msg->'route_params', '') <> '' THEN
+		a := ('{' || (msg->'route_params') || '}')::TEXT[];
+		rp = slice(msg, a);
+	END IF;
+
 	DELETE FROM regs WHERE userid = uid AND location = loc;
-	INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio)
-		VALUES (uid, CURRENT_TIMESTAMP, loc, expint, dev, drv, ipt, iph, ipp, drv <> 'jabber');
+	INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params)
+		VALUES (uid, CURRENT_TIMESTAMP, loc, expint, msg->'device', drv, msg->'ip_transport', (msg->'ip_host')::INET, (msg->'ip_port')::INTEGER, drv <> 'jabber', rp);
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -281,6 +297,7 @@ DECLARE
 	clr RECORD;
 	cld RECORD;
 	t RECORD;
+	kvp RECORD;
 	rtpfw BOOLEAN;
 BEGIN
 	cld := userrec(called_arg);
@@ -292,6 +309,9 @@ BEGIN
 			cntr := cntr + 1;
 			res := res || hstore('callto.' || cntr, t.location);
 			res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
+			FOR kvp IN SELECT * FROM EACH(t.route_params) LOOP
+				res := res || hstore('callto.' || cntr || '.' || kvp.key, kvp.value);
+			END LOOP;
 		END LOOP;
 	END IF;
 

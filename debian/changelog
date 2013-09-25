@@ -1,3 +1,9 @@
+dyatel (0.0.26) UNRELEASED; urgency=low
+
+  * SIP over TCP support
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Wed, 25 Sep 2013 23:57:59 +0400
+
 dyatel (0.0.25) UNRELEASED; urgency=low
 
   * Fixed cdr timestamps
