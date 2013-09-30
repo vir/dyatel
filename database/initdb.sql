@@ -445,13 +445,15 @@ CREATE TABLE cdr (
 	ringtime INTERVAL,
 	status TEXT,
 	reason TEXT,
-	ended BOOLEAN
+	ended BOOLEAN,
+	callid TEXT
 );
 CREATE INDEX cdr_billid_index ON cdr(billid);
 CREATE INDEX cdr_caller_index ON cdr(caller);
 CREATE INDEX cdr_direction_index ON cdr(direction);
 CREATE INDEX cdr_status_index ON cdr(status);
 CREATE INDEX cdr_ts_index ON cdr(ts);
+CREATE INDEX cdr_callid_index ON cdr(callid);
 ALTER TABLE cdr CLUSTER ON cdr_ts_index;
 
 

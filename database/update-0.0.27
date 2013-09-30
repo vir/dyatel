@@ -1,0 +1,4 @@
+
+ALTER TABLE cdr ADD callid TEXT;
+CREATE INDEX cdr_callid_index ON cdr(callid);
+
