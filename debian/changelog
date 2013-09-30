@@ -1,3 +1,10 @@
+dyatel (0.0.27) UNRELEASED; urgency=low
+
+  * Added new field "callid" to cdr table.
+  * Fixed 'unregister_expired' setting in register.conf.
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Mon, 30 Sep 2013 15:17:21 +0400
+
 dyatel (0.0.26) UNRELEASED; urgency=low
 
   * SIP over TCP support
