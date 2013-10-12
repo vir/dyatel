@@ -16,5 +16,8 @@ INSERT INTO ivr_aa(num, descr, prompt, timeout, e1, e2, e3, etimeout) VALUES (
 INSERT INTO ivr_minidisa(num, descr, prompt, timeout, numlen, firstdigit, etimeout) VALUES (
 	'223', 'Sample auto-attendant', '/home/vir/disa.au', 15, 3, '123', '222');
 
+INSERT INTO abbrs (num, target, descr) VALUES ('666', '+79210000001', 'xxx mobile');
+INSERT INTO abbrs (num, owner, target, descr) VALUES ('#1', 189, '+79210000002', 'some other mobile');
+
 COMMIT;
 

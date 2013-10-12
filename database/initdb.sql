@@ -1,4 +1,4 @@
-CREATE DOMAIN phone AS TEXT CHECK( VALUE ~ E'^\\d+$' );
+CREATE DOMAIN phone AS TEXT CHECK( VALUE ~ E'^\+?[0-9\8\#]+$' );
 
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
@@ -592,6 +592,22 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSql;
 
+-- abbreveated numbers
+CREATE TABLE abbrs(id SERIAL PRIMARY KEY, num PHONE NOT NULL, owner INTEGER REFERENCES users(id) NULL, target TEXT, descr TEXT);
+CREATE INDEX abbrs_uniq_index ON abbrs(num, owner);
+CREATE INDEX abbrs_num_index ON abbrs(num);
+
+CREATE OR REPLACE FUNCTION abbrs_route(clrnum TEXT, cldnum TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(clrnum);
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || target::TEXT FROM abbrs WHERE num = cldnum AND owner = u
+		UNION SELECT 'location'::TEXT, 'lateroute/' || target FROM abbrs WHERE num = cldnum AND owner IS NULL;
+END;
+$$ LANGUAGE PlPgSql;
+
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
 BEGIN
 	RETURN QUERY
@@ -599,9 +615,12 @@ BEGIN
 	UNION
 		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
 	UNION
-		SELECT * FROM callpickup_route(msg->'caller', msg->'called');
+		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
+	UNION
+		SELECT * FROM abbrs_route(msg->'caller', msg->'called');
 END;
 $$ LANGUAGE PlPgSQL;
+
 
 
 -- vim: ft=sql

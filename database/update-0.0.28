@@ -1,0 +1,49 @@
+
+BEGIN;
+
+-- allow # and * in phone numbers
+ALTER DOMAIN phone DROP CONSTRAINT phone_check;
+ALTER DOMAIN phone ADD CONSTRAINT phone_check CHECK( VALUE ~ E'^\\+?[0-9\\*\\#]+$' );
+
+-- abbreveated numbers
+CREATE TABLE abbrs(id SERIAL PRIMARY KEY, num PHONE NOT NULL, owner INTEGER REFERENCES users(id) NULL, target TEXT, descr TEXT);
+CREATE INDEX abbrs_uniq_index ON abbrs(num, owner);
+CREATE INDEX abbrs_num_index ON abbrs(num);
+
+CREATE OR REPLACE FUNCTION abbrs_route(clrnum TEXT, cldnum TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(clrnum);
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || target::TEXT FROM abbrs WHERE num = cldnum AND owner = u
+		UNION SELECT 'location'::TEXT, 'lateroute/' || target FROM abbrs WHERE num = cldnum AND owner IS NULL;
+END;
+$$ LANGUAGE PlPgSql;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+	UNION
+		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+	UNION
+		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
+	UNION
+		SELECT * FROM abbrs_route(msg->'caller', msg->'called');
+END;
+$$ LANGUAGE PlPgSQL;
+
+-- support 3cxphone's wildcard subscriptions
+CREATE OR REPLACE FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT) RETURNS SETOF RECORD AS $$
+BEGIN
+	-- INSERT INTO funclog(src, msg) VALUES ('subscriptions_notify', 'notifier=' || notifier_arg || ', operation=' || event_arg);
+	-- result:         (notifier                  data  subscriber  event      notifyto  notifyseq)
+	RETURN QUERY SELECT notifier_arg AS notifier, data, subscriber, operation, notifyto, id AS notifyseq
+		FROM subscriptions WHERE operation = event_arg
+			AND (notifier = notifier_arg OR notifier = '#any-dn#');
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
