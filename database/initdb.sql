@@ -608,6 +608,70 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSql;
 
+
+-- Scheduled route changes
+CREATE TABLE schedule (
+	id SERIAL PRIMARY KEY,
+	prio INTEGER NOT NULL DEFAULT 100,
+	mday DATE,
+	days INTEGER NOT NULL DEFAULT 1,
+	dow SMALLINT[] NOT NULL DEFAULT '{0,1,2,3,4,5,6}',
+	tstart TIME WITHOUT TIME ZONE NOT NULL,
+	tend TIME WITHOUT TIME ZONE NOT NULL,
+	mode TEXT NOT NULL
+);
+
+INSERT INTO schedule (prio,      tstart, tend, mode) VALUES ( 0,                '00:00', '24:00', 'holiday');
+INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (10, '{1,2,3,4,5}', '09:00', '18:00', 'work');
+-- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (20, '{1,2,3,4,5}', '18:00', '21:00', 'evening');
+-- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '21:00', '24:00', 'night');
+-- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night');
+-- INSERT INTO schedule (mday, days, tstart, tend, mode) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday');
+
+CREATE OR REPLACE FUNCTION sceduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT 'now', tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+DECLARE
+	wts TIMESTAMP WITH TIME ZONE;
+	d DATE;
+	t TIME WITHOUT TIME ZONE;
+	wd SMALLINT;
+	r TEXT;
+BEGIN
+	wts := ts AT TIME ZONE tz;
+	d := wts;
+	t := wts;
+	wd := EXTRACT(dow FROM d)::SMALLINT;
+	-- RAISE NOTICE 'wts: %, d: %, t: %, wd: %', wts, d, t, wd;
+	SELECT mode INTO r FROM schedule s WHERE wd = ANY (s.dow)
+		AND t >= s.tstart AND t < s.tend
+		AND (mday IS NULL OR
+			(d >= mday AND d < mday + days)) 
+		ORDER BY prio DESC, mday DESC, tstart DESC LIMIT 1;
+	RETURN r;
+END;
+$$ LANGUAGE PlPgSQL;
+
+-- route incoming calls
+CREATE TABLE incoming(
+	id SERIAL PRIMARY KEY,
+	ctx TEXT NULL,
+	called PHONE,
+	mode TEXT,
+	route PHONE NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	m TEXT;
+BEGIN
+	m := sceduled_mode();
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || route FROM incoming
+		WHERE (ctx IS NULL OR ctx = msg->'context')
+			AND (called IS NULL OR called = msg->'called')
+			AND (mode IS NULL OR mode = m)
+		ORDER BY ctx IS NULL, called IS NULL, mode IS NULL LIMIT 1;
+END;
+$$ LANGUAGE PlPgSQL;
+
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
 BEGIN
 	RETURN QUERY
@@ -617,10 +681,10 @@ BEGIN
 	UNION
 		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
 	UNION
-		SELECT * FROM abbrs_route(msg->'caller', msg->'called');
+		SELECT * FROM abbrs_route(msg->'caller', msg->'called')
+	UNION
+		SELECT * FROM incoming_route(msg);
 END;
 $$ LANGUAGE PlPgSQL;
-
-
 
 -- vim: ft=sql

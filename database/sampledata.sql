@@ -19,5 +19,18 @@ INSERT INTO ivr_minidisa(num, descr, prompt, timeout, numlen, firstdigit, etimeo
 INSERT INTO abbrs (num, target, descr) VALUES ('666', '+79210000001', 'xxx mobile');
 INSERT INTO abbrs (num, owner, target, descr) VALUES ('#1', 189, '+79210000002', 'some other mobile');
 
+INSERT INTO schedule (prio,      tstart, tend, mode) VALUES ( 0,                '00:00', '24:00', 'holiday');
+INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (10, '{1,2,3,4,5}', '09:00', '18:00', 'work');
+INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (20, '{1,2,3,4,5}', '18:00', '21:00', 'evening');
+INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '21:00', '24:00', 'night');
+INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night');
+INSERT INTO schedule (mday, days, tstart, tend, mode) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday');
+
+INSERT INTO incoming(ctx, route) VALUES ('from_outside', '888');
+INSERT INTO incoming(ctx, called, route) VALUES ('from_outside', '3259753', '887');
+INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'evening', '889');
+INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'night', '886');
+INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'work', '885');
+
 COMMIT;
 
