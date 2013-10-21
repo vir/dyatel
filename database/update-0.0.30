@@ -1,0 +1,54 @@
+
+BEGIN;
+
+CREATE TABLE numkinds(
+	id SERIAL PRIMARY KEY,
+	descr TEXT NOT NULL
+);
+
+INSERT INTO numkinds (descr) VALUES ('Celluar'), ('Home');
+
+CREATE TABLE morenums(
+	id SERIAL PRIMARY KEY,
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	sortkey INTEGER NOT NULL DEFAULT 100,
+	numkind INTEGER NOT NULL REFERENCES numkinds(id),
+	val TEXT NOT NULL,
+	descr TEXT,
+	timeout INTEGER NOT NULL DEFAULT 10,
+	div_noans BOOLEAN NOT NULL DEFAULT FALSE
+--	div_direct BOOLEAN NOT NULL DEFAULT FALSE,
+--	div_busy BOOLEAN NOT NULL DEFAULT FALSE,
+--	div_offline BOOLEAN NOT NULL DEFAULT FALSE,
+);
+
+CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+BEGIN
+	res := '';
+	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		FOR t IN SELECT regexp_replace(val, '[^0-9\*\#\+]', '', 'g') AS n, timeout FROM morenums WHERE uid = userid(called_arg) AND div_noans ORDER BY sortkey, id LOOP
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- appand to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || t.n);
+		END LOOP;
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+

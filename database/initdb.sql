@@ -273,24 +273,6 @@ $$ LANGUAGE SQL;
 -- routing functions requires the following upstream yate modifications:
 --  988c55b7c9e19815956f73a9ad3c641f7ae96879 - transposedb
 --  51cdc1ec7322aa09930c6a473e456adf95949daf - hstore
-CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
-	RETURNS TABLE(key TEXT, value TEXT) AS $$
-DECLARE
-	res HSTORE;
-	cntr INTEGER;
-BEGIN
-	res := '';
-	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
-
-	IF res::TEXT = '' THEN
-		RETURN;
-	ELSE
-		res := res || 'location => fork';
-		RETURN QUERY SELECT * FROM each(res);
-	END IF;
-END;
-$$ LANGUAGE PlPgSQL;
-
 CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
 	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
 DECLARE
@@ -319,6 +301,31 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+BEGIN
+	res := '';
+	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		FOR t IN SELECT regexp_replace(val, '[^0-9\*\#\+]', '', 'g') AS n, timeout FROM morenums WHERE uid = userid(called_arg) AND div_noans ORDER BY sortkey, id LOOP
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- appand to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || t.n);
+		END LOOP;
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
 
 
 

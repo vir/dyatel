@@ -32,5 +32,8 @@ INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'evening', '889')
 INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'night', '886');
 INSERT INTO incoming(ctx, mode, route) VALUES ('from_outside', 'work', '885');
 
+INSERT INTO morenums(uid, numkind, val) VALUES (189, 1, '+7-921-1234567');
+INSERT INTO morenums(uid, numkind, val) VALUES (189, 2, '+7-812-1234567');
+
 COMMIT;
 

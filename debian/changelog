@@ -1,3 +1,9 @@
+dyatel (0.0.30) UNRELEASED; urgency=low
+
+  * Added divertion on 'no answer'
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Mon, 21 Oct 2013 13:23:16 +0400
+
 dyatel (0.0.29) UNRELEASED; urgency=low
 
   * Schedule-based incoming calls distribution added
