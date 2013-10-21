@@ -301,6 +301,31 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+CREATE TABLE numkinds(
+	id SERIAL PRIMARY KEY,
+	descr TEXT NOT NULL,
+	tag TEXT,
+	set_local_caller BOOLEAN NOT NULL DEFAULT FALSE,
+	set_context TEXT NULL,
+	ins_prefix TEXT NOT NULL DEFAULT ''
+);
+
+INSERT INTO numkinds (descr) VALUES ('Celluar'), ('Home');
+
+CREATE TABLE morenums(
+	id SERIAL PRIMARY KEY,
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	sortkey INTEGER NOT NULL DEFAULT 100,
+	numkind INTEGER NOT NULL REFERENCES numkinds(id),
+	val TEXT NOT NULL,
+	descr TEXT,
+	timeout INTEGER NOT NULL DEFAULT 10,
+	div_noans BOOLEAN NOT NULL DEFAULT FALSE
+--	div_direct BOOLEAN NOT NULL DEFAULT FALSE,
+--	div_busy BOOLEAN NOT NULL DEFAULT FALSE,
+--	div_offline BOOLEAN NOT NULL DEFAULT FALSE,
+);
+
 CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
@@ -315,12 +340,20 @@ BEGIN
 		RETURN;
 	ELSE
 		res := res || 'location => fork';
-		FOR t IN SELECT regexp_replace(val, '[^0-9\*\#\+]', '', 'g') AS n, timeout FROM morenums WHERE uid = userid(called_arg) AND div_noans ORDER BY sortkey, id LOOP
+		FOR t IN SELECT regexp_replace(n.val, '[^0-9\*\#\+]', '', 'g'), n.timeout, k.*
+				FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
+				WHERE uid = userid(called_arg) AND div_noans ORDER BY n.sortkey, n.id LOOP
 			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- appand to previous group
 			cntr := cntr + 1;
 			res := res || hstore('callto.' || cntr, '|');
 			cntr := cntr + 1;
-			res := res || hstore('callto.' || cntr, 'lateroute/' || t.n);
+			res := res || hstore('callto.' || cntr, 'lateroute/' || t.ins_prefix || t.n);
+			IF t.set_local_caller THEN
+				res := res || hstore('callto.' || cntr || '.caller', called_arg);
+			END IF;
+			IF t.set_context IS NOT NULL THEN
+				res := res || hstore('callto.' || cntr || '.context', t.set_context);
+			END IF;
 		END LOOP;
 		RETURN QUERY SELECT * FROM each(res);
 	END IF;

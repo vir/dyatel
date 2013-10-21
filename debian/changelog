@@ -1,3 +1,10 @@
+dyatel (0.0.31) UNRELEASED; urgency=low
+
+  * Allow setting routing context, local caller and insert prefix while
+    diverting calls.
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Mon, 21 Oct 2013 16:12:55 +0400
+
 dyatel (0.0.30) UNRELEASED; urgency=low
 
   * Added divertion on 'no answer'

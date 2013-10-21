@@ -1,0 +1,45 @@
+BEGIN;
+
+ALTER TABLE numkinds ADD tag TEXT;
+ALTER TABLE numkinds ADD set_local_caller BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE numkinds ADD set_context TEXT NULL;
+ALTER TABLE numkinds ADD ins_prefix TEXT NOT NULL DEFAULT '';
+
+CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+BEGIN
+	res := '';
+	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		FOR t IN SELECT regexp_replace(n.val, '[^0-9\*\#\+]', '', 'g'), n.timeout, k.*
+				FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
+				WHERE uid = userid(called_arg) AND div_noans ORDER BY n.sortkey, n.id LOOP
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- appand to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || t.ins_prefix || t.n);
+			IF t.set_local_caller THEN
+				res := res || hstore('callto.' || cntr || '.caller', called_arg);
+			END IF;
+			IF t.set_context IS NOT NULL THEN
+				res := res || hstore('callto.' || cntr || '.context', t.set_context);
+			END IF;
+		END LOOP;
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
