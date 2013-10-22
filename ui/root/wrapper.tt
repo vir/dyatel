@@ -1,3 +1,6 @@
+[% IF no_wrapper %]
+[% content %]
+[% ELSE %]
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" [%#
     %]"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -8,6 +11,9 @@
 </head>
 
 <body>
+[% IF thin_wrapper %]
+[% content %]
+[% ELSE %]
 <div id="outer">
 <div id="header">
     [%# Your logo could go here -%]
@@ -48,8 +54,9 @@
 
 <div id="footer">Copyright (c) your name goes here</div>
 </div><!-- end outer -->
-
+[% END # thin_wrapper %]
 </body>
 </html>
 
+[% END # no_wrapper %]
 

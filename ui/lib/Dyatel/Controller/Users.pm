@@ -41,8 +41,7 @@ it under the same terms as Perl itself.
 sub list :Local
 {
 	my($self, $c) = @_;
-#	$c->stash(users => [$c->model('DB::Users')->all], template => 'users/list.tt');
-	$c->stash(users => [$c->model('DB::Users')->search({}, {order_by => 'num'})], template => 'users/list.tt');
+	$c->stash(users => [$c->model('DB::Users')->search({}, { order_by => 'num' })], template => 'users/list.tt');
 }
 
 sub get_user_params
@@ -54,8 +53,8 @@ sub get_user_params
 		alias => $c->request->params->{alias} || undef,
 		domain => $c->request->params->{domain} // '',
 		password => $c->request->params->{password},
-		nat_support => $c->request->params->{nat_support},
-		nat_port_support => $c->request->params->{nat_port_support},
+		nat_support => $c->request->params->{nat_support} || '0',
+		nat_port_support => $c->request->params->{nat_port_support} || '0',
 	};
 }
 
@@ -71,6 +70,7 @@ sub user :LocalRegex('^(\d+)$')
 		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $uid }));
 	}
 	$c->stash(user => $user, provision => $user->provisions->all, regs => $user->regs->all, template => 'users/user.tt');
+#	$c->stash(user => $user, template => 'users/user.tt');
 }
 
 sub create :Local :Args(0)

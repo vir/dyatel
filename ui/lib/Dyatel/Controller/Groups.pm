@@ -1,4 +1,4 @@
-package Dyatel::Controller::Provisions;
+package Dyatel::Controller::Groups;
 use Moose;
 use namespace::autoclean;
 
@@ -6,7 +6,7 @@ BEGIN {extends 'Catalyst::Controller'; }
 
 =head1 NAME
 
-Dyatel::Controller::Provisions - Catalyst Controller
+Dyatel::Controller::Groups - Catalyst Controller
 
 =head1 DESCRIPTION
 
@@ -23,28 +23,25 @@ Catalyst Controller.
 
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
-#    $c->response->body('Matched Dyatel::Controller::Provisions in Provisions.');
 		$c->response->redirect($c->uri_for($self->action_for('list')));
 }
 
 sub list :Local
 {
 	my($self, $c) = @_;
-	my $opts = {join => 'uid', prefetch => 'uid', order_by => 'hw'};
-	$c->stash(rows => [$c->model('DB::Provision')->search({}, $opts)], template => 'provisions/list.tt');
+	$c->stash(rows => [$c->model('DB::Callgroups')->search({}, {order_by => 'num'})], template => 'groups/list.tt');
 }
 
-sub provisions :Chained('/') :PathPart('provisions') :CaptureArgs(1)
+sub groups :Chained('/') :PathPart('groups') :CaptureArgs(1)
 {
 	my($self, $c, $id) = @_;
-#	warn "Dyatel::Controller::Provisions::base($self, $c, $id)\n";
-#	$c->log->debug("Dyatel::Controller::Provisions::base($self, $c, $id)");
-	$c->stash(obj => $c->model('DB::Provision')->find($id), tpls => $c->model('FS::ProvisionTpls')->list);
+	$c->log->debug("Dyatel::Controller::Provisions::base($self, $c, $id)");
+	$c->stash(obj => $c->model('DB::Callgroups')->find($id, {result_class => }));
 }
 
 use Data::Dumper;
 
-sub show :Chained('provisions') PathPart('') Args(0)
+sub show :Chained('groups') PathPart('') Args(0)
 {
 	my($self, $c) = @_;
 	if($c->request->params->{save}) {
@@ -54,7 +51,6 @@ sub show :Chained('provisions') PathPart('') Args(0)
 	}
 	$c->stash(template => 'provisions/show.tt');
 }
-
 
 =head1 AUTHOR
 
@@ -70,3 +66,4 @@ it under the same terms as Perl itself.
 __PACKAGE__->meta->make_immutable;
 
 1;
+

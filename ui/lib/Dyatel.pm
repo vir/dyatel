@@ -21,6 +21,7 @@ use Catalyst qw/
     ConfigLoader
     Static::Simple
 		StackTrace
+		Unicode
 /;
 
 extends 'Catalyst';
@@ -47,6 +48,16 @@ __PACKAGE__->config( 'Plugin::ConfigLoader' => {
 	driver => {
 		'General' => { -UTF8 => 1 },
 	}
+} );
+
+# Set unicode HTML output
+__PACKAGE__->config( 'View::HTML' => {
+	ENCODING => 'UTF-8',
+} );
+
+# Limit JSON output
+__PACKAGE__->config( 'View::JSON' => {
+#		expose_stash => 'json' 
 } );
 
 # Start the application
@@ -79,5 +90,12 @@ This library is free software. You can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
+
+# Dirty hack to fix JSON serialization
+package DBIx::Class;
+
+sub TO_JSON {
+	return { $_[0]->get_inflated_columns };
+}
 
 1;

@@ -1,0 +1,39 @@
+<h1>{{ existingUser ? (user.num + ': ' + user.descr) : 'New user' }}</h1>
+
+<form method="post">
+<dl>
+	<dt>Num</dt><dd><input type="text" ng-model="user.num" ng-readonly="existingUser" /></dd>
+	<dt>Alias</dt><dd><input type="text" ng-model="user.alias" />@<input type="text" ng-model="user.domain" /></dd>
+	<dt>Password</dt><dd><input type="text" ng-model="user.password" /></dd>
+	<dt>Last registered</dt><dd>{{ user.lastreg }}</dd>
+	<dt>Last IP</dt><dd>{{ user.lastip }}</dd>
+	<dt>Description</dt><dd><textarea ng-model="user.descr" /></dd>
+	<dt>Display name</dt><dd><input type="text" ng-model="user.dispname" /></dd>
+	<dt>NAT support</dt><dd><input type="checkbox" ng-model="nat_support" /></dd>
+	<dt>NAT port support</dt><dd><input type="checkbox" ng-model="nat_port_support" /></dd>
+</dl>
+<button ng-click="saveUser()">Save</button>
+<button ng-show="existingUser" ng-click="deleteUser()">Delete</button>
+</form>
+
+<!--
+<div id="user-provision">
+<h1>Provisioned devices</h1>
+<table>
+[% FOREACH p IN provision %]
+<tr><td><a href="/provisions/[% p.id %]">[% p.hw %]</a></td><td><a href="/provisions/[% p.id %]">[% p.devtype %]</a></td></tr>
+[% END %]
+</table>
+</div>
+
+<div id="user-regs">
+<h1>Active registrations</h1>
+<table>
+[% FOREACH r IN regs %]
+<tr><td>[% r.ts %]</td><td>[% r.location %]</td><td>[% r.expires %]</td><td>[% r.device %]</td><td>[% r.driver %]</td><td>[% r.ip_transport %]</td><td>[% r.ip_host %]:[% r.ip_port %]</td><td>[% r.audio %]</td></tr>
+</td></tr>
+[% END %]
+</table>
+</div>
+-->
+

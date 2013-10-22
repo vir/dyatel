@@ -68,12 +68,19 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => 1,
   },
+  "route_params",
+  {
+    data_type => "hstore",
+    default_value => undef,
+    is_nullable => 1,
+    size => undef,
+  },
 );
 __PACKAGE__->belongs_to("userid", "Dyatel::Schema::Users", { id => "userid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-24 15:44:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+g4SRR2oYr05y1yrLpGCWg
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FGlv/IiT2EgJ5MDKTHAxFQ
 
 # add primary key to make DBIx::* happy
 __PACKAGE__->set_primary_key(qw/userid location/);

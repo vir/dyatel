@@ -29,6 +29,13 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => undef,
   },
+  "domain",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 0,
+    size => undef,
+  },
   "password",
   {
     data_type => "text",
@@ -61,19 +68,46 @@ __PACKAGE__->add_columns(
   { data_type => "boolean", default_value => undef, is_nullable => 1, size => 1 },
   "nat_port_support",
   { data_type => "boolean", default_value => undef, is_nullable => 1, size => 1 },
-  "domain",
+  "media_bypass",
+  {
+    data_type => "boolean",
+    default_value => "false",
+    is_nullable => 1,
+    size => 1,
+  },
+  "dispname",
   {
     data_type => "text",
     default_value => undef,
-    is_nullable => 0,
+    is_nullable => 1,
     size => undef,
   },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("users_pkey", ["id"]);
 __PACKAGE__->has_many(
+  "abbrs",
+  "Dyatel::Schema::Abbrs",
+  { "foreign.owner" => "self.id" },
+);
+__PACKAGE__->has_many(
+  "linetrackers",
+  "Dyatel::Schema::Linetracker",
+  { "foreign.uid" => "self.id" },
+);
+__PACKAGE__->has_many(
+  "morenums",
+  "Dyatel::Schema::Morenums",
+  { "foreign.uid" => "self.id" },
+);
+__PACKAGE__->has_many(
   "offlinemsgs",
   "Dyatel::Schema::Offlinemsgs",
+  { "foreign.uid" => "self.id" },
+);
+__PACKAGE__->has_many(
+  "pickupgrpmembers",
+  "Dyatel::Schema::Pickupgrpmembers",
   { "foreign.uid" => "self.id" },
 );
 __PACKAGE__->has_many(
@@ -103,8 +137,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-07-24 15:44:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GXCprMteQ/bYKERV7PVbEg
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Eu7V2HhaJvL9dEJ1de5scA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

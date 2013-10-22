@@ -27,10 +27,21 @@ The root page (/)
 =cut
 
 sub index :Path :Args(0) {
-    my ( $self, $c ) = @_;
+	my( $self, $c ) = @_;
 
-    # Hello World
-    $c->response->body( $c->welcome_message );
+	my $href = $c->uri_for('/users/list');
+	my $jsredir = << "***";
+<html><head>
+ <script type="text/javascript">
+  document.location = "/spa";
+ </script>
+ <noscript>
+  <meta http-equiv="refresh" content="0; url=$href">
+ </noscript>
+</head><body>
+</body></html>
+***
+	$c->response->body( $jsredir );
 }
 
 =head2 default
@@ -45,13 +56,24 @@ sub default :Path {
     $c->response->status(404);
 }
 
+sub spa :Local {
+	my($self, $c) = @_;
+	$c->stash(template => 'spa.tt', no_wrapper => 1);
+}
+
 =head2 end
 
 Attempt to render a view, if needed.
 
 =cut
 
-sub end : ActionClass('RenderView') {}
+sub end : ActionClass('RenderView') {
+	my($self, $c) = @_;
+	if(($c->req->param('o')||'') eq 'json') {
+		$c->stash(current_view => 'JSON');
+#		$c->forward('View:JSON');
+	}
+}
 
 =head1 AUTHOR
 
