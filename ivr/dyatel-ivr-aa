@@ -334,6 +334,26 @@ sub action_switch
 	$self->destruct;
 }
 
+sub action_switch2
+{
+	my $self = shift;
+	my($num) = @_;
+	$num = $self->{collected} unless defined($num) && length($num);
+	$self->debug("Switching call to $num");
+	$self->yate->message('chan.masquerade', undef, undef,
+		map({ $_ => $self->{$_} } COPYPARAMS),
+		message => 'call.execute',
+		callto => 'fork',
+		'callto.1' => 'tone/ring',
+		'callto.1.fork.calltype' => 'persistent',
+		'callto.1.fork.autoring' => 'true',
+		'callto.1.fork.automessage' => 'call.progress',
+		'callto.2' => 'lateroute/'.$num,
+		called => $num,
+	);
+	$self->destruct;
+}
+
 sub action_flush
 {
 	my $self = shift;
@@ -468,6 +488,7 @@ sub _make_handler
 	my($fn)= @_;
 	return sub {
 		my $m = shift;
+#$m->dumpmsg("msg");
 		my $call = Yate::IVR::Call->find($m);
 		if($call) {
 #			$m->dumpmsg("Found call $call");
@@ -569,6 +590,23 @@ my $table2 = [
 	[ undef, 'timeout', undef, 'error' ],
 ];
 
+my $table3 = [
+	[ 'start', 'enter', ['flush', 'answer', 'timer 15'], 'prompt' ],
+	[ 'prompt', 'enter', 'playfile /home/vir/disa.au', 'firstdigit' ],
+	[ 'firstdigit', 'default', undef, 'error' ],
+	[ 'firstdigit', 'dtmf_1', 'collect 1', 'second' ],
+	[ 'firstdigit', 'dtmf_2', 'collect 2', 'second' ],
+	[ 'firstdigit', 'dtmf_3', 'collect 3', 'second' ],
+	[ 'second', 'dtmf', 'collect', 'third' ],
+	[ 'second', 'default', 'suicide', 'second' ],
+	[ 'third', 'dtmf', ['collect', 'switch2'], 'finish' ],
+	[ 'finish', 'enter', 'suicide', undef ],
+	[ 'error', 'enter', 'switch 222', undef ],
+	[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
+	[ undef, 'answered', undef, undef ],
+	[ undef, 'timeout', undef, 'error' ],
+];
+
 my $conf = Dyatel::ExtConfig::load()->{Model}{Yate}{extmodule};
 my $dbh = Dyatel::ExtConfig::dbh();
 $dbh->do('LISTEN ivr');
@@ -581,6 +619,7 @@ Yate::IVR::init($yate);
 #	851 => $table2,
 #);
 load_db();
+#Yate::IVR::add( 850 => $table3,);
 
 $yate->install('engine.timer', \&check_db);
 $SIG{TERM} = sub { Yate::IVR::Call::shutdown_all(); exit 0; };
@@ -652,13 +691,6 @@ sub load_md
 			[ undef, 'timeout', undef, 'error' ],
 			[ 'start', 'enter', ['flush', 'answer', 'timer '.$h->{timeout}], 'prompt' ],
 			[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit'.$pos ],
-			[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
-			[ 'switching', 'timeout', 'drop', 'prompt' ],
-			[ 'switching', 'dtmf', 'drop', 'prompt' ],
-			[ 'switching', 'ringing', 'playtone ring', 'switching' ],
-			[ 'switching', 'answered', 'connect', 'finish' ],
-			[ 'switching', 'hangup', 'drop', 'prompt' ],
-			[ 'switching', 'disconnect', 'drop', 'finish' ],
 			[ 'finish', 'enter', 'suicide', undef ],
 		];
 		if($h->{etimeout}) {
@@ -679,7 +711,7 @@ sub load_md
 			if($pos + 1 <= $h->{numlen}) {
 				push @$table, [ 'digit'.$pos, 'dtmf', 'collect', 'digit'.($pos + 1) ]
 			} else {
-				push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'originate'], 'switching' ],
+				push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'switch2'], 'finish' ],
 			}
 			++$pos;
 		}
