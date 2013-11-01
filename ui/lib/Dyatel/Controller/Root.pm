@@ -26,6 +26,30 @@ The root page (/)
 
 =cut
 
+sub begin : Private {
+	my ( $self, $c ) = @_;
+	unless ($c->user_exists) {
+		unless ($c->authenticate( {} )) {
+			$c->response->status(403);
+			$c->response->body('Unauthorized');
+		}
+	}
+}
+
+#use Data::Dumper;
+#sub env :Local
+#{
+#	my ( $self, $c ) = @_;
+#	$c->res->headers->header("Content-type"=> 'text/plain');
+#	my $req = $c->req;
+#	$c->response->body(
+#		'$c->engine->env is : '.Dumper($c->engine->env)
+#		."c->req is $req\n"
+#		.'c->config is ' .Dumper($c->config)
+#		."\nENV is : ".Dumper(\%ENV)
+#	);
+#}
+
 sub index :Path :Args(0) {
 	my( $self, $c ) = @_;
 
@@ -71,7 +95,6 @@ sub end : ActionClass('RenderView') {
 	my($self, $c) = @_;
 	if(($c->req->param('o')||'') eq 'json') {
 		$c->stash(current_view => 'JSON');
-#		$c->forward('View:JSON');
 	}
 }
 

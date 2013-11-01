@@ -25,5 +25,8 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
  <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/navbar.htm'" ng-controller="NavbarCtrl"></div>
  <div ng-view></div>
 </body></html>
+<!-- user: [% c.user.username %] -->
+
+
 
 

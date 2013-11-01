@@ -22,6 +22,7 @@ use Catalyst qw/
     Static::Simple
 		StackTrace
 		Unicode
+		Authentication
 /;
 
 extends 'Catalyst';
@@ -56,13 +57,29 @@ __PACKAGE__->config( 'View::HTML' => {
 } );
 
 # Limit JSON output
-__PACKAGE__->config( 'View::JSON' => {
+#__PACKAGE__->config( 'View::JSON' => {
 #		expose_stash => 'json' 
-} );
+#} );
+
+__PACKAGE__->config(
+	'Plugin::Authentication' => {
+		default_realm => 'remoterealm',
+		realms => {
+			remoterealm => {
+				credential => { class => 'Remote' },
+				store => { class => 'Null' }
+			},
+		},
+	},
+);
 
 # Start the application
 __PACKAGE__->setup();
 
+if($ENV{TEST_AUTH_USER}) {
+	require Dyatel::TestAuth;
+	Dyatel::TestAuth->meta->apply(__PACKAGE__->engine);
+}
 
 =head1 NAME
 
