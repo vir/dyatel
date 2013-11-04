@@ -1,6 +1,7 @@
-package Dyatel::Controller::Users;
+package Dyatel::Controller::A::Users;
 use Moose;
 use namespace::autoclean;
+require Dyatel::Controller::A;
 
 BEGIN {extends 'Catalyst::Controller'; }
 
@@ -16,6 +17,12 @@ Catalyst Controller.
 
 =cut
 
+#sub a :Chained('/') :PathPart('a') :CaptureArgs(0)
+#{
+#	my($self, $c) = @_;
+#	$c->stash(adm => 1);
+## XXX authorize admin user here
+#}
 
 =head2 index
 
@@ -38,39 +45,10 @@ it under the same terms as Perl itself.
 
 =cut
 
-sub list :Local
+sub list :Local Args(0)
 {
 	my($self, $c) = @_;
 	$c->stash(users => [$c->model('DB::Users')->search({}, { order_by => 'num' })], template => 'users/list.tt');
-}
-
-sub get_user_params
-{
-	my($c) = @_;
-	return {
-		num => $c->request->params->{num},
-		descr => $c->request->params->{descr},
-		alias => $c->request->params->{alias} || undef,
-		domain => $c->request->params->{domain} // '',
-		password => $c->request->params->{password},
-		nat_support => $c->request->params->{nat_support} || '0',
-		nat_port_support => $c->request->params->{nat_port_support} || '0',
-	};
-}
-
-sub user :LocalRegex('^(\d+)$')
-{
-	my($self, $c) = @_;
-	my $uid = $c->req->captures->[0];
-	my $user = $c->model('DB::Users')->find({id => $uid});
-	if($c->request->params->{save}) {
-		$user->update(get_user_params($c));
-		$c->response->redirect('/'.$c->request->path);
-	} elsif($c->request->params->{delete}) {
-		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $uid }));
-	}
-	$c->stash(user => $user, provision => $user->provisions->all, regs => $user->regs->all, template => 'users/user.tt');
-#	$c->stash(user => $user, template => 'users/user.tt');
 }
 
 sub create :Local :Args(0)
@@ -98,6 +76,36 @@ sub delete :Local :Args(0)
 	}
 	$c->stash(user => $user, template => 'users/delete.tt');
 }
+
+sub show :Path Args(1)
+{
+	my($self, $c, $id) = @_;
+	my $o = $c->model('DB::Users')->find($id);
+	$c->stash(obj => $o);
+	if($c->request->params->{save}) {
+		$o->update(get_user_params($c));
+		$c->response->redirect('/'.$c->request->path);
+	} elsif($c->request->params->{delete}) {
+		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $o->id }));
+	}
+#	$c->stash(user => $o, provision => $o->provisions->all, regs => $o->regs->all, template => 'users/user.tt');
+	$c->stash(user => $o, template => 'users/user.tt');
+}
+
+sub get_user_params
+{
+	my($c) = @_;
+	return {
+		num => $c->request->params->{num},
+		descr => $c->request->params->{descr},
+		alias => $c->request->params->{alias} || undef,
+		domain => $c->request->params->{domain} // '',
+		password => $c->request->params->{password},
+		nat_support => $c->request->params->{nat_support} || '0',
+		nat_port_support => $c->request->params->{nat_port_support} || '0',
+	};
+}
+
 
 __PACKAGE__->meta->make_immutable;
 

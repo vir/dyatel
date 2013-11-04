@@ -11,10 +11,10 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/users/:userId',   { templateUrl: '/static/p/user.htm',       controller: 'UserDetailCtrl' }).
 	when('/provisions',      { templateUrl: '/static/p/provisions.htm', controller: 'ProvisionsListCtrl' }).
 	when('/provisions/:pId', { templateUrl: '/static/p/provision.htm',  controller: 'ProvisionDetailCtrl' }).
-	when('/cgroups',         { templateUrl: '/static/p/cgrups.htm',     controller: 'CallGroupsListCtrl' }).
-	when('/cgroups/:grpId',  { templateUrl: '/static/p/cgrup.htm',      controller: 'CallGroupDetailCtrl' }).
-	when('/pgroups',         { templateUrl: '/static/p/pgrups.htm',     controller: 'PickupGroupsListCtrl' }).
-	when('/pgroups/:grpId',  { templateUrl: '/static/p/pgrup.htm',      controller: 'PickupGroupDetailCtrl' }).
+	when('/cgroups',         { templateUrl: '/static/p/cgroups.htm',    controller: 'CallGroupsListCtrl' }).
+	when('/cgroups/:grpId',  { templateUrl: '/static/p/cgroup.htm',     controller: 'CallGroupDetailCtrl' }).
+	when('/pgroups',         { templateUrl: '/static/p/pgroups.htm',    controller: 'PickupGroupsListCtrl' }).
+	when('/pgroups/:grpId',  { templateUrl: '/static/p/pgroup.htm',     controller: 'PickupGroupDetailCtrl' }).
 	otherwise({ redirectTo: '/home' });
 }]);
 

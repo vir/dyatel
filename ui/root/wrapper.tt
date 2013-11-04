@@ -25,21 +25,19 @@
 <div id="bodyblock">
 <div id="menu">
     <ul>
-        <li><a href="[% c.uri_for('/users/list') %]">Users</a></li>
-        <li><a href="[% c.uri_for('/provisions/') %]">Provisions</a></li>
+        <li><a href="[% c.uri_for('/a/users/list') %]">Users</a></li>
+        <li><a href="[% c.uri_for('/a/provisions/') %]">Provisions</a></li>
 	<li><hr /></li>
 
-        <li><a href="[% c.uri_for('/directory') %]">Directory</a></li>
-        <li><a href="[% c.uri_for('/trunks/list') %]">Trunks</a></li>
+        <li><a href="[% c.uri_for('/a/directory') %]">Directory</a></li>
+        <li><a href="[% c.uri_for('/a/trunks/list') %]">Trunks</a></li>
         <li>Groups<ul>
-            <li><a href="[% c.uri_for('/groups/list') %]">PBX Groups</a></li>
-            <li><a href="[% c.uri_for('/pickup/list') %]">Call Pickup</a></li>
+            <li><a href="[% c.uri_for('/a/cgroups/list') %]">Call</a></li>
+            <li><a href="[% c.uri_for('/a/pgroups/list') %]">Pickup</a></li>
         </ul></li>
-        <li><a href="[% c.uri_for('/translation') %]">Number Translation</a></li>
-        <li><a href="[% c.uri_for('/disas/list') %]">DISA</a></li>
-        <li><a href="[% c.uri_for('/moh/list') %]">Music on Hold</a></li>
-        <li><a href="[% c.uri_for('/')
-            %]" title="Catalyst Welcome Page">Welcome</a></li>
+        <li><a href="[% c.uri_for('/a/translation') %]">Number Translation</a></li>
+        <li><a href="[% c.uri_for('/a/disas/list') %]">DISA</a></li>
+        <li><a href="[% c.uri_for('/a/moh/list') %]">Music on Hold</a></li>
     </ul>
 </div><!-- end menu -->
 
@@ -59,4 +57,5 @@
 </html>
 
 [% END # no_wrapper %]
+[%# vim: set ft=html: %]
 

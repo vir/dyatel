@@ -1,0 +1,10 @@
+
+<table border="1">
+[% FOREACH row IN rows %]
+<tr>
+<td><a href="[% row.id %]">[% row.id %]</a></td><td>[% row.descr %]</td>
+</tr>
+[% END %]
+</table>
+
+

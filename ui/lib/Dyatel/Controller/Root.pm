@@ -26,14 +26,22 @@ The root page (/)
 
 =cut
 
-sub begin : Private {
+sub index :Path Args(0)
+{
+	my( $self, $c ) = @_;
+	$c->stash(template => 'root.tt', no_wrapper => 1);
+}
+
+sub auto : Private {
 	my ( $self, $c ) = @_;
 	unless ($c->user_exists) {
 		unless ($c->authenticate( {} )) {
 			$c->response->status(403);
 			$c->response->body('Unauthorized');
+			return 0;
 		}
 	}
+	return 1;
 }
 
 #use Data::Dumper;
@@ -50,23 +58,6 @@ sub begin : Private {
 #	);
 #}
 
-sub index :Path :Args(0) {
-	my( $self, $c ) = @_;
-
-	my $href = $c->uri_for('/users/list');
-	my $jsredir = << "***";
-<html><head>
- <script type="text/javascript">
-  document.location = "/spa";
- </script>
- <noscript>
-  <meta http-equiv="refresh" content="0; url=$href">
- </noscript>
-</head><body>
-</body></html>
-***
-	$c->response->body( $jsredir );
-}
 
 =head2 default
 
@@ -80,11 +71,6 @@ sub default :Path {
     $c->response->status(404);
 }
 
-sub spa :Local {
-	my($self, $c) = @_;
-	$c->stash(template => 'spa.tt', no_wrapper => 1);
-}
-
 =head2 end
 
 Attempt to render a view, if needed.
@@ -93,7 +79,9 @@ Attempt to render a view, if needed.
 
 sub end : ActionClass('RenderView') {
 	my($self, $c) = @_;
-	if(($c->req->param('o')||'') eq 'json') {
+# Accept: application/json
+	if(($c->request->header('Accept')||'') =~ /\bapplication\/json\b/
+			or ($c->req->param('o')||'') eq 'json') {
 		$c->stash(current_view => 'JSON');
 	}
 }

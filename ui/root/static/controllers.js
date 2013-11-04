@@ -11,7 +11,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 	if($routeParams.userId == 'new') {
 		$scope.existingUser = false;
 	} else {
-		$http.get('/users/' + $routeParams.userId + '?o=json').success(function(data) {
+		$http.get('users/' + $routeParams.userId).success(function(data) {
 			$scope.user = data.user;
 			$scope.existingUser = true;
 		});
@@ -19,7 +19,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 	$scope.saveUser = function() {
 		$scope.user.save=1;
 		$http({
-			url: $scope.existingUser ? '/users/' + $routeParams.userId : '/users/create',
+			url: $scope.existingUser ? '/a/users/' + $routeParams.userId : '/a/users/create',
 			method: "POST",
 			data: $.param($scope.user), // use jQuery to url-encode object
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -32,13 +32,13 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 	};
 	$scope.deleteUser = function() {
 		$http({
-			url: '/users/delete?uid=' + $routeParams.userId,
+			url: '/a/users/delete?uid=' + $routeParams.userId,
 			method: "POST",
 			data: "delete=1",
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function (data, status, headers, config) {
 			alert('User deleted');
-			$location.path('/users/list');
+			$location.path('/a/users/list');
 			$scope.$apply();
 		}).error(function (data, status, headers, config) {
 			alert('Error: ' + status);
@@ -47,7 +47,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 });
 
 dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
-	$http.get('/users/list?o=json').success(function(data) {
+	$http.get('/a/users/list').success(function(data) {
 		$scope.myData = data.users;
 	});
 	$scope.gridOptions = {
