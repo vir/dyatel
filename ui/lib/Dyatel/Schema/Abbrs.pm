@@ -44,8 +44,8 @@ __PACKAGE__->add_unique_constraint("abbrs_pkey", ["id"]);
 __PACKAGE__->belongs_to("owner", "Dyatel::Schema::Users", { id => "owner" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p3CzTbgM5ZdGG/qpVvTP1w
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AuqL4ngbf8LYARpcrz8dlw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

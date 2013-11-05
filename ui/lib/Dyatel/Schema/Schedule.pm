@@ -54,8 +54,8 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("schedule_pkey", ["id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6oLSbrySENHE7aMWIavSrw
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k/PcGW+CaVNzqrfJrvkzGA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

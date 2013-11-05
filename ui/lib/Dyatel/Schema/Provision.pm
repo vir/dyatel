@@ -39,8 +39,8 @@ __PACKAGE__->add_unique_constraint("provision_pkey", ["id"]);
 __PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ds2R29Wnx2na97BBJc/n1Q
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5KhR1cTBUlQLfFTbPdzcYQ
 
 # Fix hstore column. This requires InflateColumn::Serializer component
 __PACKAGE__->add_columns(

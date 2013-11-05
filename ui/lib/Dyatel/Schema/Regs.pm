@@ -79,8 +79,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->belongs_to("userid", "Dyatel::Schema::Users", { id => "userid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FGlv/IiT2EgJ5MDKTHAxFQ
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Y52Vf/Z6jfYRrppmHjavsw
 
 # add primary key to make DBIx::* happy
 __PACKAGE__->set_primary_key(qw/userid location/);

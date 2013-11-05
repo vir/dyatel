@@ -12,7 +12,8 @@ CREATE TABLE users (
 	nat_support BOOLEAN,
 	nat_port_support BOOLEAN,
 	media_bypass BOOLEAN DEFAULT FALSE,
-	dispname TEXT NULL
+	dispname TEXT NULL,
+	login TEXT NULL
 );
 
 CREATE TABLE regs (

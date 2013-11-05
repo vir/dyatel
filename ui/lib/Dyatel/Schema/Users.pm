@@ -82,6 +82,13 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => undef,
   },
+  "login",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 1,
+    size => undef,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("users_pkey", ["id"]);
@@ -137,8 +144,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-10-23 21:35:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Eu7V2HhaJvL9dEJ1de5scA
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SxEwlw3K861CiWk1Ue2B9A
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
