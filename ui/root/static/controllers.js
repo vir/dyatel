@@ -1,19 +1,28 @@
 
 var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid' ]);
 
-dyatelControllers.controller('NavbarCtrl', function($scope, $location) {
+dyatelControllers.controller('NavbarCtrl', function($scope, $http) {
+	$http.get('/id').success(function(data) {
+		$scope.user = data;
+	});
 });
 
 dyatelControllers.controller('HomePageCtrl', function($scope, $http) {
 });
 
+
+/* * * * * * * * * * Users * * * * * * * * * */
+
 dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location) {
 	if($routeParams.userId == 'new') {
 		$scope.existingUser = false;
+		$scope.title += 'New user';
 	} else {
 		$http.get('users/' + $routeParams.userId).success(function(data) {
 			$scope.user = data.user;
 			$scope.existingUser = true;
+//			$scope.title += data.user.num + ': ' + data.user.descr;
+			$scope.Title.set(data.user.num + ': ' + data.user.descr);
 		});
 	}
 	$scope.saveUser = function() {
@@ -60,10 +69,65 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
 	};
 });
 
-dyatelControllers.controller('ProvisionsListCtrl', function($scope, $http) {  });
-dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $http) {  });
-dyatelControllers.controller('CallGroupsListCtrl', function($scope, $http) {  });
-dyatelControllers.controller('CallGroupDetailCtrl', function($scope, $http) {  });
-dyatelControllers.controller('PickupGroupsListCtrl', function($scope, $http) {  });
-dyatelControllers.controller('PickupGroupDetailCtrl', function($scope, $http) {  });
+
+/* * * * * * * * * * Call Groups * * * * * * * * * */
+
+dyatelControllers.controller('CallGroupsListCtrl', function($scope, $http) {
+	$http.get('/a/cgroups/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+			{field:'descr', displayName:'Name'},
+		],
+		showFilter: true,
+	};
+});
+
+dyatelControllers.controller('CallGroupDetailCtrl', function($scope, $routeParams, $http) {
+	if($routeParams.userId == 'new') {
+		$scope.existingGrp = false;
+	} else {
+		$http.get('cgroups/' + $routeParams.grpId).success(function(data) {
+			$scope.grp = data.grp;
+			$scope.members = data.members;
+			$scope.existingGrp = true;
+		});
+	}
+	// members list
+	$scope.gridOptions = {
+		data: 'members',
+		showFilter: true,
+	};
+});
+
+
+/* * * * * * * * * * Pickup Groups * * * * * * * * * */
+
+dyatelControllers.controller('PickupGroupsListCtrl', function($scope, $http) {
+	$http.get('/a/pgroups/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'id', displayName:'Id', cellTemplate: '<a ng-href="#/pgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+			{field:'descr', displayName:'Name'},
+		],
+		showFilter: true,
+	};
+});
+
+dyatelControllers.controller('PickupGroupDetailCtrl', function($scope, $routeParams, $http) {
+});
+
+
+/* * * * * * * * * * Provision * * * * * * * * * */
+
+dyatelControllers.controller('ProvisionsListCtrl', function($scope, $http) {
+});
+dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParams, $http) {
+});
 

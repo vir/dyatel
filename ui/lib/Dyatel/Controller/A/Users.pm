@@ -77,19 +77,19 @@ sub delete :Local :Args(0)
 	$c->stash(user => $user, template => 'users/delete.tt');
 }
 
+use Data::Dumper;
 sub show :Path Args(1)
 {
 	my($self, $c, $id) = @_;
 	my $o = $c->model('DB::Users')->find($id);
-	$c->stash(obj => $o);
 	if($c->request->params->{save}) {
 		$o->update(get_user_params($c));
 		$c->response->redirect('/'.$c->request->path);
 	} elsif($c->request->params->{delete}) {
 		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $o->id }));
 	}
-#	$c->stash(user => $o, provision => $o->provisions->all, regs => $o->regs->all, template => 'users/user.tt');
-	$c->stash(user => $o, template => 'users/user.tt');
+	$c->stash(user => $o, provision => $o->provisions->all(), template => 'users/user.tt');
+#	$c->stash(regs => $o->regs->all); # something wrong with regs XXX TODO sort that out
 }
 
 sub get_user_params

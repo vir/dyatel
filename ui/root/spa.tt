@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" [%#
     %]"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 [%
-stykes = [ 'ng-grid.css'
+styles = [ 'ng-grid.css'
 	, 'bootstrap.css', 'bootstrap-responsive.css'
 ];
 javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
@@ -13,16 +13,17 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 <html ng-app="dyatelApp"><head>
  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-[% FOREACH css IN stykes %] <link rel="stylesheet" type="text/css" href="[% c.uri_for('/static/' _ css) %]" />
+[% FOREACH css IN styles %] <link rel="stylesheet" type="text/css" href="[% c.uri_for('/static/' _ css) %]" />
 [% END %]
 [% FOREACH js IN javascripts %] <script type="text/javascript" src="[% c.uri_for('/static/' _ js) %]"></script>
 [% END %]
  <style type="text/css">
 .gridStyle { border:2px solid blue; width:400px; height:300px; }
  </style>
- <title>DYATEL</title>
+ <!-- <title ng-bind="'DYATEL &mdash; ' + title">DYATEL</title> -->
+ <title>{{ Title.get() }}</title>
 </head><body>
- <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/navbar.htm'" ng-controller="NavbarCtrl"></div>
+ <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/navbar.htm'"></div>
  <div ng-view></div>
 </body></html>
 <!-- user: [% c.user.username %] -->

@@ -34,13 +34,15 @@ sub index :Path Args(0)
 
 sub auto : Private {
 	my ( $self, $c ) = @_;
-	unless ($c->user_exists) {
-		unless ($c->authenticate( {} )) {
+	unless($c->user_exists) {
+		unless($c->authenticate( {} )) {
 			$c->response->status(403);
 			$c->response->body('Unauthorized');
 			return 0;
 		}
 	}
+	my($u) = $c->model('DB::Users')->search({login => $c->user->username }, {});
+	$c->stash(uid => $u->id);
 	return 1;
 }
 
@@ -58,6 +60,12 @@ sub auto : Private {
 #	);
 #}
 
+sub id :Local
+{
+	my($self, $c) = @_;
+	my $u = $c->model('DB::Users')->find($c->stash->{uid});
+	$c->stash(login => $c->user->username(), name => $u->dispname || $u->descr);
+}
 
 =head2 default
 
@@ -66,9 +74,9 @@ Standard 404 error page
 =cut
 
 sub default :Path {
-    my ( $self, $c ) = @_;
-    $c->response->body( 'Page not found' );
-    $c->response->status(404);
+	my ( $self, $c ) = @_;
+	$c->response->body( 'Page not found' );
+	$c->response->status(404);
 }
 
 =head2 end

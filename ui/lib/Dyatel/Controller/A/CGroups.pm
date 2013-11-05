@@ -31,7 +31,10 @@ sub grp :Path Args(1)
 {
 	my($self, $c, $id) = @_;
 	if($id =~ /^\d+$/) {
-		$c->stash(obj => $c->model('DB::Callgroups')->find($id));
+		my $g = $c->model('DB::Callgroups')->find($id);
+#		my $m = [$g->callgrpmembers->all];
+		my $m = [$g->callgrpmembers->search({}, { columns => [qw/ num ord /], order_by => 'ord' })];
+		$c->stash(grp => $g, members => $m);
 		$c->forward('show');
 	} else {
 		die "Invalid group id $id";

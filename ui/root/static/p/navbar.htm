@@ -1,4 +1,4 @@
-<div class="navbar-inner">
+<div class="navbar-inner" ng-controller="NavbarCtrl">
  <div class="container">
   <button class="btn btn-navbar" ng-init="isCollapsed = true" ng-click="isCollapsed = !isCollapsed">
    <span class="icon-bar"></span>
@@ -39,7 +39,7 @@
    </ul>
    <ul class="nav pull-right">
     <li><a href="#/help">Help</a></li>
-    <li><a href="#/logout">Logout</a></li>
+    <li><p class="navbar-text"><abbr title="{{ user.name }}">{{ user.login }}</abbr></p></li>
    </ul>
   </div> <!-- /.nav-collapse -->
  </div>
