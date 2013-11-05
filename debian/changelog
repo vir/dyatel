@@ -1,3 +1,9 @@
+dyatel (0.0.33) UNRELEASED; urgency=low
+
+  * Web admin improvements
+
+ -- Vasily i. Redkin <vir@vir.otvt.ru>  Mon, 04 Nov 2013 11:54:49 +0400
+
 dyatel (0.0.32) UNRELEASED; urgency=low
 
   * Added 'Offline' divertion support
