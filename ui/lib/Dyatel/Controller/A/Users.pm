@@ -82,6 +82,11 @@ sub show :Path Args(1)
 {
 	my($self, $c, $id) = @_;
 	my $o = $c->model('DB::Users')->find($id);
+	unless($o) {
+		$c->response->body('User not found');
+		$c->response->status(404);
+		return;
+	}
 	if($c->request->params->{save}) {
 		$o->update(get_user_params($c));
 		$c->response->redirect('/'.$c->request->path);
