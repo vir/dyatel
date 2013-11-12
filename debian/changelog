@@ -1,3 +1,9 @@
+dyatel (0.0.34) UNRELEASED; urgency=low
+
+  * BLF provision added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 12 Nov 2013 18:00:26 +0400
+
 dyatel (0.0.33) UNRELEASED; urgency=low
 
   * Web admin improvements

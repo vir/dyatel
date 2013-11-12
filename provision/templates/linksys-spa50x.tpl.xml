@@ -2326,7 +2326,7 @@
   <Unit_1_Enable ua="na">Yes</Unit_1_Enable>
   <Subscribe_Delay ua="na">1</Subscribe_Delay>
   <Unit_2_Enable ua="na">Yes</Unit_2_Enable>
-  <Server_Type ua="na">Broadsoft</Server_Type> <!-- options: Broadsoft/SPA9000/Asterisk/RFC3265_4235/Sylantro -->
+  <Server_Type ua="na">RFC3265_4235</Server_Type> <!-- options: Broadsoft/SPA9000/Asterisk/RFC3265_4235/Sylantro -->
   <Test_Mode_Enable ua="na">No</Test_Mode_Enable>
   <Attendant_Console_Call_Pickup_Code ua="na">*98</Attendant_Console_Call_Pickup_Code>
   <Attendant_Console_Call_Park_Code ua="na">*68</Attendant_Console_Call_Park_Code>
@@ -2350,7 +2350,13 @@
   <BLF_Ringing_LED ua="na"></BLF_Ringing_LED>
   <BLF_Busy_LED ua="na"></BLF_Busy_LED>
   <BLF_Held_LED ua="na"></BLF_Held_LED>
-
+%]
+[% IF blfs %]
+[%  FOREACH blf IN blfs %]
+  <Unit_1_Key_[% blf.0 %] ua="na">fnc=sd+blf+cp;sub=[% blf.1 | xml %]@[% params.SIPServer %]</Unit_1_Key_1>
+[%  END %]
+[% END %]
+[%#
   <!-- Unit 1 -->
 
   <Unit_1_Key_1 ua="na"></Unit_1_Key_1>
@@ -2423,3 +2429,5 @@
   <Protect_IVR_FactoryReset ua="na">No</Protect_IVR_FactoryReset>
 %]
 </flat-profile>
+<!-- vim: set ft=xml: -->
+

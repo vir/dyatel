@@ -40,6 +40,7 @@ $sth->execute();
 while(my $row = $sth->fetchrow_hashref())
 {
 	my $user = $dbh->selectrow_hashref("SELECT * FROM users WHERE id = ?", undef, $row->{uid});
+	my $blfs = $dbh->selectall_arrayref("SELECT key, num FROM blfs WHERE uid = ? ORDER BY key, id", undef, $row->{uid});
 	my %params;
 	%params = %{ $myconf->{Params} } if $myconf->{Params};
 	%params = ( %params, hw => $row->{hw} );
@@ -51,6 +52,7 @@ while(my $row = $sth->fetchrow_hashref())
 			params => \%params,
 			user => $user,
 			conf => $myconf,
+			blfs => $blfs,
 		});
 	};
 	if($@) {
