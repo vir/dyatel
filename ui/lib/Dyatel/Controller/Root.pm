@@ -41,7 +41,12 @@ sub auto : Private {
 			return 0;
 		}
 	}
-	my($u) = $c->model('DB::Users')->search({login => $c->user->username }, {});
+	my($u) = $c->model('DB::Users')->search({login => lc $c->user->username }, {});
+	unless($u) {
+			$c->response->status(403);
+			$c->response->body('Unknown user '.$c->user->username);
+			return 0;
+	}
 	$c->stash(uid => $u->id);
 	return 1;
 }

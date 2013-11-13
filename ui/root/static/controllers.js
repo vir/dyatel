@@ -18,11 +18,20 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		$scope.existingUser = false;
 		$scope.title += 'New user';
 	} else {
-		$http.get('users/' + $routeParams.userId).success(function(data) {
+		$http.get('/a/users/' + $routeParams.userId).success(function(data) {
 			$scope.user = data.user;
 			$scope.existingUser = true;
 //			$scope.title += data.user.num + ': ' + data.user.descr;
 			$scope.Title.set(data.user.num + ': ' + data.user.descr);
+		});
+		$http.get('/a/provisions/list?uid=' + $routeParams.userId).success(function(data) {
+			$scope.provisions = data.rows;
+		});
+		$http.get('/a/morenums/list?uid=' + $routeParams.userId).success(function(data) {
+			$scope.morenums = data.rows;
+		});
+		$http.get('/a/regs/list?uid=' + $routeParams.userId).success(function(data) {
+			$scope.regs = data.rows;
 		});
 	}
 	$scope.saveUser = function() {
@@ -52,6 +61,14 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		}).error(function (data, status, headers, config) {
 			alert('Error: ' + status);
 		});
+	};
+	$scope.randomPassword = function(len, charset) {
+		var result = [];
+		charset = charset || 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		while(--len) {
+			result.push(charset.charAt(Math.floor(Math.random() * charset.length)));
+		}
+		return result.join('');
 	};
 });
 

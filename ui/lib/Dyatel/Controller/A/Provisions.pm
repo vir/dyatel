@@ -30,7 +30,9 @@ sub list :Local
 {
 	my($self, $c) = @_;
 	my $opts = {join => 'uid', prefetch => 'uid', order_by => 'hw'};
-	$c->stash(rows => [$c->model('DB::Provision')->search({}, $opts)], template => 'provisions/list.tt');
+	my $where = { };
+	$where->{uid} = $c->request->params->{uid} if $c->request->params->{uid};
+	$c->stash(rows => [$c->model('DB::Provision')->search($where, $opts)], template => 'provisions/list.tt');
 }
 
 sub show :Path Args(1)
