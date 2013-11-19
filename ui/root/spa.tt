@@ -2,7 +2,7 @@
     %]"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 [%
 styles = [ 'ng-grid.css'
-	, 'bootstrap.css', 'bootstrap-responsive.css'
+	, 'bootstrap.css', 'bootstrap-responsive.css', 'my.css'
 ];
 javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 	, 'angular-route.min.js', 'ng-grid-2.0.7.min.js'
@@ -17,14 +17,11 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 [% END %]
 [% FOREACH js IN javascripts %] <script type="text/javascript" src="[% c.uri_for('/static/' _ js) %]"></script>
 [% END %]
- <style type="text/css">
-.gridStyle { border:2px solid blue; width:400px; height:300px; }
- </style>
  <!-- <title ng-bind="'DYATEL &mdash; ' + title">DYATEL</title> -->
  <title>{{ Title.get() }}</title>
 </head><body>
  <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/navbar.htm'"></div>
- <div ng-view></div>
+ <div id="view" ng-view></div>
 </body></html>
 <!-- user: [% c.user.username %] -->
 

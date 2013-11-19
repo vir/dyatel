@@ -1,0 +1,17 @@
+<h1>Call detail records</h1>
+<div class="container-fluid">
+<div class="row-fluid">
+	<div class="table-responsive">
+		<div id="cdrs" class="gridStyle span12" ng-grid="gridOptions"></div>
+		<!-- TODO:
+		https://github.com/angular-ui/ng-grid/issues/265
+		https://github.com/angular-ui/ng-grid/blob/master/plugins/ng-grid-layout.js
+		-->
+	</div>
+</div>
+<div class="row-fluid">
+	<pre>{{ selection }}</pre>
+	<p>Total server rows: {{ totalServerItems }}</p>
+</div>
+</div>
+

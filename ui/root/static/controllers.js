@@ -13,7 +13,36 @@ dyatelControllers.controller('HomePageCtrl', function($scope, $http) {
 
 /* * * * * * * * * * Users * * * * * * * * * */
 
-dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location) {
+dyatelControllers.directive('divertionIcon', function () {
+	return {
+		restrict: 'EA',
+		template: '<abbr class="divertion" ng-show="show" ng-style="getStyle()" title="Divertion on \'{{ lng }}\'">{{ shrt }}</abbr>',
+		replace: true,
+		scope: {
+			type: '@divertionIcon',
+			show: '=',
+		},
+		link: function ($scope, element, attrs) {
+			if($scope.type == 'offline') {
+				$scope.clr = '#555';
+				$scope.lng = 'Offline';
+				$scope.shrt = 'X';
+			}
+			if($scope.type == 'noans') {
+				$scope.clr = '#44A';
+				$scope.lng = 'No Answer';
+				$scope.shrt = 'N';
+			}
+			$scope.getStyle = function() {
+				return {
+					'color': $scope.clr,
+				};
+			};
+		},
+	}
+});
+
+dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal) {
 	if($routeParams.userId == 'new') {
 		$scope.existingUser = false;
 		$scope.title += 'New user';
@@ -69,6 +98,61 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 			result.push(charset.charAt(Math.floor(Math.random() * charset.length)));
 		}
 		return result.join('');
+	};
+
+	$scope.editOthernums = function() {
+		var modalInstance = $modal.open({
+			templateUrl: '/static/p/user_morenums.htm',
+			controller: function($scope, $modalInstance, uid) {
+				$http.get('/a/morenums/list?uid=' + uid).success(function(data) {
+					$scope.myData = data.rows;
+				});
+				$scope.selection = [ ];
+				$scope.gridOptions = {
+					data: 'myData',
+					columnDefs: [
+					  { field: 'numkind.descr', displayName: 'Kind' },
+						{ field: 'val', displayName: 'Number' },
+						{ field: 'descr', displayName: 'Description' },
+						{ field: null, displayName: 'Divertion', cellTemplate: '<i show="row.getProperty(\'div_offline\')" divertion-icon="offline" ></i> <i show="row.getProperty(\'div_noans\')" divertion-icon="noans" ></i><span ng-show="row.getProperty(\'div_noans\')">{{row.getProperty(\'timeout\')}}</span>' },
+					],
+					showFilter: true,
+					multiSelect: false,
+					selectedItems: $scope.selection,
+				};
+				$scope.ok = function () {
+					$modalInstance.close($scope.selected.item);
+				};
+				$scope.cancel = function () {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+			resolve: {
+				uid: function () {
+					return $routeParams.userId;
+				}
+			},
+		});
+	};
+
+	$scope.editBLFs = function() {
+		var modalInstance = $modal.open({
+			templateUrl: '/static/p/user_blfs.htm',
+			controller: function($scope, $modalInstance, items) {
+				$scope.items = items;
+				$scope.ok = function () {
+					$modalInstance.close($scope.selected.item);
+				};
+				$scope.cancel = function () {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+			resolve: {
+				items: function () {
+					return $scope.items;
+				}
+			}
+		});
 	};
 });
 
@@ -147,4 +231,65 @@ dyatelControllers.controller('ProvisionsListCtrl', function($scope, $http) {
 });
 dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParams, $http) {
 });
+
+/* CDR */
+
+dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
+/*	$http.get('/a/cdrs/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	*/
+	$scope.selection = [ ];
+	$scope.totalServerItems = 0;
+	$scope.pagingOptions = {
+		pageSizes: [250, 500, 1000],
+		pageSize: 250,
+		currentPage: 1
+	};
+	$scope.getData = function(pageSize, page) {
+		$http.get('/a/cdrs/list?page=' + page + '&perpage=' + pageSize).success(function(data) {
+			$scope.myData = data.rows;
+			$scope.totalServerItems = data.totalrows;
+			if (!$scope.$$phase) {
+				$scope.$apply();
+			}
+		});
+	};
+	$scope.$watch('pagingOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
+			$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+		}
+	}, true);
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+//			{field:'id', displayName:'id'},
+			{field:'ts', displayName:'Timestamp', cellTemplate:'<abbr title="{{row.getProperty(\'ts\')}}">{{row.getProperty(\'ts\').substr(11,8)}}</abbr>' },
+			{field:'chan', displayName:'Channel', cellTemplate:"<span>{{row.getProperty('chan')}}  <abbr class=\"pull-right\" title=\"{{row.getProperty('direction')}}\">{{ {'incoming':'&lt;&lt;&lt;', 'outgoing':'&gt;&gt;&gt;'}[row.getProperty('direction')] }}</abbr></span>" },
+			{field:'address', displayName:'Address'},
+//			{field:'direction', displayName:'Direction'},
+			{field:'billid', displayName:'Billid'},
+			{field:'caller', displayName:'Caller'},
+			{field:'called', displayName:'Called'},
+			{field:'duration', displayName:'Duration'},
+			{field:'billtime', displayName:'Bill Time'},
+			{field:'ringtime', displayName:'Ring Time'},
+			{field:'status', displayName:'Status'},
+			{field:'reason', displayName:'Reason'},
+//			{field:'ended', displayName:'ended'},
+//			{field:'callid', displayName:'callid'},
+
+//			{field:'id', displayName:'Id', cellTemplate: '<a ng-href="#/pgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+		],
+		showFilter: true,
+		multiSelect: false,
+		selectedItems: $scope.selection,
+		enablePaging: true,
+		showFooter: true,
+		totalServerItems: 'totalServerItems',
+		pagingOptions: $scope.pagingOptions,
+	};
+	$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+});
+
 

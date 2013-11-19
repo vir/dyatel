@@ -1,0 +1,32 @@
+<form novalidate>
+ <div class="modal-header">
+  <h1>Othernums</h1>
+ </div>
+ <div id='morenumsdlg' class="modal-body">
+  <div class="container-fluid">
+   <div class="row-fluid">
+
+<div class="gridStyle" ng-grid="gridOptions"></div>
+<input class="span4" type="text" ng-model="selection[0].numkind.descr" placeholder="NumKind" />
+<input class="span4" type="text" ng-model="selection[0].val" placeholder="Number" />
+<input class="span4" type="text" ng-model="selection[0].descr" placeholder="Description" />
+
+<label class="span4"><input type="checkbox" ng-checked="selection[0].div_offline" ng-true-value="1" ng-false-value="0" />Offline</label>
+<label class="span4"><input type="checkbox" ng-checked="selection[0].div_noans" ng-true-value="1" ng-false-value="0" />No answer</label>
+<input class="span2" type="text" ng-model="selection[0].timeout" placeholder="Timeout"/>
+<input class="span2" type="text" ng-model="selection[0].sortkey" placeholder="Sort key" />
+
+   </div> <!-- row-fluid -->
+   <div class="row-fluid">
+<pre>
+Selection: {{ selection | json }}
+</pre>
+   </div> <!-- row-fluid -->
+  </div> <!-- container-fluid -->
+ </div> <!-- modal-body -->
+ <div class="modal-footer">
+  <button>Save</button>
+  <button>Cancel</button>
+ </div>
+</form>
+

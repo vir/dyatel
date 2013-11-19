@@ -15,6 +15,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/cgroups/:grpId',  { templateUrl: '/static/p/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group' }).
 	when('/pgroups',         { templateUrl: '/static/p/pgroups.htm',    controller: 'PickupGroupsListCtrl',   title: 'Pickup groups' }).
 	when('/pgroups/:grpId',  { templateUrl: '/static/p/pgroup.htm',     controller: 'PickupGroupDetailCtrl',  title: 'Pickup group' }).
+	when('/cdr',             { templateUrl: '/static/p/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);
