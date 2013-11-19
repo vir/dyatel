@@ -1,3 +1,9 @@
+dyatel (0.0.36) UNRELEASED; urgency=low
+
+  * Admin UI improvements. CDR viewer added. 
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 20 Nov 2013 01:16:00 +0400
+
 dyatel (0.0.35) UNRELEASED; urgency=low
 
   * Admin's user management page improved a bit
