@@ -1,0 +1,45 @@
+<h1>IVR &mdash; AA</h1>
+<div class="row-fluid">
+
+<div class="span6">
+	<div class="gridStyle" ng-grid="gridOptions" style="width:100%"></div>
+	<button class="btn" ng-click="onNew()">New</button>
+	<button class="btn" ng-click="onSave()">Save</button>
+	<button class="btn" ng-click="onDelete()">Delete</button>
+</div>
+
+<form class="form-inline span6" role="form"><div style="width:16em; text-align:center;">
+	<!--<input type="text" ng-model="selection[0].id" />-->
+	<div class="row-fluid">
+		<label>Number <input type="text" ng-model="selection[0].num" /></label>
+	</div>
+	<div class="row-fluid">
+		<div>
+		<div class="span4"><label>1<br /><input type="text" ng-model="selection[0].e1" style="width:60%" /></label></div>
+		<div class="span4"><label>2<br /><input type="text" ng-model="selection[0].e2" style="width:60%" /></label></div>
+		<div class="span4"><label>3<br /><input type="text" ng-model="selection[0].e3" style="width:60%" /></label></div>
+		</div><div>
+		<div class="span4"><label>4<br /><input type="text" ng-model="selection[0].e4" style="width:60%" /></label></div>
+		<div class="span4"><label>5<br /><input type="text" ng-model="selection[0].e5" style="width:60%" /></label></div>
+		<div class="span4"><label>6<br /><input type="text" ng-model="selection[0].e6" style="width:60%" /></label></div>
+		</div><div>
+		<div class="span4"><label>7<br /><input type="text" ng-model="selection[0].e7" style="width:60%" /></label></div>
+		<div class="span4"><label>8<br /><input type="text" ng-model="selection[0].e8" style="width:60%" /></label></div>
+		<div class="span4"><label>9<br /><input type="text" ng-model="selection[0].e9" style="width:60%" /></label></div>
+		</div><div>
+		<div class="span4"><label>*<br /><input type="text" ng-model="selection[0].estar" style="width:60%" /></label></div>
+		<div class="span4"><label>0<br /><input type="text" ng-model="selection[0].e0" style="width:60%" /></label></div>
+		<div class="span4"><label>#<br /><input type="text" ng-model="selection[0].ehash" style="width:60%" /></label></div>
+		</div>
+	</div>
+	<div class="row-fluid">
+		<label>Exit position on timeout <input type="text" ng-model="selection[0].etimeout" /></label>
+		<label>Timeout in seconds <input type="text" ng-model="selection[0].timeout" /></label>
+		<label>Description <input type="text" ng-model="selection[0].descr" /></label>
+		<label>Prompt file <input type="text" ng-model="selection[0].prompt" /></label>
+	</div>
+</div></form>
+
+</div>
+<pre>{{ selection | json }}</pre>
+
