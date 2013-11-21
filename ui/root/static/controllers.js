@@ -232,6 +232,56 @@ dyatelControllers.controller('ProvisionsListCtrl', function($scope, $http) {
 dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParams, $http) {
 });
 
+
+/* * * * * * * * * * IVR * * * * * * * * * */
+
+dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
+	$scope.selection = [ ];
+	$http.get('/a/ivr/aa/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'num', displayName:'Number'},
+//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+			{field:'descr', displayName:'Description'},
+		],
+		multiSelect: false,
+		selectedItems: $scope.selection,
+	};
+	$scope.onNew = function() {
+	};
+	$scope.onSave = function() {
+		$scope.selection[0].action = 'save';
+		$http({
+			method: 'POST',
+			url: '/a/ivr/aa/' + $scope.selection[0].id,
+			data: $.param($scope.selection[0]), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		});
+	};
+	$scope.onDelete = function() {
+	};
+});
+
+dyatelControllers.controller('IvrMDsCtrl', function($scope, $http) {
+	$scope.selection = [ ];
+	$http.get('/a/ivr/md/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'num', displayName:'Number'},
+//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+			{field:'descr', displayName:'Description'},
+		],
+		multiSelect: false,
+		selectedItems: $scope.selection,
+	};
+});
+
 /* CDR */
 
 dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
