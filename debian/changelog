@@ -1,3 +1,9 @@
+dyatel (0.0.37) UNRELEASED; urgency=low
+
+  * Admin UI improvements. AutoAttendents editor added.
+
+ -- Vasily i. Redkin <vir@zombie.ctm.ru>  Sat, 23 Nov 2013 00:41:00 +0400
+
 dyatel (0.0.36) UNRELEASED; urgency=low
 
   * Admin UI improvements. CDR viewer added. 
