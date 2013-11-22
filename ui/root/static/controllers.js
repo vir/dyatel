@@ -334,8 +334,8 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 	$scope.selection = [ ];
 	$scope.totalServerItems = 0;
 	$scope.pagingOptions = {
-		pageSizes: [250, 500, 1000],
-		pageSize: 250,
+		pageSizes: [500, 1000, 2000],
+		pageSize: 500,
 		currentPage: 1
 	};
 	$scope.getData = function(pageSize, page) {

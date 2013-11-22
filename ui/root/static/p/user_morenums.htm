@@ -1,32 +1,38 @@
 <form novalidate>
  <div class="modal-header">
-  <h1>Othernums</h1>
+  <h1>Other Contacts</h1>
  </div>
  <div id='morenumsdlg' class="modal-body">
   <div class="container-fluid">
    <div class="row-fluid">
 
 <div class="gridStyle" ng-grid="gridOptions"></div>
-<input class="span4" type="text" ng-model="selection[0].numkind.descr" placeholder="NumKind" />
-<input class="span4" type="text" ng-model="selection[0].val" placeholder="Number" />
-<input class="span4" type="text" ng-model="selection[0].descr" placeholder="Description" />
-
-<label class="span4"><input type="checkbox" ng-checked="selection[0].div_offline" ng-true-value="1" ng-false-value="0" />Offline</label>
-<label class="span4"><input type="checkbox" ng-checked="selection[0].div_noans" ng-true-value="1" ng-false-value="0" />No answer</label>
-<input class="span2" type="text" ng-model="selection[0].timeout" placeholder="Timeout"/>
-<input class="span2" type="text" ng-model="selection[0].sortkey" placeholder="Sort key" />
 
    </div> <!-- row-fluid -->
+   <!--
    <div class="row-fluid">
-<pre>
-Selection: {{ selection | json }}
-</pre>
+<pre> Selection: {{ selection | json }} </pre>
+   </div>
+   -->
+   <div class="row-fluid">
+    <input class="span4" type="text" ng-model="selection[0].numkind.descr" placeholder="NumKind" />
+    <input class="span4" type="text" ng-model="selection[0].val" placeholder="Number" />
+    <div class="span4">
+     Divertion:<br />
+     <label><input type="checkbox" ng-checked="selection[0].div_offline" ng-true-value="1" ng-false-value="0" />Offline</label>
+     <label><input type="checkbox" ng-checked="selection[0].div_noans" ng-true-value="1" ng-false-value="0" />No answer</label>
+    </div>
+    <input class="span4" type="text" ng-model="selection[0].descr" placeholder="Description" />
+
+    <input class="span2" type="text" ng-model="selection[0].timeout" placeholder="Timeout"/>
+    <input class="span2" type="text" ng-model="selection[0].sortkey" placeholder="Sort key" />
    </div> <!-- row-fluid -->
   </div> <!-- container-fluid -->
  </div> <!-- modal-body -->
  <div class="modal-footer">
-  <button>Save</button>
-  <button>Cancel</button>
+   <a class="btn">New</a>
+   <a class="btn">Save</a>
+   <a class="btn btn-default">Close</a>
  </div>
 </form>
 

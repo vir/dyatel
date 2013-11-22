@@ -26,6 +26,8 @@ sub index :Path :Args(0) {
 		$c->response->redirect($c->uri_for($self->action_for('list')));
 }
 
+use Data::Dumper;
+
 sub list :Local
 {
 	my($self, $c) = @_;
@@ -37,8 +39,16 @@ sub list :Local
 	my $where = {
 		ts => { '>', '2013-11-18' },
 	};
-# XXX TODO totalrows = SELECT MAX(id) - MIN(id) FROM cdr;
-	$c->stash(rows => [$c->model('DB::Cdr')->search($where, $opts)], totalrows => 263121, template => 'cdrs/list.tt');
+
+	my $row = $c->model('DB::Cdr')->search($where, {
+		columns => [qw/ /],
+		'+select' => [{ MIN => 'id', -as => 'min' }, { MAX => 'id', -as => 'max' }],
+		'+as' =>   [qw/ min max /],
+	})->first();
+#	$r->result_class('DBIx::Class::ResultClass::HashRefInflator');
+	my $total = $row->get_column('max') - $row->get_column('min');
+
+	$c->stash(rows => [$c->model('DB::Cdr')->search($where, $opts)], totalrows => $total, template => 'cdrs/list.tt');
 }
 
 
