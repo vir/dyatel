@@ -29,3 +29,10 @@ html,body{height:100%;}
 }
 */
 
+.changed {
+	background-color: #FDD;
+}
+
+.selected .changed {
+	background-color: #FAA;
+}
