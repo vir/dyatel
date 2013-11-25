@@ -29,6 +29,14 @@ html,body{height:100%;}
 }
 */
 
+.changed {
+	background-color: #FDD;
+}
+
+.selected .changed {
+	background-color: #FAA;
+}
+
 .badge {
 	color: rgb(255, 255, 255) !important;
 	background-color: rgb(151, 51, 51);

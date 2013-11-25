@@ -1,12 +1,17 @@
-dyatel (0.0.37) UNRELEASED; urgency=low
+dyatel (0.0.38) UNRELEASED; urgency=low
 
   * UI improvements.
   * User's web interface part stub added.
   * Admin authorization added (via 'admin' badge).
   * Shortcut icon link fixed.
 
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 25 Nov 2013 17:24:56 +0400
 
- -- Vasily i. Redkin <vir@ctm.ru>  Mon, 25 Nov 2013 17:20:33 +0400
+dyatel (0.0.37) UNRELEASED; urgency=low
+
+  * Admin UI improvements. AutoAttendents editor added.
+
+ -- Vasily i. Redkin <vir@zombie.ctm.ru>  Sat, 23 Nov 2013 00:41:00 +0400
 
 dyatel (0.0.36) UNRELEASED; urgency=low
 

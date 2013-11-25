@@ -32,30 +32,31 @@ sub list :Local
 	my($self, $c) = @_;
 	my $opts = {order_by => 'id'};
 	my $where = { };
-	$where->{uid} = $c->request->params->{uid} if $c->request->params->{uid};
 	$c->stash(rows => [$c->model(MODELCLASS)->search($where, $opts)]);
 }
 
 sub create :Local :Args(0)
 {
 	my($self, $c) = @_;
-	if($c->request->params->{save}) {
+	if($c->request->method eq 'POST') {
 		my $o = $c->model(MODELCLASS)->create(get_item_params($c));
-		my $uid = $o->{id};
-		$c->response->redirect($c->uri_for($self->action_for('list'), {status_msg => "Added"}));
+		$c->stash(id => $o->{id});
+		$c->response->redirect($o->id);
+#		$c->response->redirect($c->uri_for($self->action_for('list'), {status_msg => "Added"}));
 	}
 }
 
 sub delete :Local :Args(0)
 {
 	my($self, $c) = @_;
-	my $id = $c->request->params->{uid};
+	my $id = $c->request->params->{id};
 	my $o = $c->model(MODELCLASS)->find({id => $id});
-	if($c->request->params->{delete}) {
+	if($c->request->method eq 'POST' && $id) {
+		if($c->request->params->{cancel}) {
+			return $c->response->redirect($id);
+		}
 		$o->delete;
 		$c->response->redirect($c->uri_for($self->action_for('list'), { status_msg => "Deleted" }));
-	} elsif($c->request->params->{cancel}) {
-		$c->response->redirect($id);
 	}
 	$c->stash(obj => $o);
 }
@@ -69,14 +70,14 @@ sub item :Path Args(1)
 		$c->response->status(404);
 		return;
 	}
-	my $action = $c->request->params->{action} || '';
-warn "Action: $action\n";
-	if($action eq 'save') {
-		$o->update(get_item_params($c));
-		$c->response->redirect('/'.$c->request->path);
-	} elsif($action eq 'delete') {
-		$c->response->redirect($c->uri_for($self->action_for('delete'), { id => $o->id }));
-	} else {
+	if($c->request->method eq 'POST') {
+		if($c->request->params->{delete}) {
+			return $c->response->redirect($c->uri_for($self->action_for('delete'), { id => $o->id }));
+		} else { # save
+			$o->update(get_item_params($c));
+			$c->response->redirect('/'.$c->request->path);
+		}
+	} else { # GET ?
 		$c->stash(obj => $o);
 	}
 }
@@ -99,7 +100,7 @@ sub get_item_params
 		ehash => $c->request->params->{ehash},
 		estar => $c->request->params->{estar},
 		etimeout => $c->request->params->{etimeout},
-		id => $c->request->params->{id},
+#		id => $c->request->params->{id},
 		num => $c->request->params->{num},
 		prompt => $c->request->params->{prompt},
 		timeout => $c->request->params->{timeout},

@@ -244,13 +244,32 @@ dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
 		data: 'myData',
 		columnDefs: [
 			{field:'num', displayName:'Number'},
-//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
 			{field:'descr', displayName:'Description'},
 		],
 		multiSelect: false,
 		selectedItems: $scope.selection,
+		rowTemplate:
+			'<div style="height: 100%" ng-class="{changed: !!row.getProperty(\'changed\')}">' +
+				'<div ng-repeat="col in renderedColumns" ng-class="col.colIndex()" class="ngCell">' +
+					'<div ng-cell></div>' +
+				'</div>' +
+			'</div>',
+		beforeSelectionChange: function() {
+			$scope.editForm.$pristine = true;
+			return true;
+		},
 	};
 	$scope.onNew = function() {
+		var newRow = { id: 'create', changed: true };
+		$scope.myData.push(newRow);
+		var index = $scope.myData.indexOf(newRow);
+		console.log('index: ' + index);
+		var e = $scope.$on('ngGridEventData', function() {
+			$scope.gridOptions.selectItem(index, true);
+			var grid = $scope.gridOptions.ngGrid;
+			grid.$viewport.scrollTop((grid.rowMap[index] + 1) * grid.config.rowHeight);
+//			e();
+		});
 	};
 	$scope.onSave = function() {
 		$scope.selection[0].action = 'save';
@@ -259,9 +278,32 @@ dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
 			url: '/a/ivr/aa/' + $scope.selection[0].id,
 			data: $.param($scope.selection[0]), // XXX depends on jQuery
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			alert(angular.toJson(data));
+			if(data.obj) {
+				for(k in data.obj) {
+					$scope.selection[0][k] = data.obj[k];
+				}
+			}
+			$scope.selection[0].changed = false;
 		});
 	};
 	$scope.onDelete = function() {
+		var delRow = function() {
+			var index = $scope.myData.indexOf($scope.selection[0]);
+			$scope.gridOptions.selectItem(index, false);
+			$scope.myData.splice(index, 1);
+		};
+		if(isNaN(parseFloat($scope.selection[0].id)))
+			delRow();
+		else {
+			$http({
+				method: 'POST',
+				url: '/a/ivr/aa/delete',
+				data: 'id=' + $scope.selection[0].id,
+				headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+			}).success(delRow);
+		}
 	};
 });
 
