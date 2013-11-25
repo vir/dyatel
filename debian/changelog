@@ -1,3 +1,13 @@
+dyatel (0.0.37) UNRELEASED; urgency=low
+
+  * UI improvements.
+  * User's web interface part stub added.
+  * Admin authorization added (via 'admin' badge).
+  * Shortcut icon link fixed.
+
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 25 Nov 2013 17:20:33 +0400
+
 dyatel (0.0.36) UNRELEASED; urgency=low
 
   * Admin UI improvements. CDR viewer added. 
