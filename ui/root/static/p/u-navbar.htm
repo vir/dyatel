@@ -5,10 +5,11 @@
    <span class="icon-bar"></span>
    <span class="icon-bar"></span>
   </button>
-  <a class="brand" href="#/home">Dyatel admin</a>
+  <a class="brand" href="#/home">Dyatel</a>
   <div class="nav-collapse" collapse="isCollapsed">
    <ul class="nav">
 
+<!--
     <li class="dropdown">
      <a href="#" class="dropdown-toggle">Users <b class="caret"></b></a>
      <ul class="dropdown-menu">
@@ -35,11 +36,12 @@
     </li>
 
     <li><a href="#/cdr">CDR</a></li>
-
+-->
    </ul>
    <ul class="nav pull-right">
     <li><a href="#/help">Help</a></li>
-    <li><a href="/u/" title="{{ user.name }}">{{ user.login }}</a></li>
+    <li ng-repeat="b in user.badges"><p class="navbar-text"><a class="badge" href="/a/">{{ b }}</a></p></li>
+    <li><p class="navbar-text"><abbr title="{{ user.name }}">{{ user.login }}</abbr></p></li>
    </ul>
   </div> <!-- /.nav-collapse -->
  </div>

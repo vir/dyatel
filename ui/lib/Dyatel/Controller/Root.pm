@@ -44,10 +44,12 @@ sub auto : Private {
 	my($u) = $c->model('DB::Users')->search({login => lc $c->user->username }, {});
 	unless($u) {
 			$c->response->status(403);
-			$c->response->body('Unknown user '.$c->user->username);
+			my $msg = 'Unknown user '.$c->user->username;
+			$c->log->debug($msg);
+			$c->response->body($msg);
 			return 0;
 	}
-	$c->stash(uid => $u->id);
+	$c->stash(uid => $u->id, badges => $u->badges);
 	return 1;
 }
 
@@ -69,7 +71,7 @@ sub id :Local
 {
 	my($self, $c) = @_;
 	my $u = $c->model('DB::Users')->find($c->stash->{uid});
-	$c->stash(login => $c->user->username(), name => $u->dispname || $u->descr);
+	$c->stash(login => $c->user->username(), name => $u->dispname || $u->descr, badges => $u->badges);
 }
 
 =head2 default

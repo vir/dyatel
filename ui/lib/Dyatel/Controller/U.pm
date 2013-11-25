@@ -1,4 +1,4 @@
-package Dyatel::Controller::A;
+package Dyatel::Controller::U;
 use Moose;
 use namespace::autoclean;
 
@@ -6,7 +6,7 @@ BEGIN { extends 'Catalyst::Controller'; }
 
 =head1 NAME
 
-Dyatel::Controller::A - Catalyst Controller
+Dyatel::Controller::U - Catalyst Controller
 
 =head1 DESCRIPTION
 
@@ -21,32 +21,24 @@ Catalyst Controller.
 
 =cut
 
-sub auto :Private
-{
-	my ( $self, $c ) = @_;
-	unless(grep { $_ eq 'admin' } @{ $c->stash->{badges} }) {
-		$c->response->status(403);
-		my $msg = 'User '.$c->user->username.' is not admin';
-		$c->log->error($msg." (".$c->request->method." request for /".$c->request->path." from ".$c->request->address.")");
-		$c->response->body($msg);
-		return 0;
-	}
-	return 1;
+sub index :Path :Args(0) {
+    my ( $self, $c ) = @_;
+    $c->response->body('Matched Dyatel::Controller::U::PhoneList in U::PhoneList.');
 }
 
 sub index :Path Args(0) {
 	my( $self, $c ) = @_;
 
-	my $href = $c->uri_for('/a/users/list');
 	my $jsredir = << "***";
 <html><head>
  <script type="text/javascript">
-  document.location = "/a/spa";
+  document.location = "/u/spa";
  </script>
- <noscript>
-  <meta http-equiv="refresh" content="0; url=$href">
- </noscript>
 </head><body>
+ <noscript>
+  <h1>JavaScript not detected</h1>
+	<p>Javascript support is required.</p>
+ </noscript>
 </body></html>
 ***
 	$c->response->body( $jsredir );
@@ -54,7 +46,7 @@ sub index :Path Args(0) {
 
 sub spa :Local {
 	my($self, $c) = @_;
-	$c->stash(template => 'spa.tt', no_wrapper => 1);
+	$c->stash(template => 'spa.tt', no_wrapper => 1, prefix => 'u-');
 }
 
 =encoding utf8

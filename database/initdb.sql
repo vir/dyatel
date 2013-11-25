@@ -13,7 +13,8 @@ CREATE TABLE users (
 	nat_port_support BOOLEAN,
 	media_bypass BOOLEAN DEFAULT FALSE,
 	dispname TEXT NULL,
-	login TEXT NULL
+	login TEXT NULL,
+	badges TEXT[] NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE regs (
