@@ -43,6 +43,8 @@ dyatelControllers.directive('divertionIcon', function () {
 });
 
 dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal) {
+	$scope.possibleBadges = [ 'admin' ];
+	$scope.badges = { };
 	if($routeParams.userId == 'new') {
 		$scope.existingUser = false;
 		$scope.title += 'New user';
@@ -50,7 +52,9 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		$http.get('/a/users/' + $routeParams.userId).success(function(data) {
 			$scope.user = data.user;
 			$scope.existingUser = true;
-//			$scope.title += data.user.num + ': ' + data.user.descr;
+			$scope.user.badges.forEach(function(b) {
+				$scope.badges[b] = true;
+			});
 			$scope.Title.set(data.user.num + ': ' + data.user.descr);
 		});
 		$http.get('/a/provisions/list?uid=' + $routeParams.userId).success(function(data) {
@@ -64,11 +68,15 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		});
 	}
 	$scope.saveUser = function() {
-		$scope.user.save=1;
+		$scope.user.badges = [ ];
+		$scope.possibleBadges.forEach(function(b) {
+			if($scope.badges[b])
+				$scope.user.badges.push(b);
+		});
 		$http({
 			url: $scope.existingUser ? '/a/users/' + $routeParams.userId : '/a/users/create',
 			method: "POST",
-			data: $.param($scope.user), // use jQuery to url-encode object
+			data: $.param($scope.user, true), // use jQuery to url-encode object
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function (data, status, headers, config) {
 			alert('Saved user');

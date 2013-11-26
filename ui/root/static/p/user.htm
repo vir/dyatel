@@ -4,40 +4,41 @@
 <div class="row-fluid">
 	<div id="mainuserinfo" class="span7">
 		<h2>{{ existingUser ? (user.num + ': ' + user.descr) : 'New user' }}</h2>
-		<div class="controls">
-			<input type="text" class="span1" placeHolder="Number" ng-model="user.num" ng-readonly="existingUser" />
+		<div class="span12 controls form-horizontal">
+			<input type="text" class="span2" placeHolder="Number" ng-model="user.num" ng-readonly="existingUser" />
 			<input type="text" class="span3" placeHolder="Password" ng-model="user.password" />
-			<button ng-click="user.password = randomPassword(12)">Random</button>
-			<input type=text class="span4" placeHolder="Domain login" ng-model="user.login" />
+			<button class="btn" ng-click="user.password = randomPassword(12)">Random</button>
+			Login: <input type=text class="span4" placeHolder="Domain login" ng-model="user.login" />
 		</div>
-		<div class="controls">
+		<div class="span12 controls form-horizontal">
 			Alias: <input type="text" class="span2" placeHolder="Alias" ng-model="user.alias" />@<input type="text" class="span3" placeHolder="Domain" ng-model="user.domain" />
 		</div>
-		<div class="controls">
+		<div class="span12 controls">
 			<span class="span3">Last registered: {{ user.lastreg }}</span>
 			<span class="span3">Last IP: {{ user.lastip }}</span>
 		</div>
-		<div class="controls">
-			<textarea class="span11" placeHolder="Description" ng-model="user.descr" />
+		<div class="span12 controls form-horizontal">
+			<textarea class="span12" placeHolder="Description" ng-model="user.descr" />
 		</div>
-		<div class="controls">
-			<input type="text" class="span11" placeHolder="Display Name" ng-model="user.dispname" />
-			<span class="span6"><label>NAT support <input type="checkbox" ng-model="nat_support" /></label></span>
-			<span class="span6"><label>NAT port support <input type="checkbox" ng-model="nat_port_support" /></label></span>
+		<div class="span12 controls form-horizontal">
+			<input type="text" class="span12" placeHolder="Display Name" ng-model="user.dispname" />
+			<label class="span4"><input type="checkbox" ng-model="user.nat_support" /> NAT support</label>
+			<label class="span4"><input type="checkbox" ng-model="user.nat_port_support" /> NAT port support</label>
+			<label class="span4"><input type="checkbox" ng-model="user.media_bypass" /> Media bypass</label>
+			<label class="spam4 badge" ng-repeat="b in possibleBadges"><input type="checkbox" ng-model="badges[b]" /> {{ b }}</label>
 		</div>
-		<div class="controls span12">
-			<button ng-click="saveUser()">Save</button>
-			<button ng-show="existingUser" ng-click="deleteUser()">Delete</button>
+		<div class="span12 form-horizontal">
+			<button class="btn" ng-click="saveUser()">Save</button>
+			<button class="btn" ng-show="existingUser" ng-click="deleteUser()">Delete</button>
 		</div>
 	</div>
-	<div id="moreuserinfo" class="span3 container-fluid">
+	<div id="moreuserinfo" class="span5 container-fluid">
 		<div class="row-fluid">
 			<h3>Registrations</h3>
 			<table>
 			<tr ng-repeat="r in regs">
 				<td><a href="#/regs/{{ r.location }}" title="{{ r.device }}">{{ r.location }}</a></td>
-				<td>{{ r.driver }} {{ r.ip_transport }}</td>
-				<td>{{ r.ip_host }}</td>
+				<td><abbr title="{{ r.ip_host }}">{{ r.driver }} {{ r.ip_transport }}</abbr></td>
 			</tr>
 			</table>
 		</div>
@@ -52,17 +53,15 @@
 		</div>
 		<div class="row-fluid">
 			<h3>Other contacts</h3>
-			<table>
-			<tr ng-repeat="n in morenums">
-				<td>{{ n.numkind.descr }}</td>
-				<td><a href="#/morenums/{{ n.id }}" title="{{ n.descr }}">{{ n.val }}</a></td>
-				<td>
-					<i show="n.div_offline" divertion-icon="offline" ></i>
-					<i show="n.div_noans" divertion-icon="noans" ></i>
-				</td>
-				<td><abbr title="'No Answer' timeout">{{ n.timeout }}</abbr></td>
-			</tr>
-			</table>
+			<ol class="list-unstyled">
+			<li ng-repeat="n in morenums">
+				{{ n.numkind.descr }}
+				<a href="#/morenums/{{ n.id }}" title="{{ n.descr }}">{{ n.val }}</a>
+				<i show="n.div_offline" divertion-icon="offline" ></i>
+				<i show="n.div_noans" divertion-icon="noans" ></i>
+				<abbr show="n.div_noans" title="'No Answer' timeout">{{ n.timeout }}</abbr>
+			</li>
+			</ol>
 			<a ng-click="editOthernums()">Edit</a>
 		</div>
 		<div class="row-fluid">

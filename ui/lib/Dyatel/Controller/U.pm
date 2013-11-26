@@ -21,11 +21,6 @@ Catalyst Controller.
 
 =cut
 
-sub index :Path :Args(0) {
-    my ( $self, $c ) = @_;
-    $c->response->body('Matched Dyatel::Controller::U::PhoneList in U::PhoneList.');
-}
-
 sub index :Path Args(0) {
 	my( $self, $c ) = @_;
 

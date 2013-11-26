@@ -17,17 +17,11 @@ Catalyst Controller.
 
 =cut
 
-#sub a :Chained('/') :PathPart('a') :CaptureArgs(0)
-#{
-#	my($self, $c) = @_;
-#	$c->stash(adm => 1);
-## XXX authorize admin user here
-#}
-
 =head2 index
 
 =cut
 
+ 
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
 		$c->response->redirect($c->uri_for($self->action_for('list')));
@@ -87,11 +81,15 @@ sub show :Path Args(1)
 		$c->response->status(404);
 		return;
 	}
-	if($c->request->params->{save}) {
-		$o->update(get_user_params($c));
-		$c->response->redirect('/'.$c->request->path);
-	} elsif($c->request->params->{delete}) {
-		$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $o->id }));
+	if($c->request->method eq 'POST') {
+		if($c->request->params->{delete}) {
+			warn "del";
+			$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $o->id }));
+		} else {
+			warn "upd";
+			$o->update(get_user_params($c));
+			$c->response->redirect('/'.$c->request->path);
+		}
 	}
 	$c->stash(user => $o, provision => $o->provisions->all(), template => 'users/user.tt');
 #	$c->stash(regs => $o->regs->all); # something wrong with regs XXX TODO sort that out
@@ -100,14 +98,20 @@ sub show :Path Args(1)
 sub get_user_params
 {
 	my($c) = @_;
+	my $badges = $c->request->params->{badges};
+	$badges = [$badges] if $badges && !ref($badges);
 	return {
 		num => $c->request->params->{num},
-		descr => $c->request->params->{descr},
 		alias => $c->request->params->{alias} || undef,
 		domain => $c->request->params->{domain} // '',
 		password => $c->request->params->{password},
+		descr => $c->request->params->{descr},
 		nat_support => $c->request->params->{nat_support} || '0',
 		nat_port_support => $c->request->params->{nat_port_support} || '0',
+		media_bypass => $c->request->params->{media_bypass} || undef,
+		dispname => $c->request->params->{dispname} || undef,
+		login => $c->request->params->{login} || undef,
+		badges => $badges || [ ],
 	};
 }
 
