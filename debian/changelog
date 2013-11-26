@@ -1,3 +1,9 @@
+dyatel (0.0.39) UNRELEASED; urgency=low
+
+  * UI: User form fix
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 26 Nov 2013 10:55:19 +0400
+
 dyatel (0.0.38) UNRELEASED; urgency=low
 
   * UI improvements.
