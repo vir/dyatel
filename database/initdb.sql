@@ -494,7 +494,8 @@ CREATE TABLE cdr (
 	status TEXT,
 	reason TEXT,
 	ended BOOLEAN,
-	callid TEXT
+	callid TEXT,
+	calledfull TEXT
 );
 CREATE INDEX cdr_billid_index ON cdr(billid);
 CREATE INDEX cdr_caller_index ON cdr(caller);
@@ -502,6 +503,7 @@ CREATE INDEX cdr_direction_index ON cdr(direction);
 CREATE INDEX cdr_status_index ON cdr(status);
 CREATE INDEX cdr_ts_index ON cdr(ts);
 CREATE INDEX cdr_callid_index ON cdr(callid);
+CREATE INDEX cdr_calledfull_index ON cdr(calledfull);
 ALTER TABLE cdr CLUSTER ON cdr_ts_index;
 
 
@@ -742,5 +744,18 @@ CREATE TABLE blfs(
 	num PHONE NOT NULL
 );
 CREATE UNIQUE INDEX blfs_uniqe_index ON blfs(uid, key);
+
+
+
+CREATE TABLE phonebook (
+	id SERIAL PRIMARY KEY,
+	owner INTEGER NULL REFERENCES users(id) ON DELETE CASCADE,
+	num PHONE NOT NULL,
+	descr TEXT NOT NULL,
+	comments TEXT NOT NULL
+);
+CREATE INDEX phonebook_owner_index ON phonebook(owner);
+CREATE INDEX phonebook_num_index ON phonebook USING gin(num gin_trgm_ops);
+CREATE INDEX phonebook_descr_index ON phonebook USING gin(descr gin_trgm_ops);
 
 -- vim: ft=sql

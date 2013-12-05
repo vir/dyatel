@@ -37,3 +37,21 @@ INSERT INTO morenums(uid, numkind, val) VALUES (189, 2, '+7-812-1234567');
 
 COMMIT;
 
+
+
+-- == extended phonebook - may be l8r
+-- CREATE EXTENSION pg_trgm;
+-- CREATE TABLE phonebook_data (
+-- 	eid INTEGER NOT NULL REFERENCES phonebook(id) ON DELETE CASCADE,
+-- 	tag TEXT NOT NULL,
+-- 	val TEXT NOT NULL
+-- );
+-- CREATE INDEX phonebook_data_val_index ON phonebook_data USING gin(val gin_trgm_ops);
+-- INSERT INTO phonebook(id) SELECT generate_series(1, (SELECT COUNT(*) FROM users));
+-- SELECT setval('phonebook_id_seq'::regclass, (SELECT MAX(id) FROM phonebook));
+-- INSERT INTO phonebook_data(eid, tag, val)
+-- 	SELECT ROW_NUMBER() OVER (PARTITION BY z), z,
+-- 		CASE WHEN z = 'FN' THEN descr ELSE num END AS v
+-- 	FROM users, unnest(ARRAY['FN', 'TEL']) z
+-- 	ORDER BY id, v;
+

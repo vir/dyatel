@@ -1,0 +1,19 @@
+BEGIN;
+
+ALTER TABLE cdr ADD calledfull TEXT;
+CREATE INDEX cdr_calledfull_index ON cdr(calledfull);
+
+CREATE TABLE phonebook (
+	id SERIAL PRIMARY KEY,
+	owner INTEGER NULL REFERENCES users(id) ON DELETE CASCADE,
+	num PHONE NOT NULL,
+	descr TEXT NOT NULL,
+	comments TEXT NOT NULL
+);
+CREATE INDEX phonebook_owner_index ON phonebook(owner);
+CREATE INDEX phonebook_num_index ON phonebook USING gin(num gin_trgm_ops);
+CREATE INDEX phonebook_descr_index ON phonebook USING gin(descr gin_trgm_ops);
+
+COMMIT;
+
+-- vim: ft=sql

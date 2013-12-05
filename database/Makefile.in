@@ -4,7 +4,16 @@ install:
 	install -d ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/install/
 	install -d ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/install-dbadmin/
 	install -d ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/upgrade/pgsql/
+	install -d ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/upgrade-dbadmin/pgsql/
 	install -m 644 initdb.sql ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/install/pgsql
 	install -m 644 admin.sql ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/install-dbadmin/pgsql
-	for f in update-*; do echo $$f; v=`echo $$f | sed 's/.*update-//; s/\\.sql$$//'`; echo $$v; install -m 644 $$f ${DESTDIR}/usr/share/dbconfig-common/data/dyatel/upgrade/pgsql/$$v; done
+	for f in update-*; do \
+		echo -n $$f; \
+		v=`echo $$f | sed 's/.*update-//; s/\\.[a-z]*$$//'`; \
+		echo -n ' --> ' $$v; \
+		case $$f in *.dbadm) s='-dbadmin';; esac; \
+		d=${DESTDIR}/usr/share/dbconfig-common/data/dyatel/upgrade$$s/pgsql; \
+		echo ' --> ' $$d; \
+		install -m 644 $$f $$d/$$v; \
+	done
 

@@ -1,3 +1,11 @@
+dyatel (0.0.40) UNRELEASED; urgency=low
+
+  * Fix SPA50x BLF provision template
+  * Added "phonebook" table
+  * Added "calledfull" field to cdr table
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 05 Dec 2013 18:27:28 +0400
+
 dyatel (0.0.39) UNRELEASED; urgency=low
 
   * UI: User form fix
