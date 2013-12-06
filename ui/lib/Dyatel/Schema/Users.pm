@@ -121,6 +121,11 @@ __PACKAGE__->has_many(
   { "foreign.uid" => "self.id" },
 );
 __PACKAGE__->has_many(
+  "phonebooks",
+  "Dyatel::Schema::Phonebook",
+  { "foreign.owner" => "self.id" },
+);
+__PACKAGE__->has_many(
   "pickupgrpmembers",
   "Dyatel::Schema::Pickupgrpmembers",
   { "foreign.uid" => "self.id" },
@@ -152,8 +157,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-25 11:44:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:igrxKBN4Df1r3MfbWu7HKQ
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-12-06 15:20:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jb1Vl/tWYYFvaUbkueF/gw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

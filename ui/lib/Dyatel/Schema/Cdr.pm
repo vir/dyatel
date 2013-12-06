@@ -108,13 +108,20 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => undef,
   },
+  "calledfull",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 1,
+    size => undef,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cdr_pkey", ["id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FYnkZkZVYj/GXuweUqP4lw
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-12-06 15:20:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zuyhnIgbSe5LwIvo+8vRhg
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

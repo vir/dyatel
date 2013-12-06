@@ -22,12 +22,12 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("pickupgrpmembers_pkey", ["id"]);
-__PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 __PACKAGE__->belongs_to("grp", "Dyatel::Schema::Pickupgroups", { id => "grp" });
+__PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:U1rjprlUunEkb73K3e1z4g
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-12-06 15:20:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/7lsvBUYhuu/I4tAtv1+6Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
