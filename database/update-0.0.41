@@ -1,0 +1,4 @@
+
+ALTER TABLE phonebook ADD numkind INTEGER NULL REFERENCES numkinds(id) ON DELETE SET NULL;
+
+

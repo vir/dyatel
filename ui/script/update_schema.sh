@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2013-12-01 01:31:34 +0400
+# Last modified: 2013-12-06 15:20:37 +0400
 #
 
 DIR=`dirname $0`
@@ -20,7 +20,7 @@ FILES=`git status lib/Dyatel/Schema | awk '($2 == "modified:") { print $3 }'`
 for F in ${FILES}
 do
 	echo ${F}
-	if ! git --no-pager diff --no-color lib/Dyatel/Schema/Vcards.pm | grep '^[+-]' | grep -v '^[+-]\(#\|--\|++\)'
+	if ! git --no-pager diff --no-color ${F} | grep '^[+-]' | grep -v '^[+-]\(#\|--\|++\)'
 	then
 		echo ' - no changes'
 		git checkout ${F}

@@ -47,6 +47,5 @@ __PACKAGE__->belongs_to("owner", "Dyatel::Schema::Users", { id => "owner" });
 # Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-12-06 15:20:41
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kvnSt4hj7QsofqUupFaj2g
 
-
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;

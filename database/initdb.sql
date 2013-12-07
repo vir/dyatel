@@ -752,7 +752,9 @@ CREATE TABLE phonebook (
 	owner INTEGER NULL REFERENCES users(id) ON DELETE CASCADE,
 	num PHONE NOT NULL,
 	descr TEXT NOT NULL,
-	comments TEXT NOT NULL
+	comments TEXT NOT NULL,
+	numkind INTEGER NULL REFERENCES numkinds(id) ON DELETE SET NULL
+
 );
 CREATE INDEX phonebook_owner_index ON phonebook(owner);
 CREATE INDEX phonebook_num_index ON phonebook USING gin(num gin_trgm_ops);

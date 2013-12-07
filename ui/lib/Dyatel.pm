@@ -29,6 +29,8 @@ extends 'Catalyst';
 
 our $VERSION = '0.01';
 
+use Log::Any::Adapter;
+
 # Configure the application.
 #
 # Note that settings in dyatel.conf (or other external
@@ -76,6 +78,9 @@ __PACKAGE__->config(
 # Start the application
 __PACKAGE__->setup();
 
+# Prepare logger to be used in models
+Log::Any::Adapter->set('Catalyst', logger => __PACKAGE__->log);
+
 if($ENV{TEST_AUTH_USER}) {
 	require Dyatel::TestAuth;
 	Dyatel::TestAuth->meta->apply(__PACKAGE__->engine);
@@ -111,8 +116,33 @@ it under the same terms as Perl itself.
 # Dirty hack to fix JSON serialization
 package DBIx::Class;
 
+use Data::Dumper;
 sub TO_JSON {
 	my $self = shift;
+	unless($self->can('get_inflated_columns') && $self->can('columns')) {
+		my $copy;
+		$copy = sub {
+			my($x) = @_;
+			if(! ref($x)) {
+				return $x;
+			} elsif(ref($x) eq 'ARRAY') {
+				my $r;
+				foreach my $e(@$x) {
+					push @$r, $copy->($e);
+				}
+				return $r;
+			} elsif(ref($x) eq 'HASH') {
+				my $r;
+				foreach my $k(keys %$x) {
+					$r->{$k} = $copy->($x->{$k});
+				}
+				return $r;
+			}
+		};
+		my $r = $copy->($self);
+#		print "TO_JSON: ".Dumper($r);
+		return $r;
+	}
 	my $r = { $self->get_inflated_columns };
 	foreach my $k($self->columns()) {
 		my $inf = $self->column_info($k);
