@@ -17,20 +17,22 @@ __PACKAGE__->config(
 sub xsearch
 {
 	my $self = shift;
-	my($q, $areas) = @_;
+	my($q, $opts) = @_;
 	my $storage = $self->storage;
 	return $storage->dbh_do(sub {
 		my $self = shift;
 		my $dbh = shift;
 		my @selects;
-		push @selects, q"SELECT 'users' AS src, num, descr, 'local' AS numkind FROM users WHERE descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1";
-		push @selects, q"SELECT 'users' AS src, num, u.descr, COALESCE(k.tag, k.descr) AS numkind FROM users u INNER JOIN morenums m ON m.uid = u.id INNER JOIN numkinds k ON k.id = m.numkind WHERE u.descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1 OR m.val ILIKE $1 OR m.descr ILIKE $1";
-		push @selects, q"SELECT 'pb' AS src, p.num, p.descr, COALESCE(k.tag, k.descr) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner IS NULL AND (p.descr ILIKE $1 OR p.num ILIKE $1)";
+		push @selects, q"SELECT 'users' AS src, num, descr, 'local' AS numkind FROM users WHERE descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1" if $opts->{loc};
+		push @selects, q"SELECT 'users' AS src, m.val AS num, u.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM users u INNER JOIN morenums m ON m.uid = u.id INNER JOIN numkinds k ON k.id = m.numkind WHERE u.descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1 OR m.val ILIKE $1 OR m.descr ILIKE $1" if $opts->{loc};
+		push @selects, q"SELECT 'cpb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner IS NULL AND (p.descr ILIKE $1 OR p.num ILIKE $1)" if $opts->{com};
+		push @selects, q"SELECT 'ppb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner = ".$opts->{uid}.q" AND (p.descr ILIKE $1 OR p.num ILIKE $1)" if $opts->{pvt};
+		return [ ] unless @selects;
 		my $sql = join(' UNION ', @selects)." ORDER BY num;";
     $log->debug("Search SQL: $sql, arg: <<$q>>");
 		my $sth = $dbh->prepare($sql);
 		$sth->execute("%$q%");
-		my $r = $sth->fetchall_arrayref({});
+		my $r = $sth->fetchall_arrayref( { } ); # note empty hash ref - makes array of hashes
 		return $r;
 	});
 }

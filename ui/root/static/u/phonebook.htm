@@ -1,0 +1,19 @@
+<form novalidate>
+<div id="phonebook" class="container-fluid">
+<div class="row-fluid text-center" style="text-align:center;">
+
+<input id="filter" ng-model="filterOptions.filterText" type="text" placeholder="Поиск" class="input-large search-query" focus-me />
+<div class="form-inline">
+	<label class="checkbox"><input type="checkbox" ng-model="filterOptions.cb_local">Местные телефоны</label>
+	<label class="checkbox"><input type="checkbox" ng-model="filterOptions.cb_private">Личная адресная книга</label>
+	<label class="checkbox"><input type="checkbox" ng-model="filterOptions.cb_common">Общая адресная книга</label>
+</div>
+
+<div class="row-fluid">
+	<div class="table-responsive">
+		<div class="gridStyle span12" ng-grid="gridOptions"></div>
+	</div>
+</div>
+
+</div>
+</div>

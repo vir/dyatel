@@ -50,3 +50,16 @@ html,body{height:100%;}
 	border-radius: 6px;
 }
 
+#phonebook input.input-large {
+	width: 50%;
+	height: 36px;
+	font-size: 32px;
+	line-height: 32px;
+}
+#phonebook #filter {
+	margin-top:32px;
+}
+#phonebook label.checkbox {
+	margin-left: 6px;
+}
+

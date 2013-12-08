@@ -7,7 +7,79 @@ ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
 	});
 });
 
-dyatelControllers.controller('HomePageCtrl', function($scope, $http) {
+ctrlrModule.directive('focusMe', function ($timeout) {
+	return {
+		link: function (scope, element, attrs, model) {
+			$timeout(function () {
+				element[0].focus();
+			});
+		}
+	};
+});
+
+ctrlrModule.controller('HomePageCtrl', function($scope, $http) {
+});
+
+ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
+	$scope.filterOptions = {
+		filterText: "",
+		useExternalFilter: true,
+		cb_local: true,
+		cb_private: true,
+		cb_common: true,
+	};
+	$scope.pagingOptions = {
+		totalServerItems: 0,
+		pageSizes: [5, 10, 20],
+		pageSize: 5,
+		currentPage: 1
+	};
+
+	$scope.getData = function() {
+		var url = '/u/phonebook/search?' + $.param({
+			q: $scope.filterOptions.filterText,
+//			p: $scope.pagingOptions.currentPage,
+//			pp: $scope.pagingOptions.pageSize,
+			loc: $scope.filterOptions.cb_local ? 1 : 0,
+			pvt: $scope.filterOptions.cb_private ? 1 : 0,
+			com: $scope.filterOptions.cb_common ? 1 : 0,
+		}, true); // use jQuery to url-encode object
+		$http.get(url).success(function(data) {
+			$scope.pagingOptions.totalServerItems = data.rows;
+			$scope.myData = data.result;
+		});
+	};
+
+	$scope.$watch('pagingOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
+			$scope.getData();
+		}
+	}, true);
+	$scope.$watch('filterOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal) {
+			$scope.getData();
+		}
+	}, true);
+
+	$scope.getData();
+
+	$scope.gridOptions = {
+		data: 'myData',
+//		enablePaging: true,
+		showFooter: true,
+		totalServerItems:'pagingOptions.totalServerItems',
+		pagingOptions: $scope.pagingOptions,
+		filterOptions: $scope.filterOptions
+	};
+});
+
+ctrlrModule.controller('CallListCtrl', function($scope, $http) {
+});
+
+ctrlrModule.controller('MyPhoneCtrl', function($scope, $http) {
+});
+
+ctrlrModule.controller('MyAbbrsCtrl', function($scope, $http) {
 });
 
 

@@ -30,7 +30,13 @@ sub index :Path :Args(0) {
 sub search :Local
 {
 	my($self, $c) = @_;
-	my $res = $c->model('DB')->xsearch($c->request->params->{q});
+	my %opts = (
+		uid => $c->stash->{uid},
+	);
+	foreach my $k(qw( loc pvt com )) {
+		$opts{$k} = $c->request->params->{$k};
+	}
+	my $res = $c->model('DB')->xsearch($c->request->params->{q}, \%opts);
 	$c->stash(result => $res);
 }
 
