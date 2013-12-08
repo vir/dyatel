@@ -173,6 +173,8 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
 		columnDefs: [
 			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
 			{field:'descr', displayName:'Name'},
+			{field:'login', displayName:'Login'},
+			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="badge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>'},
 		],
 		showFilter: true,
 	};
