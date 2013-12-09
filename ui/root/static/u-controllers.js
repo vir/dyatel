@@ -49,27 +49,41 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 			$scope.myData = data.result;
 		});
 	};
+	$scope.updateResults = function() {
+		//$scope.getData();
+		if($scope.getDataTimeout)
+			$timeout.cancel($scope.getDataTimeout);
+		$scope.getDataTimeout = $timeout(function() {
+			$scope.getData();
+		}, 500);
+		$scope.$on('$destroy', function() {
+			$timeout.cancel($scope.getDataTimeout);
+		});
+	};
 
 	$scope.$watch('pagingOptions', function (newVal, oldVal) {
 		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
-			$scope.getData();
+			$scope.updateResults();
 		}
 	}, true);
 	$scope.$watch('filterOptions', function (newVal, oldVal) {
 		if (newVal !== oldVal) {
-			$scope.getData();
+			$scope.updateResults();
 		}
 	}, true);
 
 	$scope.getData();
 
+	$scope.selection = [ ];
 	$scope.gridOptions = {
 		data: 'myData',
 //		enablePaging: true,
-		showFooter: true,
+//		showFooter: true,
 		totalServerItems:'pagingOptions.totalServerItems',
 		pagingOptions: $scope.pagingOptions,
-		filterOptions: $scope.filterOptions
+		filterOptions: $scope.filterOptions,
+		multiSelect: false,
+		selectedItems: $scope.selection,
 	};
 });
 
