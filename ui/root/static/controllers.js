@@ -344,7 +344,7 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 	$scope.selection = [ ];
 	$scope.totalServerItems = 0;
 	$scope.pagingOptions = {
-		pageSizes: [500, 1000, 2000],
+		pageSizes: [100, 200, 500, 1000, 2000],
 		pageSize: 500,
 		currentPage: 1
 	};
@@ -372,7 +372,7 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 //			{field:'direction', displayName:'Direction'},
 			{field:'billid', displayName:'Billid'},
 			{field:'caller', displayName:'Caller'},
-			{field:'called', displayName:'Called'},
+			{field:'called', displayName:'Called', cellTemplate:"<span>{{ row.getProperty('called') + (row.getProperty('calledfull') && (' (' + row.getProperty('calledfull') + ')') || '') }}</span>"},
 			{field:'duration', displayName:'Duration'},
 			{field:'billtime', displayName:'Bill Time'},
 			{field:'ringtime', displayName:'Ring Time'},
