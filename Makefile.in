@@ -1,5 +1,5 @@
 
-SUBDIRS=database ui provision ivr
+SUBDIRS=database ui provision ivr cti
 all:
 	( cd ui; perl Makefile.PL SITEPREFIX=/usr )
 	for d in ${SUBDIRS}; do $(MAKE) -C $$d; done

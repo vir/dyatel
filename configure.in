@@ -5,7 +5,8 @@ AC_INIT([dyatel], [0.0.1])
 AC_REVISION([m4_esyscmd_s([git describe --always])])
 
 # AC_CONFIG_FILES, AC_CONFIG_HEADERS, AC_CONFIG_COMMANDS and AC_CONFIG_LINK
-AC_CONFIG_FILES([Makefile database/Makefile provision/Makefile ivr/Makefile])
+AC_CONFIG_FILES([Makefile database/Makefile provision/Makefile ivr/Makefile
+	cti/Makefile])
 
 AC_OUTPUT
 

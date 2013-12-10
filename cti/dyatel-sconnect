@@ -1,0 +1,159 @@
+#!/usr/bin/perl -w
+
+use strict;
+use warnings FATAL => 'uninitialized';
+use lib '.';
+use Yate;
+use Dyatel::ExtConfig;
+
+$|=1;
+
+# Operation:
+# 1. [sig/xxx = callerid] <--- [dumb/xxx = dumb1]
+# 2.                                              [dumb/xxx = dumb2] ---> [iax/xxx = targetid]
+# 3. [sig/xxx = callerid] ----------------------------------------------> [iax/xxx = targetid]
+
+# "caller-called" => { callerid=>id, calledid=>id, caller=>nnn, called=>nnn }
+my %calls;
+my %byid;
+
+my $debug = 0;
+
+sub purge_call
+{
+	my($call, $reason) = @_;
+	my $id = $call->{caller}."-".$call->{called};
+	print "Purging call $id: $reason\n";
+	delete $calls{$id};
+	delete $byid{$call->{callerid}} if $call->{callerid};
+	delete $byid{$call->{calledid}} if $call->{calledid};
+}
+
+# Handler for our "private" message, posted by some other script.
+# Initialize "Call" structure and initiate call to originator.
+sub on_call_sconnect
+{
+	my $msg = shift;
+	my $caller = $msg->param('from');
+	my $called = $msg->param('to');
+	return undef unless $caller && $called;
+	print "Trying to connect $caller and $called\n";
+	my $id = "$caller-$called";
+	my $call = $calls{$id} = {
+		caller => $caller,
+		called => $called,
+	};
+	$msg->param('autoring', 'false');
+
+	my $msgid = $msg->generate_id;
+	$byid{$msgid} = $call; # Store message id to get associate reponse with our call
+	$called =~ s#\D##; # clean up caller so Ericsson will not shit off
+	$msg->message('call.execute', undef, $msgid,
+		caller => $called,
+		callto => 'dumb/',
+		target => $caller,
+		format => 'alaw',
+	);
+	return('true');
+}
+
+# Called 2 times:
+#  First, when we call "originator" (we get his channel id)
+#  Second, when we call "destination" (we get their channel id)
+sub on_our_call_execute_result
+{
+	my $msg = shift;
+	my $call = delete $byid{$msg->header('id')} || return;
+	my $targetid = $msg->param('targetid');
+	if(! $call->{callerid}) { # First case
+		$msg->dumpmsg('Our call to originator (result)') if $debug;
+		$call->{dumb1} = $msg->param('id');
+		$call->{callerid} = $targetid;
+		$byid{$targetid} = $call;
+	} elsif(! $call->{calledid}) { # Second case
+		$msg->dumpmsg('Our call to destination (result)') if $debug;
+		$call->{dumb2} = $msg->param('id');
+		$call->{calledid} = $targetid;
+		$byid{$targetid} = $call;
+	} else {
+		warn "Got call.execute response but both channels ids is already set";
+	}
+}
+
+sub on_call_answered
+{
+	my $msg = shift;
+	my $id = $msg->param('id');
+	my $call = $byid{$id} || return undef;
+
+	if($id eq $call->{callerid}) {
+		$msg->dumpmsg('Originator answered, going on') if $debug;
+
+		my $msgid = $msg->generate_id;
+		$byid{$msgid} = $call; # Store message id to get associate reponse with our call
+		$msg->message('call.execute', undef, $msgid,
+			caller => $call->{caller},
+			callto => 'dumb/',
+			target => $call->{called},
+			format => 'alaw',
+		);
+	} else {
+		$msg->dumpmsg('Destination answered, interconnecting channels') if $debug;
+		$msg->message('chan.connect', undef, undef,
+			id => $call->{callerid},
+			targetid => $call->{calledid},
+			billid => $msg->param('billid'),
+		);
+		purge_call($call, 'connected');
+	}
+	return undef;
+}
+
+# Called when someone disconnects. Clean up our structures.
+sub on_chan_hangup
+{
+	my $msg = shift;
+	my $id = $msg->param('id');
+	my $call = $byid{$id} || return undef;
+	$msg->dumpmsg('Got hangup') if $debug;
+
+	my $peerid = $call->{ ($id eq $call->{callerid})?'calledid':'callerid' };
+	$msg->message('call.drop', undef, undef,
+		id => $peerid,
+		reason => 'Peer hangup',
+	) if $peerid;
+
+	my $reason = $msg->param('reason') || 'hangup';
+	purge_call($call, $reason);
+}
+
+# Forward destination channel "ringing" to originator channel (inband only)
+sub on_call_ringing
+{
+	my $msg = shift;
+	my $call = $byid{$msg->param('id')} || return undef;
+	my $targetid = $msg->{targetid};
+	$msg->dumpmsg('Target is ringing now, so do we') if $debug;
+	$msg->message('chan.masquerade', undef, undef,
+		message => "chan.attach",
+		id=>$call->{dumb1},
+		source=>"tone/ring",
+	);
+	return 'true';
+}
+
+
+my $conf = Dyatel::ExtConfig::load()->{Model}{Yate}{extmodule};
+
+my $message = new Yate(Debug=>0);
+$message->connect($conf->{address}.':'.$conf->{port}, 'global', $0);
+$message->install("call.sconnect",\&on_call_sconnect,200);
+$message->install_incoming('call.execute', \&on_our_call_execute_result);
+$message->install("call.answered",\&on_call_answered,50);
+$message->install("chan.hangup",\&on_chan_hangup,50);
+$message->install("call.ringing",\&on_call_ringing,50);
+$message->listen();
+
+
+
+
