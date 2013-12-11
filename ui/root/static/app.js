@@ -18,6 +18,8 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/ivr-aas',         { templateUrl: '/static/p/ivr-aas.htm',    controller: 'IvrAAsCtrl',             title: 'IVR - AA' }).
 	when('/ivr-mds',         { templateUrl: '/static/p/ivr-mds.htm',    controller: 'IvrMDsCtrl',             title: 'IVR - MD' }).
 	when('/cdr',             { templateUrl: '/static/p/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
+	when('/status',          { templateUrl: '/static/p/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
+	when('/status/:module',  { templateUrl: '/static/p/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);

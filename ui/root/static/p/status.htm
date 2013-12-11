@@ -1,0 +1,8 @@
+<h1>Engine status</h1>
+
+<table>
+<tr><th>Module</th><th>Type</th><th>Data</th></tr>
+<tr ng-repeat="row in data"><td><a ng-href="#/status/{{row.name}}">{{ row.name }}</a></td><td>{{ row.type }}</td><td>{{ row.params | json }}</td></tr>
+</table>
+
+

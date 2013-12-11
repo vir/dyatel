@@ -394,4 +394,29 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 	$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
 });
 
+/* Status */
+
+dyatelControllers.controller('StatusCtrlOverview', function($scope, $http) {
+	$scope.data = [ ];
+	$http.get('/a/status/overview').success(function(data) {
+		$scope.data = data.result;
+	});
+});
+
+dyatelControllers.controller('StatusCtrlModule', function($scope, $routeParams, $http) {
+	$scope.data = [ ];
+	$scope.colDefs = [ ];
+	$http.get('/a/status/detail/' + $routeParams.module).success(function(data) {
+		$scope.data = data.result[0];
+		$scope.colDefs = $scope.data.format.map(function(x) {
+			return { field: x };
+		});
+		$scope.colDefs.unshift({field: 'row_id'});
+	});
+	$scope.gridOptions = {
+		data: 'data.rows',
+		columnDefs: 'colDefs',
+	};
+});
+
 

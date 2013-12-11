@@ -76,6 +76,60 @@ sub testcall
 	return "I am alive!\n".Dumper($r);
 }
 
+# === status query ===
+
+sub _parse_params
+{
+	my($text) = @_;
+	return { map { split('=', $_, 2) } split(',', $text) };
+}
+
+sub _parse_status
+{
+	my($line) = @_;
+	my($head, $tail, @rows) = split(';', $line);
+	foreach(@rows) {
+		$_ = [ split(/[=|]/, $_) ];
+	}
+	my $h = _parse_params($head);
+	my @format;
+	@format = split(/\|/, $h->{format}) if defined $h->{format};
+	foreach(@rows) {
+		my %h = ( row_id => shift @$_ );
+		for(my $i = 0; $i < @$_; ++$i) {
+			$h{ $format[$i] } = $_->[$i];
+		}
+		$_ = \%h;
+	}
+	$h->{params} = _parse_params($tail) if defined $tail;
+	$h->{format} = \@format;
+	$h->{rows} = \@rows;
+	return $h;
+}
+
+sub status_overview
+{
+	my $self = shift;
+	my $text = $self->send_message_wait_response('engine.status', undef, undef, details => 'false');
+	my $r = [ ];
+	foreach my $line(split(/[\r\n]+/, $text)) {
+		push @$r, _parse_status($line);
+	}
+	return $r;
+}
+
+sub status_detail
+{
+	my $self = shift;
+	my($module) = @_;
+	my $text = $self->send_message_wait_response('engine.status', undef, undef, module => $module);
+	my $r = [ ];
+	foreach my $line(split(/[\r\n]+/, $text)) {
+		push @$r, _parse_status($line);
+	}
+	return $r;
+}
+
 =head1 NAME
 
 Dyatel::Model::Yate - Catalyst Model
