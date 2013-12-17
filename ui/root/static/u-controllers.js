@@ -61,6 +61,21 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 		});
 	};
 
+	$scope.call = function(arg) {
+		var postdata = {
+			called: arg,
+			linehint: 'xz',
+		};
+		$http({
+			method: 'POST',
+			url: '/u/cti/call',
+			data: $.param(postdata),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			alert(angular.toJson(data));
+		});
+	};
+
 	$scope.$watch('pagingOptions', function (newVal, oldVal) {
 		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
 			$scope.updateResults();
@@ -77,6 +92,14 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 	$scope.selection = [ ];
 	$scope.gridOptions = {
 		data: 'myData',
+		columnDefs: [
+			{ field: 'src', displayName: 'Source' },
+			{ field: 'numkind', displayName: 'Kind' },
+			{ field: null, displayName: 'x', cellTemplate: '<span class="icon icon-home"></span>' },
+			{ field: 'num', displayName: 'Number' },
+			{ field: 'descr', displayName: 'Description' },
+			{ displayName: 'Action', cellTemplate: '<button ng-click="call(row.getProperty(\'num\'))">Call</button>' },
+		],
 //		enablePaging: true,
 //		showFooter: true,
 		totalServerItems:'pagingOptions.totalServerItems',

@@ -94,6 +94,17 @@ sub new
 	return $self;
 }
 
+sub status
+{
+	my $self = shift;
+	return {
+		name => $self->{name},
+		caller => $self->{caller},
+		id => $self->{id},
+		state => $self->{fsm_state},
+	};
+}
+
 sub yate { return shift->{yate}; }
 
 sub find
@@ -430,11 +441,22 @@ sub action_suicide
 
 # === === ===
 
+sub get_calls_list
+{
+	my(%found, @calls);
+	foreach my $k(keys %registry) {
+		my $o = $registry{$k};
+		next if $found{"$o"};
+
+		++$found{"$o"};
+		push @calls, $o;
+	}
+	return \@calls;
+}
+
 sub shutdown_all
 {
-	my %a = map { $_ => 1 } values %registry;
-	while(%registry) {
-		my($o) = values %registry;
+	foreach my $o(@{ get_calls_list() }) {
 		$o->destruct;
 	}
 }
@@ -446,6 +468,7 @@ use warnings;
 
 our %ivrs;
 our @callbacks;
+our $count_all = 0;
 
 sub init
 {
@@ -462,6 +485,7 @@ sub init
 	$yate->install('chan.replaced', _make_handler(\&Yate::IVR::Call::replace_chan));
 	$yate->install_incoming('call.execute', \&_call_execute_result);
 	$yate->install('engine.timer', \&_broadcast_engine_timer);
+	$yate->install('engine.status', \&_engine_status_handler, 150);
 }
 
 sub add
@@ -507,7 +531,28 @@ sub _call_route_handler
 	Yate::IVR::Call->new($m, $called, $table);
 	$m->param('autoring', 'false');
 	$m->param('tonedetect_in', 'true');
+	++$count_all;
 	return 'dumb/';
+}
+
+sub _engine_status_handler
+{
+	my $msg = shift;
+	my @format = qw( name id caller state );
+	my $name = $0;
+	$name =~ s#.*/##;
+	$name =~ s/\.pl$//;
+	my $mystatus = "name=$name,type=ext,format=".join('|', map({ucfirst($_)} @format)).";";
+	$mystatus .= "calls=$count_all,ivrs=".scalar(keys %ivrs).",registry=".scalar(keys %Yate::IVR::Call::registry).",responses=".scalar(keys %Yate::IVR::Call::responses);
+	if(($msg->param('details')||'') ne 'false') {
+		my $calls = Yate::IVR::Call::get_calls_list();
+		$mystatus .=",active=".scalar(@$calls);
+		for(my $i = 0; $i < @$calls; ++$i) {
+			my $s = $calls->[$i]->status;
+			$mystatus .= ";$i=".join('|', map({ defined($s->{$_}) ? $s->{$_} : '-' } @format));
+		}
+	}
+	return ['false', $msg->header('retvalue').$mystatus."\r\n"];
 }
 
 sub _call_execute_result
@@ -612,6 +657,7 @@ my $dbh = Dyatel::ExtConfig::dbh();
 $dbh->do('LISTEN ivr');
 
 my $yate = new Yate(Debug=>0);
+print "Connecting to Yate server at $conf->{address}:$conf->{port}\n";
 $yate->connect($conf->{address}.':'.$conf->{port});
 Yate::IVR::init($yate);
 #Yate::IVR::add(

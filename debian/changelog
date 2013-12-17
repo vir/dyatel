@@ -1,3 +1,10 @@
+dyatel (0.0.42) UNRELEASED; urgency=low
+
+  * Added "Call" button to phonebook (finally!)
+  * Added engine.status handler into sconnect and ivr ext. modules
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 17 Dec 2013 18:50:10 +0400
+
 dyatel (0.0.41) UNRELEASED; urgency=low
 
   * User's UI added with phonebook search

@@ -130,6 +130,21 @@ sub status_detail
 	return $r;
 }
 
+# === sconnect ===
+
+sub sconnect
+{
+	my $self = shift;
+	my($caller, $called, $linehint) = @_;
+	my %params = (
+		from => $caller,
+		to => $called,
+	);
+	$params{linehint} = $linehint if defined $linehint;
+	my $retval = $self->send_message_wait_response('call.sconnect', undef, undef, %params);
+	return $retval;
+}
+
 =head1 NAME
 
 Dyatel::Model::Yate - Catalyst Model
