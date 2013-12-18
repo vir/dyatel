@@ -93,12 +93,9 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
-			{ field: 'src', displayName: 'Source' },
-			{ field: 'numkind', displayName: 'Kind' },
-			{ field: null, displayName: 'x', cellTemplate: '<span class="icon icon-home"></span>' },
-			{ field: 'num', displayName: 'Number' },
 			{ field: 'descr', displayName: 'Description' },
-			{ displayName: 'Action', cellTemplate: '<button ng-click="call(row.getProperty(\'num\'))">Call</button>' },
+			{ field: 'num', displayName: 'Number' },
+			{ displayName: 'Action', cellTemplate: '<span>{{row.getProperty(\'src\')}} {{row.getProperty(\'numkind\')}} <button ng-click="call(row.getProperty(\'num\'))">Call</button></span>' },
 		],
 //		enablePaging: true,
 //		showFooter: true,

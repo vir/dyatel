@@ -1,8 +1,90 @@
 #!/usr/bin/perl -w
-
+use utf8;
 use strict;
 use warnings FATAL => 'uninitialized';
 use lib '.';
+
+
+package Yate::CommandHandler;
+use Yate v0.250;
+use vars qw( %commands );
+
+sub on_engine_command
+{
+	my $msg = shift;
+	my $commands = \%commands;
+	if($msg->param('partial')) {
+		my @partline = split(/\s+/, $msg->param('partline')||'');
+		while((my $c = shift @partline) && ref($commands) eq 'HASH') {
+			$commands = $commands->{$c};
+		}
+		return undef unless 'HASH' eq ref $commands;
+
+		my $partword = $msg->param('partword')||'';
+		my $rx = qr/^\Q$partword\E/i;
+		my @retvalue = split(/\t/, $msg->header('retvalue')||'');
+		foreach my $k(sort grep { /$rx/ } keys %$commands) {
+			push @retvalue, $k unless grep { $_ eq $k } @retvalue;
+		}
+		return ['false', join("\t", @retvalue)];
+	} elsif(my $line = $msg->param('line')) {
+		my @line = split(/\s+/, $line);
+		while(@line && ref($commands) eq 'HASH') {
+			my $c = shift @line;
+			$commands = $commands->{$c};
+		}
+		if('CODE' eq ref $commands) {
+			my $r = $commands->(join(' ', @line));
+			$r =~ s#\s*$#\r\n#s;
+			return $r;
+		}
+		warn "Can not execute command '$line': ".(defined($commands) ? $commands : '(undef)')." is not a CODE reference";
+		return undef;
+	}
+}
+
+sub install_handlers
+{
+	my($yate, $priority) = @_;
+	$priority = 200 unless defined $priority;
+	$yate->install("engine.command", \&on_engine_command, $priority);
+}
+
+sub add
+{
+	my($cmd, $handler) = @_;
+	my @cmd = split(/\s+/, $cmd);
+	my $lastone = pop @cmd;
+	my $commands = \%commands;
+	while(my $c = shift @cmd) {
+		$commands->{$c} = { } unless $commands->{$c};
+		if('HASH' eq ref $commands->{$c}) {
+			$commands = $commands->{$c};
+		}
+	}
+	$commands->{$lastone} = $handler;
+}
+
+sub del
+{
+	my($cmd) = @_;
+	my @cmd = split(/\s+/, $cmd);
+	my @stack;
+	my $commands = \%commands;
+	foreach my $c(@cmd) {
+		push @stack, $commands;
+		last unless 'HASH' eq ref $commands->{$c};
+		$commands = $commands->{$c};
+	}
+	for(my $i = $#cmd; $i >= 0; --$i) {
+		delete $stack[$i]{$cmd[$i]} if('HASH' ne ref($stack[$i]{$cmd[$i]}) or 0 == keys(%{$stack[$i]{$cmd[$i]}}));
+	}
+}
+
+# Example:
+#  Yate::CommandHandler::add('please say', sub { return "@_!!!" });
+
+package main;
 use Yate v0.250;
 use Dyatel::ExtConfig;
 
@@ -27,8 +109,9 @@ sub purge_call
 	my $id = $call->{caller}."-".$call->{called};
 	print "Purging call $id: $reason\n";
 	delete $calls{$id};
-	delete $byid{$call->{callerid}} if $call->{callerid};
-	delete $byid{$call->{calledid}} if $call->{calledid};
+	foreach my $k(qw( callerid calledid dumb1 dumb2 )) {
+		delete $byid{$call->{$k}} if $call->{$k};
+	}
 }
 
 # Handler for our "private" message, posted by some other script.
@@ -68,28 +151,30 @@ sub on_our_call_execute_result
 	my $msg = shift;
 	my $call = delete $byid{$msg->header('id')} || return;
 	my $targetid = $msg->param('targetid');
+	my $dumbid = $msg->param('id');
 	if(! $call->{callerid}) { # First case
 		$msg->dumpmsg('Our call to originator (result)') if $debug;
-		$call->{dumb1} = $msg->param('id');
+		$call->{dumb1} = $dumbid;
 		$call->{callerid} = $targetid;
-		$byid{$targetid} = $call;
 	} elsif(! $call->{calledid}) { # Second case
 		$msg->dumpmsg('Our call to destination (result)') if $debug;
-		$call->{dumb2} = $msg->param('id');
+		$call->{dumb2} = $dumbid;
 		$call->{calledid} = $targetid;
-		$byid{$targetid} = $call;
 	} else {
 		warn "Got call.execute response but both channels ids is already set";
 	}
+	$byid{$targetid} = $call;
+	$byid{$dumbid} = $call;
 }
 
 sub on_call_answered
 {
 	my $msg = shift;
 	my $id = $msg->param('id');
-	my $call = $byid{$id} || return undef;
+	my $targetid = $msg->param('targetid');
+	my $call = $byid{$id} || $byid{$targetid} || return undef;
 
-	if($id eq $call->{callerid}) {
+	if($id eq $call->{callerid} or $targetid eq $call->{dumb1}) {
 		$msg->dumpmsg('Originator answered, going on') if $debug;
 
 		my $msgid = $msg->generate_id;
@@ -102,6 +187,7 @@ sub on_call_answered
 		);
 	} else {
 		$msg->dumpmsg('Destination answered, interconnecting channels') if $debug;
+		$call->{calledid} = $id; # force answered destination channel, avoiding fork's complications
 		$msg->message('chan.connect', undef, undef,
 			id => $call->{callerid},
 			targetid => $call->{calledid},
@@ -135,7 +221,7 @@ sub on_chan_hangup
 sub on_call_ringing
 {
 	my $msg = shift;
-	my $call = $byid{$msg->param('id')} || return undef;
+	my $call = $byid{$msg->param('id')} || $byid{$msg->param('targetid')} || return undef;
 	my $targetid = $msg->{targetid};
 	$msg->dumpmsg('Target is ringing now, so do we') if $debug;
 	$msg->message('chan.masquerade', undef, undef,
@@ -146,6 +232,19 @@ sub on_call_ringing
 	return 'true';
 }
 
+sub on_chan_replaced
+{
+	my $msg = shift;
+	my $id = $msg->param('id');
+	my $call = $byid{$id} || return undef;
+	$msg->dumpmsg('Someone is replacing our channel') if $debug;
+	my $newid = $msg->param('newid');
+	$byid{$newid} = delete $byid{$id};
+	foreach my $k(qw( callerid calledid )) {
+		$call->{$k} = $newid if $id eq ($call->{$k}||'');
+	}
+}
+
 # Report module status
 sub on_engine_status
 {
@@ -153,10 +252,10 @@ sub on_engine_status
 	my $name = $0;
 	$name =~ s#.*/##;
 	$name =~ s/\.pl$//;
-	my $mystatus = "name=$name,type=ext;";
-	$mystatus .= "calls=$count_all,connected=$count_connected,active=".scalar(keys(%calls)).",format=caller|callerid|called|calledid";
-	warn "Status request, calls: ".scalar(keys(%calls)). ", byid: ".scalar(keys(%byid))."\n";
+	my $mystatus = "name=$name,type=ext,format=caller|callerid|called|calledid;";
+	$mystatus .= "calls=$count_all,connected=$count_connected,active=".scalar(keys(%calls));
 	if(($msg->param('details')||'') ne 'false') {
+		$mystatus .= ",calls=".scalar(keys(%calls)). ",byid=".scalar(keys(%byid));
 		foreach my $k(sort keys %calls) {
 			my $c = $calls{$k};
 			$mystatus .= ";$k=$c->{caller}|".($c->{callerid}||'-')."|$c->{called}|".($c->{calledid}||'-');
@@ -164,6 +263,31 @@ sub on_engine_status
 	}
 	return ['false', $msg->header('retvalue').$mystatus."\r\n"];
 }
+
+sub _to_boolean
+{
+	my($string, $default) = @_;
+	if(defined $string) {
+		my @str_false = ( "false", "no",  "off", "disable", "f" );
+		my @str_true  = ( "true",  "yes", "on",  "enable",  "t" );
+		return 0 if grep({ $string eq $_ } @str_false);
+		return 1 if grep { $string eq $_ } @str_true;
+	}
+	return $default->($string) if 'CODE' eq ref $default;
+	return $default;
+}
+
+sub on_engine_debug
+{
+	my $msg = shift;
+	my $name = $0;
+	$name =~ s#.*/##;
+	$name =~ s/\.pl$//;
+	return undef unless $name eq $msg->param('module');
+	$debug = _to_boolean($msg->param('line'), $debug);
+	return "debug is now $debug\r\n";
+}
+
 
 my $conf = Dyatel::ExtConfig::load()->{Model}{Yate}{extmodule};
 
@@ -174,7 +298,17 @@ $message->install_incoming('call.execute', \&on_our_call_execute_result);
 $message->install("call.answered",\&on_call_answered,50);
 $message->install("chan.hangup",\&on_chan_hangup,50);
 $message->install("call.ringing",\&on_call_ringing,50);
+$message->install("chan.replaced",\&on_chan_replaced,50);
 $message->install("engine.status",\&on_engine_status,200);
+$message->install("engine.debug",\&on_engine_debug,200);
+Yate::CommandHandler::install_handlers($message, 200);
+{
+	my $name = $0;
+	$name =~ s#.*/##;
+	$name =~ s/\.pl$//;
+	Yate::CommandHandler::add("status $name"); # We will handle engine.status
+	Yate::CommandHandler::add("debug $name");  # We will handle engine.debug
+}
 $message->listen();
 
 

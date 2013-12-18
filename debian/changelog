@@ -1,3 +1,10 @@
+dyatel (0.0.43) UNRELEASED; urgency=low
+
+  * Fixed sconnect script (fork-related issues)
+  * Fixed perl module pependence
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 18 Dec 2013 18:44:50 +0400
+
 dyatel (0.0.42) UNRELEASED; urgency=low
 
   * Added "Call" button to phonebook (finally!)
