@@ -1,5 +1,5 @@
 
-var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid' ]);
+var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid', 'ngCookies' ]);
 
 dyatelControllers.controller('NavbarCtrl', function($scope, $http) {
 	$http.get('/id').success(function(data) {
@@ -406,6 +406,7 @@ dyatelControllers.controller('StatusCtrlOverview', function($scope, $http) {
 dyatelControllers.controller('StatusCtrlModule', function($scope, $routeParams, $http) {
 	$scope.data = [ ];
 	$scope.colDefs = [ ];
+	$scope.hist_length = 10;
 	$http.get('/a/status/detail/' + $routeParams.module).success(function(data) {
 		$scope.data = data.result[0];
 		$scope.colDefs = $scope.data.format.map(function(x) {
@@ -417,6 +418,18 @@ dyatelControllers.controller('StatusCtrlModule', function($scope, $routeParams, 
 		data: 'data.rows',
 		columnDefs: 'colDefs',
 	};
+});
+
+dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $cookieStore) {
+	$scope.history = $cookieStore.get('statushistory');
+	if($scope.history)
+		$scope.history = $scope.history.filter(function(x) { return x != $routeParams.module });
+	else
+		$scope.history = [ ];
+	$scope.history.unshift($routeParams.module);
+	while($scope.history.length > $scope.hist_length)
+		$scope.history.pop();
+	$cookieStore.put('statushistory', $scope.history);
 });
 
 

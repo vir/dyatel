@@ -1,4 +1,9 @@
-<h1>Engine status</h1>
+<div ng-controller="StatusCtrlNav2">
+	<ul class="inline">
+		<li><a href="#/status">Overview</a></li>
+		<li ng-repeat="h in history"><a href="#/status/{{h}}">{{h}}</a></li>
+	</ul>
+</div>
 
 <table>
 <tr><th>Module</th><th>Type</th><th>Data</th></tr>

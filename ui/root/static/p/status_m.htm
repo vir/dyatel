@@ -1,6 +1,13 @@
 <div class="container-fluid">
 <div class="row-fluid">
 
+<div ng-controller="StatusCtrlNav2">
+	<ul class="inline">
+		<li><a href="#/status">Overview</a></li>
+		<li ng-repeat="h in history"><a href="#/status/{{h}}">{{h}}</a></li>
+	</ul>
+</div>
+
 <h1>{{ data.name }} module status</h1>
 
 <pre>{{ data.params }}</pre>
