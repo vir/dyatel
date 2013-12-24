@@ -252,6 +252,7 @@ sub on_engine_status
 	my $name = $0;
 	$name =~ s#.*/##;
 	$name =~ s/\.pl$//;
+	return undef unless $name eq ($msg->param('module') || $name);
 	my $mystatus = "name=$name,type=ext,format=caller|callerid|called|calledid;";
 	$mystatus .= "calls=$count_all,connected=$count_connected,active=".scalar(keys(%calls));
 	if(($msg->param('details')||'') ne 'false') {
