@@ -1,3 +1,9 @@
+dyatel (0.0.45) UNRELEASED; urgency=low
+
+  * Fix several jabber-related database issues
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 09 Jan 2014 17:45:05 +0400
+
 dyatel (0.0.44) UNRELEASED; urgency=low
 
   * Fix dependency

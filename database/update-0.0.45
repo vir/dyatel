@@ -1,0 +1,77 @@
+BEGIN;
+
+DROP FUNCTION roster_set_name(username TEXT, ctct TEXT, name TEXT, grps TEXT);
+DROP FUNCTION roster_set_full(uname TEXT, ctct TEXT, subs TEXT, alias TEXT, grps TEXT);
+
+CREATE OR REPLACE FUNCTION roster_set_name(uname TEXT, ctct TEXT, alias TEXT, grps TEXT)
+	RETURNS TABLE(username TEXT, contact TEXT, name TEXT, groups TEXT) AS $$
+DECLARE
+	userid INTEGER;
+BEGIN
+	userid := userid($1);
+	UPDATE roster SET label = $3, groups = $4 WHERE roster.uid = userid AND roster.contact = $2;
+	IF NOT FOUND THEN
+		INSERT INTO roster(uid, contact, label, groups) VALUES (userid, $2, $3, $4);
+	END IF;
+	RETURN QUERY SELECT u.num || '@' || u.domain AS username, r.contact, r.label AS name, r.groups FROM users u LEFT JOIN roster r ON u.id = r.uid WHERE u.id = userid AND r.contact = $2;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION roster_set_full(uname TEXT, ctct TEXT, subs TEXT, alias TEXT, grps TEXT)
+	RETURNS TABLE(username TEXT, contact TEXT, name TEXT, groups TEXT, subscription TEXT) AS $$
+DECLARE
+	userid INTEGER;
+BEGIN
+	userid := userid($1);
+	UPDATE roster SET subscription = $3, label = $4, groups = $5 WHERE roster.uid = userid AND roster.contact = $2;
+	IF NOT FOUND THEN
+		INSERT INTO roster(uid, contact, subscription, label, groups) VALUES (userid, $2, $3, $4, $5);
+	END IF;
+	RETURN QUERY SELECT u.num || '@' || u.domain AS username, r.contact, r.label AS name, r.groups, r.subscription FROM users u LEFT JOIN roster r ON u.id = r.uid WHERE u.id = userid AND r.contact = $2;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION caps_update(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	loc TEXT;
+BEGIN
+	loc = msg->'contact' || '/' || msg->'instance';
+	UPDATE regs SET audio = msg->'caps.audio' WHERE location = loc;
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
+DROP FUNCTION subscriptions_subscribe(notifier TEXT, event TEXT, subscriber TEXT, data TEXT, notifyto TEXT, expires INTERVAL);
+
+CREATE OR REPLACE FUNCTION subscriptions_subscribe(notifier_arg TEXT, event_arg TEXT, subscriber_arg TEXT, data_arg TEXT, notifyto_arg TEXT, expires_arg TEXT)
+	RETURNS TABLE (notifier TEXT, data TEXT, subscriber TEXT, event TEXT, notifyto TEXT, notifyseq INT8) AS $$
+BEGIN
+	IF event_arg IS NULL OR event_arg = '' THEN
+		RETURN;
+	END IF;
+	INSERT INTO subscriptions(notifier, operation, subscriber, data, notifyto, expires) VALUES ($1, $2, $3, $4, $5, ($6 || ' s')::INTERVAL);
+	RETURN QUERY SELECT $1, $4, $3, $2, $5, currval('subscriptions_id_seq');
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT)
+	RETURNS TABLE(notifier TEXT, data TEXT, subscriber TEXT, event TEXT, notifyto TEXT, notifyseq INT8) AS $$
+BEGIN
+	RETURN QUERY SELECT s.notifier, s.data, s.subscriber, s.operation, s.notifyto, s.id AS notifyseq
+		FROM subscriptions s WHERE s.operation = event_arg AND s.notifier = notifier_arg;
+END;
+$$ LANGUAGE PlPgSQL;
+
+DROP FUNCTION subscriptions_expires();
+
+CREATE OR REPLACE FUNCTION subscriptions_expires()
+	RETURNS TABLE(notifier TEXT, data TEXT, subscriber TEXT, event TEXT, notifyto TEXT, notifyseq INT8) AS $$
+BEGIN
+	RETURN QUERY DELETE FROM subscriptions s WHERE s.ts + s.expires < CURRENT_TIMESTAMP RETURNING s.notifier, s.data, s.subscriber, s.operation AS event, s.notifyto, s.id AS notifyseq;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
