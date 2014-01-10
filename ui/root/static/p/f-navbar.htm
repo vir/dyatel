@@ -1,0 +1,31 @@
+<div class="navbar-inner" ng-controller="NavbarCtrl">
+ <div class="container">
+  <button class="btn btn-navbar" ng-init="isCollapsed = true" ng-click="isCollapsed = !isCollapsed">
+   <span class="icon-bar"></span>
+   <span class="icon-bar"></span>
+   <span class="icon-bar"></span>
+  </button>
+  <a class="brand" href="#/home">Dyatel finance</a>
+  <div class="nav-collapse" collapse="isCollapsed">
+   <ul class="nav">
+
+    <li><a href="#/show">Просмотр</a></li>
+    <li><a href="#/reports">Отчёты</a></li>
+
+    <li class="dropdown">
+     <a href="#" class="dropdown-toggle">Параметры <b class="caret"></b></a>
+     <ul class="dropdown-menu">
+      <li><a href="#/prices">Цены</a></li>
+      <li><a href="#/groups">Отделы</a></li>
+     </ul>
+    </li>
+
+   </ul>
+   <ul class="nav pull-right">
+    <li><a href="#/help">Help</a></li>
+    <li><a href="/u/" title="{{ user.name }}">{{ user.login }}</a></li>
+   </ul>
+  </div> <!-- /.nav-collapse -->
+ </div>
+</div>
+

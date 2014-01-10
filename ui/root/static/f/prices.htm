@@ -1,0 +1,19 @@
+<div class="container-fluid">
+<div class="row-fluid">
+	<h1>Цены</h1>
+	<div class="gridStyle span11" ng-grid="gridOptions"></div>
+</div>
+<div class="row-fluid">
+	<form no-validate="1">
+	<div class="well form-inline">
+		Id:&nbsp;<input type="text" style="width:4em;" ng-model="sel[0].id" readonly="1" />
+		Prefix:&nbsp;<input type="text" ng-model="sel[0].pref" />
+		Descrption:&nbsp;<input type="text" ng-model="sel[0].descr" />
+		Price:&nbsp;<input type="text" style="width:5em;" ng-model="sel[0].price" />
+		<button class="btn" ng-click="bSave()">Save</button>
+		<button class="btn" ng-click="bNew()">New</button>
+		<button class="btn" ng-click="bDel()">Delete</button>
+	</div>
+	</form>
+</div>
+</div>

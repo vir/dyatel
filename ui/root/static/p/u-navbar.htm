@@ -24,7 +24,7 @@
    </ul>
    <ul class="nav pull-right">
     <li><a href="#/help">Help</a></li>
-    <li ng-repeat="b in user.badges"><p class="navbar-text"><a class="badge" href="/a/">{{ b }}</a></p></li>
+    <li ng-repeat="b in user.badges"><p class="navbar-text"><a class="badge" href="/{{ b.substr(0, 1) }}/">{{ b }}</a></p></li>
     <li><p class="navbar-text"><abbr title="{{ user.name }}">{{ user.login }}</abbr></p></li>
    </ul>
   </div> <!-- /.nav-collapse -->

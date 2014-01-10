@@ -96,6 +96,8 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => undef,
   },
+  "fingrp",
+  { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("users_pkey", ["id"]);
@@ -150,6 +152,7 @@ __PACKAGE__->has_many(
   "Dyatel::Schema::Roster",
   { "foreign.uid" => "self.id" },
 );
+__PACKAGE__->belongs_to("fingrp", "Dyatel::Schema::Fingroups", { id => "fingrp" });
 __PACKAGE__->has_many(
   "vcards",
   "Dyatel::Schema::Vcards",
@@ -157,8 +160,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-12-06 15:20:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jb1Vl/tWYYFvaUbkueF/gw
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-10 17:41:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u1w4bRcDa5331Tipffk17Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
