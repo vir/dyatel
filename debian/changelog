@@ -1,3 +1,9 @@
+dyatel (0.0.46) UNRELEASED; urgency=low
+
+  * Fix DB upgrade script
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 10 Jan 2014 06:17:23 +0400
+
 dyatel (0.0.45) UNRELEASED; urgency=low
 
   * Fix several jabber-related database issues

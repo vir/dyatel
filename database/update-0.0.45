@@ -55,6 +55,8 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+DROP FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT);
+
 CREATE OR REPLACE FUNCTION subscriptions_notify(notifier_arg TEXT, event_arg TEXT)
 	RETURNS TABLE(notifier TEXT, data TEXT, subscriber TEXT, event TEXT, notifyto TEXT, notifyseq INT8) AS $$
 BEGIN

@@ -11,7 +11,7 @@ install:
 		echo -n $$f; \
 		v=`echo $$f | sed 's/.*update-//; s/\\.[a-z]*$$//'`; \
 		echo -n ' --> ' $$v; \
-		case $$f in *.dbadm) s='-dbadmin';; esac; \
+		case $$f in *.dbadm) s='-dbadmin';; *) s='';; esac; \
 		d=${DESTDIR}/usr/share/dbconfig-common/data/dyatel/upgrade$$s/pgsql; \
 		echo ' --> ' $$d; \
 		install -m 644 $$f $$d/$$v; \
