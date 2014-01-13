@@ -52,9 +52,10 @@ sub spa :Local {
 	$c->stash(template => 'spa.tt', no_wrapper => 1, prefix => 'f-');
 }
 
-sub prices :Local :Args(0)
+sub _typical_ctrlr
 {
-	my($self, $c) = @_;
+	my($c, $model, $searchopts, $actions) = @_;
+	$searchopts ||= [] unless $searchopts;
 	if($c->request->method eq 'POST') {
 		my $params = $c->request->params;
 		my $id = delete $params->{id};
@@ -62,20 +63,55 @@ sub prices :Local :Args(0)
 		if($action eq 'save') {
 			my $o;
 			if($id =~ /^\d+$/) {
-				$o = $c->model('DB::Prices')->find($id);
+				$o = $c->model($model)->find($id);
 				$o->update($params);
 			} elsif($id eq 'new') {
-				$o = $c->model('DB::Prices')->create($params);
+				$o = $c->model($model)->create($params);
 			}
 			$c->stash(obj => $o);
 		} elsif($action eq 'delete') {
 			if($id =~ /^\d+$/) {
-				$c->model('DB::Prices')->find($id)->delete;
+				$c->model($model)->find($id)->delete;
 			}
+		} elsif($actions && $actions->{$action}) {
+			$actions->{$action}->($c, $id, $action, $params);
+		} else {
+			$c->response->body( 'Bad request (unknown action)' );
+			$c->response->status(400);
 		}
 	} else {
-		$c->stash(rows => [$c->model('DB::Prices')->search({}, {order_by => 'pref'})]);
+		$c->stash(rows => [$c->model($model)->search(@$searchopts)]);
 	}
+}
+
+sub prices :Local :Args(0)
+{
+	my($self, $c) = @_;
+	_typical_ctrlr($c, 'DB::Prices', [{}, {order_by => 'pref'}]);
+}
+
+sub users :Local :Args(0)
+{
+	my($self, $c) = @_;
+#	$c->stash(rows => [$c->model('DB::Users')->search(undef, { columns => ['id', 'num', 'descr', 'fingrp'], order_by => 'num' })]);
+	my $cursor = $c->model('DB::Users')->search(undef, { columns => ['id', 'num', 'descr', 'fingrp'], order_by => 'num' })->cursor;
+	my @rows;
+	while(my @vals = $cursor->next) {
+		push @rows, \@vals;
+	}
+	$c->stash(rows => \@rows);
+}
+
+sub groups :Local :Args(0)
+{
+	my($self, $c) = @_;
+	_typical_ctrlr($c, 'DB::Fingroups', [{}, {order_by => 'sortkey, name'}], {
+		setGroup => sub {
+			my($c, $id, $action, $params) = @_;
+			my $u = $c->model('DB::Users')->find($params->{uid});
+			$u->update({fingrp => $params->{grp}||undef});
+		},
+	});
 }
 
 =encoding utf8

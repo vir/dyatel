@@ -1,27 +1,16 @@
 
 var ctrlrModule = angular.module('userControllers', [ 'ngGrid' ]);
 
-ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
-	$http.get('/id').success(function(data) {
-		$scope.user = data;
-	});
-});
-
-ctrlrModule.controller('HomePageCtrl', function($scope, $http) {
-});
-
-ctrlrModule.controller('PricesCtrl', function($scope, $http) {
-	$http.get('/f/prices').success(function(data) {
+function typicalController(url, columnDefs, $scope, $http, cb) {
+	$http.get(url).success(function(data) {
 		$scope.myData = data.rows;
+		if(cb)
+			cb();
 	});
 	$scope.sel = [ ];
 	$scope.gridOptions = {
 		data: 'myData',
-		columnDefs: [
-			{field:'pref', displayName:'Префикс'},
-			{field:'descr', displayName:'Описание'},
-			{field:'price', displayName:'Цена', cellTemplate: '<span>{{ row.getProperty(col.field) }}</span>'},
-		],
+		columnDefs: columnDefs,
 		showFilter: true,
 		multiSelect: false,
 		selectedItems: $scope.sel,
@@ -30,7 +19,7 @@ ctrlrModule.controller('PricesCtrl', function($scope, $http) {
 	$scope.bSave = function() {
 		$scope.sel[0].action = 'save';
 		$http({
-			url: '/f/prices',
+			url: url,
 			method: "POST",
 			data: $.param($scope.sel[0], true), // use jQuery to url-encode object
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -53,7 +42,7 @@ ctrlrModule.controller('PricesCtrl', function($scope, $http) {
 
 	$scope.bDel = function() {
 		$http({
-			url: '/f/prices',
+			url: url,
 			method: "POST",
 			data: $.param({
 				id: $scope.sel[0].id,
@@ -68,20 +57,93 @@ ctrlrModule.controller('PricesCtrl', function($scope, $http) {
 			alert('Error: ' + status);
 		});
 	};
+}
 
+ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
+	$http.get('/id').success(function(data) {
+		$scope.user = data;
+	});
 });
 
-ctrlrModule.controller('ShowCtrl', function($scope, $http) {
-	$scope.date = {
-		begin: '',
-		end: '',
-	};
+ctrlrModule.controller('HomePageCtrl', function($scope, $http) {
+});
+
+ctrlrModule.controller('PricesCtrl', function($scope, $http) {
+	typicalController('/f/prices', [
+		{field:'pref', displayName:'Префикс'},
+		{field:'descr', displayName:'Описание'},
+		{field:'price', displayName:'Цена', cellTemplate: '<span>{{ row.getProperty(col.field) }}</span>'},
+	], $scope, $http);
 });
 
 ctrlrModule.controller('ReportsCtrl', function($scope, $http) {
 });
 
+
 ctrlrModule.controller('GroupsCtrl', function($scope, $http) {
+	$scope.noGroup = [ ];
+	var putUsers = function() {
+		$scope.users.forEach(function(u) {
+			if(u[3]) {
+				$scope.grpMap[u[3]].members.push(u);
+			} else {
+				$scope.noGroup.push(u);
+			}
+		});
+	};
+
+	typicalController('/f/groups', [
+		{field:'name', displayName:'Название'},
+		{field:'sortkey', displayName:'Ключ сортировки'},
+		{field:'members', displayName:'Сотрудники', cellTemplate: '<span><span class="member" ng-repeat="m in row.getProperty(col.field)">{{m[1]}}</span></span>'},
+	], $scope, $http, function() {
+		$scope.grpMap = { };
+		$scope.myData.forEach(function(x) {
+			x.members = [ ];
+			$scope.grpMap[x.id] = x;
+		});
+		if($scope.users)
+			putUsers();
+	});
+	$http.get('/f/users').success(function(data) {
+		$scope.users = data.rows;
+		$scope.usrMap = { };
+		$scope.users.forEach(function(u) {
+			$scope.usrMap[u[0]] = u;
+		});
+		if($scope.grpMap)
+			putUsers();
+	});
+	$scope.onDrop = function(from, toGrp) {
+		var fromGrp = from[0];
+		var uid = from[1];
+//		alert('onDrop user ' + uid + ' from grp ' + fromGrp + ' to ' + toGrp);
+		if(fromGrp == toGrp)
+			return;
+		$http({
+			url: '/f/groups',
+			method: "POST",
+			data: $.param({
+				action: 'setGroup',
+				uid: uid,
+				grp: toGrp,
+			}, true), // use jQuery to url-encode object
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function (data, status, headers, config) {
+			var u = $scope.usrMap[uid];
+			var srcColl = fromGrp ? $scope.grpMap[fromGrp].members : $scope.noGroup;
+			var dstColl = toGrp ? $scope.grpMap[toGrp].members : $scope.noGroup;
+			var idx = srcColl.indexOf(u);
+			dstColl.push(srcColl.splice(idx, 1)[0]);
+		}).error(function (data, status, headers, config) {
+			alert('Error: ' + status);
+		});
+	};
+	/*
+	$scope.dropSuccessHandler = function(ev, idx, grp, uid) {
+		alert('drop: ' + idx + 'th user with uid ' + uid + ' from group ' + grp);
+	};
+	*/
 });
 
 

@@ -4,6 +4,29 @@
 	<div class="gridStyle span11" ng-grid="gridOptions"></div>
 </div>
 <div class="row-fluid">
-	<a class="btn" href="#">Add</a>
+	<form no-validate="1">
+	<div class="well form-inline">
+		Id:&nbsp;<input type="text" style="width:4em;" ng-model="sel[0].id" readonly="1" />
+		Name:&nbsp;<input type="text" ng-model="sel[0].name" />
+		Sort key:&nbsp;<input type="text" ng-model="sel[0].sortkey" />
+		<button class="btn" ng-click="bSave()">Save</button>
+		<button class="btn" ng-click="bNew()">New</button>
+		<button class="btn" ng-click="bDel()">Delete</button>
+	</div>
+	</form>
 </div>
+
+<div class="row-fluid" ng-show="sel[0]">
+	<div class="well span6" ui-on-drop="onDrop($data, sel[0].id)">
+		<h2>Отдел &laquo;{{sel[0].name}}&raquo;</h2>
+		<span class="member" ng-repeat="m in sel[0].members" ui-draggable="true" drag="[sel[0].id, m[0]]">{{m[1]}} {{m[2]}}</span>
+		<!-- on-drop-success="dropSuccessHandler($event,$index,sel[0].id,m[0])" -->
+	</div>
+	<div class="well span6" ui-on-drop="onDrop($data, 0)">
+		<h2>Без отдела</h2>
+		<span class="member" ng-repeat="m in noGroup" ui-draggable="true" drag="[0, m[0]]">{{m[1]}} {{m[2]}}</span>
+		<!-- gn-drop-success="dropSuccessHandler($event,$index,0,m[0])" -->
+	</div>
+</div>
+
 </div>

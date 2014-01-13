@@ -1,6 +1,7 @@
 var dyatelApp = angular.module('dyatelApp', [
 	'ui.bootstrap',
 	'ngRoute',
+	'ngDragDrop',
 	'userControllers',
 ]);
 
