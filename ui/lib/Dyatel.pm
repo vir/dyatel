@@ -145,6 +145,7 @@ sub TO_JSON {
 	}
 	my $r = { $self->get_inflated_columns };
 	foreach my $k($self->columns()) {
+		next unless defined $r->{$k};
 		my $inf = $self->column_info($k);
 		if($inf->{data_type} eq "boolean") {
 			$r->{$k} = \( $r->{$k} ? 1 : 0 );
