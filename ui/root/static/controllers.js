@@ -43,7 +43,7 @@ dyatelControllers.directive('divertionIcon', function () {
 });
 
 dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal) {
-	$scope.possibleBadges = [ 'admin' ];
+	$scope.possibleBadges = [ 'admin', 'finance' ];
 	$scope.badges = { };
 	if($routeParams.userId == 'new') {
 		$scope.existingUser = false;
@@ -432,4 +432,62 @@ dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $c
 	$cookieStore.put('statushistory', $scope.history);
 });
 
+/* Schedule */
+dyatelControllers.directive('datepickerFormatString', function (dateFilter) {
+	return {
+		restrict: 'A',
+		require: 'ngModel',
+		priority: -100,
+		link: function ($scope, element, attrs, ngModel) {
+			var format = attrs.datepickerFormatString;
+			if(!format)
+				format = 'yyyy-MM-dd';
+			ngModel.$parsers.unshift(function (val) {
+				return dateFilter(val, format);
+			});
+		},
+	};
+});
+dyatelControllers.directive('timepickerFormatString', function (dateFilter) {
+	return {
+		restrict: 'A',
+		require: 'ngModel',
+		priority: -100,
+		link: function ($scope, element, attrs, ngModel) {
+			var format = attrs.datepickerFormatString;
+			if(!format)
+				format = 'hh:mm:ss';
+			ngModel.$parsers.unshift(function (val) {
+				return dateFilter(val, format);
+			});
+		},
+	};
+});
+
+dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
+	$scope.myData = [ ];
+	$scope.wdays = [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб' ];
+	$scope.anymday = $scope.anywday = false;
+	$http.get('/a/schedule/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.selection = [ ];
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{ field: 'prio', displayName: 'Priority' },
+			{ field: 'mday', displayName: 'Start date' },
+			{ field: 'days', displayName: 'Days' },
+			{ field: 'dow',  displayName: 'Week days' },
+			{ field: 'tstart', displayName: 'Start time' },
+			{ field: 'tend', displayName: 'End time' },
+			{ field: 'mode', displayName: 'Mode' },
+//			{field:'num', displayName:'Number'},
+//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+//			{field:'descr', displayName:'Description'},
+		],
+		multiSelect: false,
+		selectedItems: $scope.selection,
+	};
+});
 

@@ -2,6 +2,7 @@ var dyatelApp = angular.module('dyatelApp', [
 	'ui.bootstrap',
 	'ngRoute',
 	'dyatelControllers',
+	'ui.utils',
 ]);
 
 dyatelApp.config(['$routeProvider', function($routeProvider) {
@@ -20,6 +21,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/cdr',             { templateUrl: '/static/p/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	when('/status',          { templateUrl: '/static/p/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
 	when('/status/:module',  { templateUrl: '/static/p/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
+	when('/schedule',        { templateUrl: '/static/p/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);
