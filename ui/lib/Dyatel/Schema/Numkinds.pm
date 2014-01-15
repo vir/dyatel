@@ -58,10 +58,15 @@ __PACKAGE__->has_many(
   "Dyatel::Schema::Morenums",
   { "foreign.numkind" => "self.id" },
 );
+__PACKAGE__->has_many(
+  "phonebooks",
+  "Dyatel::Schema::Phonebook",
+  { "foreign.numkind" => "self.id" },
+);
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TGgWLtfXUnbTkewrVDyA5g
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-10 17:41:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3uKjx0fLrofvicSkYJX5Vw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
