@@ -3,25 +3,36 @@
 <div class="container-fluid">
 <div class="row-fluid">
 	<div id="mainuserinfo" class="span7">
-		<h2>{{ existingUser ? (user.num + ': ' + user.descr) : 'New user' }}</h2>
-		<div class="span12 controls form-horizontal">
-			<input type="text" class="span2" placeHolder="Number" ng-model="user.num" ng-readonly="existingUser" />
-			<input type="text" class="span3" placeHolder="Password" ng-model="user.password" />
-			<button class="btn" ng-click="user.password = randomPassword(12)">Random</button>
-			Login: <input type=text class="span4" placeHolder="Domain login" ng-model="user.login" />
+		<h2>{{ existingUser ? (user.num.num + ': ' + user.num.descr) : 'New user' }}</h2>
+		<div class="span12 well">
+			<dirnum dir-num="user.num" num-type="user" num-readonly="existingUser" />
 		</div>
+		<!--
+		<div class="span12 controls form-horizontal well">
+			<input type="text" class="span2" placeHolder="Number" ng-model="user.num.num" ng-readonly="existingUser" ng-change="numCahnge()"/>
+			<input type="text" class="span8" placeHolder="Description" ng-model="user.num.descr" />
+			<div class="small" ng-show="user.num.num">
+				<div class="text-warning" ng-show="warns" ng-bind="warns" />
+				<div class="text-success" ng-hide="warns">Ok</div>
+			</div>
+		</div>
+		-->
 		<div class="span12 controls form-horizontal">
-			Alias: <input type="text" class="span2" placeHolder="Alias" ng-model="user.alias" />@<input type="text" class="span3" placeHolder="Domain" ng-model="user.domain" />
+			<label>Display name: <input type="text" class="span9" placeHolder="Display Name" ng-model="user.dispname" /></label>
+		</div>
+		<div class="span12 controls form-inline">
+			<label>Password: <input type="text" placeHolder="Password" ng-model="user.password" /></label>
+			<button class="btn" ng-click="user.password = randomPassword(12)">Random</button>
+		</div>
+		<div class="span12 controls form-inline">
+			<label>Alias: <input type="text" placeHolder="Alias" ng-model="user.alias" /></label>@<input type="text" placeHolder="Domain" ng-model="user.domain" />
+			<label>Domain login: <input type="text" placeHolder="Domain login" ng-model="user.login" /></label>
 		</div>
 		<div class="span12 controls">
 			<span class="span3">Last registered: {{ user.lastreg }}</span>
 			<span class="span3">Last IP: {{ user.lastip }}</span>
 		</div>
 		<div class="span12 controls form-horizontal">
-			<textarea class="span12" placeHolder="Description" ng-model="user.descr" />
-		</div>
-		<div class="span12 controls form-horizontal">
-			<input type="text" class="span12" placeHolder="Display Name" ng-model="user.dispname" />
 			<label class="span4"><input type="checkbox" ng-model="user.nat_support" /> NAT support</label>
 			<label class="span4"><input type="checkbox" ng-model="user.nat_port_support" /> NAT port support</label>
 			<label class="span4"><input type="checkbox" ng-model="user.media_bypass" /> Media bypass</label>
@@ -32,7 +43,7 @@
 			<button class="btn" ng-show="existingUser" ng-click="deleteUser()">Delete</button>
 		</div>
 	</div>
-	<div id="moreuserinfo" class="span5 container-fluid">
+	<div id="moreuserinfo" class="span5 container-fluid" ng-show="existingUser">
 		<div class="row-fluid">
 			<h3>Registrations</h3>
 			<table>
@@ -52,6 +63,7 @@
 			</table>
 		</div>
 		<div class="row-fluid">
+			<a class="actbutton" ng-click="editOthernums()">Edit</a>
 			<h3>Other contacts</h3>
 			<ol class="list-unstyled">
 			<li ng-repeat="n in morenums">
@@ -62,9 +74,9 @@
 				<abbr show="n.div_noans" title="'No Answer' timeout">{{ n.timeout }}</abbr>
 			</li>
 			</ol>
-			<a ng-click="editOthernums()">Edit</a>
 		</div>
 		<div class="row-fluid">
+			<a class="actbutton" ng-click="editBLFs()">Edit</a>
 			<h3>Busy lamps</h3>
 			<table>
 			<tr ng-repeat="x in blfs">
@@ -73,7 +85,6 @@
 				<td>{{ x.descr }}</td>
 			</tr>
 			</table>
-			<a ng-click="editBLFs()">Edit</a>
 		</div>
 	</div>
 </div> <!-- row-fluid -->

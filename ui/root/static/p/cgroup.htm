@@ -1,24 +1,25 @@
-<h1>{{ existingGrp ? (grp.num + ': ' + grp.descr) : 'New group' }}</h1>
+<h1>{{ existingGrp ? (grp.num.num + ': ' + grp.num.descr) : 'New group' }}</h1>
 
+<form novalidate="1">
+<div class="span12 well">
+ <dirnum dir-num="grp.num" num-type="callgrp" num-readonly="existingGrp" />
+</div>
 <div id="grpparams" class="span8">
- <form method="post">
-  <dl>
-   <dt>Num</dt><dd><input type="text" ng-model="grp.num" ng-readonly="existinggrp" /></dd>
-   <dt>Description</dt><dd><textarea ng-model="grp.descr" /></dd>
-   <dt>Ringback</dt><dd><input type="text" ng-model="grp.ringback" /></dd>
-   <dt>Call distribution</dt><dd>{{ grp.distr }}</dd>
-   <dt>Max call</dt><dd><input type="text" ng-model="grp.maxcall" /></dd>
-   <dt>Exit position</dt><dd><input type="text" ng-model="grp.exitpos" /></dd>
-  </dl>
- </form>
+ <dl>
+  <dt>Ringback</dt><dd><input type="text" ng-model="grp.ringback" /></dd>
+  <dt>Call distribution</dt><dd>{{ grp.distr }}</dd>
+  <dt>Max call</dt><dd><input type="text" ng-model="grp.maxcall" /></dd>
+  <dt>Exit position</dt><dd><input type="text" ng-model="grp.exitpos" /></dd>
+ </dl>
  <button ng-click="savegrp()">Save</button>
- <button ng-show="existinggrp" ng-click="deletegrp()">Delete</button>
+ <button ng-show="existingGrp" ng-click="deletegrp()">Delete</button>
 </div>
 
-<div id="grpmembers" class="span4" style="border:1px dotted red" vresize>
+<div id="grpmembers" class="span4" ng-show="existingGrp" style="border:1px dotted red" vresize>
  <h2>Members</h2>
  <div ng-grid="gridOptions" style="height:200px;" style="border:2px dotted blue"></div>
 </div>
 
+</form>
 
 

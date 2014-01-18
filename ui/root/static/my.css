@@ -92,3 +92,12 @@ span.member {
 	cursor: move;
 }
 
+.actbutton {
+	display:inline;
+	float:right;
+	border:1px solid #888;
+	background-color:#eee;
+	margin-top:1.2em;
+	padding:1px 8px;
+}
+

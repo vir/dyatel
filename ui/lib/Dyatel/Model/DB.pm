@@ -37,6 +37,17 @@ sub xsearch
 	});
 }
 
+sub dir_conflict
+{
+	my $self = shift;
+	my($num) = @_;
+	return $self->storage->dbh_do(sub {
+		my $self = shift;
+		my $dbh = shift;
+		my $r = $dbh->selectrow_array('SELECT directory_check_num(?);', undef, $num);
+		return $r;
+	});
+}
 
 =head1 NAME
 

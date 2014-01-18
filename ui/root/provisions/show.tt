@@ -1,7 +1,7 @@
 [% META title = 'Provision' %]
 
 <form method="post">
-<p>User: [% obj.uid.descr | html %] (<a href="/users/[% obj.uid.id %]">[% obj.uid.num %]</a>)</p>
+<p>User: [% obj.uid.num.descr | html %] (<a href="/a/users/[% obj.uid.id %]">[% obj.uid.num.num %]</a>)</p>
 <p>Hw address: <input type="text" name="hw" value="[% obj.hw %]" /></p>
 
 <p>Device type: <select name="devtype">

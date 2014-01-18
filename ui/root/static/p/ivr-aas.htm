@@ -3,16 +3,16 @@
 
 <div class="span6">
 	<div class="gridStyle" ng-grid="gridOptions" style="width:100%"></div>
+	<div class="well">
+		<dirnum dir-num="selection[0].num" num-type="ivr" any-change="alert('hi')" />
+	</div>
 	<button class="btn" ng-click="onNew()">New</button>
 	<button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed">Save</button>
 	<button class="btn" ng-click="onDelete()" ng-disabled="!selection[0].id">Delete</button>
 	<p class="warning" ng-show="selection[0].changed">Current row is not saved</p>
 </div>
 
-<form name="editForm" class="form-inline span6" role="form"><div style="width:16em; text-align:center;">
-	<div class="row-fluid">
-		<label>Number <input type="text" ng-model="selection[0].num" ng-change="selection[0].changed=true" /></label>
-	</div>
+<form name="editForm" class="form-inline span6" role="form"><div class="well" style="width:16em; text-align:center;">
 	<div class="row-fluid">
 		<div>
 		<div class="span4"><label>1<br /><input type="text" ng-model="selection[0].e1" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
@@ -35,11 +35,9 @@
 	<div class="row-fluid">
 		<label>Exit position on timeout <input type="text" ng-model="selection[0].etimeout" ng-change="selection[0].changed=true" /></label>
 		<label>Timeout in seconds <input type="text" ng-model="selection[0].timeout" ng-change="selection[0].changed=true" /></label>
-		<label>Description <input type="text" ng-model="selection[0].descr" ng-change="selection[0].changed=true" /></label>
 		<label>Prompt file <input type="text" ng-model="selection[0].prompt" ng-change="selection[0].changed=true" /></label>
 	</div>
 </div></form>
 
 </div>
-<pre>{{ selection | json }}</pre>
 

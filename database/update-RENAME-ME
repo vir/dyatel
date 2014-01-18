@@ -1,0 +1,56 @@
+BEGIN;
+
+CREATE TABLE numtypes(numtype VARCHAR PRIMARY KEY, descr TEXT);
+
+CREATE TABLE directory (num PHONE PRIMARY KEY, numtype VARCHAR NOT NULL REFERENCES numtypes(numtype), descr TEXT);
+CREATE INDEX directory_prefix_smart_index ON directory USING btree (num text_pattern_ops);
+
+CREATE OR REPLACE FUNCTION directory_check_num(newnum PHONE) RETURNS TEXT[] AS $$
+	SELECT array_agg(num::TEXT) FROM (
+		SELECT num FROM directory WHERE num LIKE $1 || '%' UNION
+		SELECT num FROM directory WHERE $1 LIKE num || '%') ss;
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION directory_uniq_prefix_trigger() RETURNS TRIGGER AS $$
+DECLARE
+	cflct TEXT;
+BEGIN
+	cflct := array_to_string(directory_check_num(NEW.num), ', ');
+	IF LENGTH(cflct) <> 0 THEN
+		RAISE EXCEPTION 'Conflict: %', cflct;
+	END IF;
+	RETURN NEW;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE TRIGGER directory_uniq_prefix_trigger BEFORE INSERT OR UPDATE ON directory
+	FOR EACH ROW EXECUTE PROCEDURE directory_uniq_prefix_trigger();
+
+INSERT INTO numtypes (numtype, descr) VALUES ('user', 'User extension number');
+INSERT INTO numtypes (numtype, descr) VALUES ('callgrp', 'PBX call group');
+INSERT INTO numtypes (numtype, descr) VALUES ('abbr', 'Abbreveated number');
+INSERT INTO numtypes (numtype, descr) VALUES ('ivr', 'Interactive voice response');
+
+-- Populate directory with existing numbers
+INSERT INTO directory(num, numtype, descr) SELECT num, 'user', descr FROM users;
+INSERT INTO directory(num, numtype, descr) SELECT num, 'callgrp', descr FROM callgroups;
+INSERT INTO directory(num, numtype, descr) SELECT num, 'abbr', descr FROM abbrs;
+INSERT INTO directory(num, numtype, descr) SELECT num, 'ivr', descr FROM ivr_aa;
+INSERT INTO directory(num, numtype, descr) SELECT num, 'ivr', descr FROM ivr_minidisa;
+
+ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE abbrs ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ivr_aa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ivr_minidisa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE users DROP COLUMN descr;
+ALTER TABLE callgroups DROP COLUMN descr;
+ALTER TABLE abbrs DROP COLUMN descr;
+ALTER TABLE ivr_aa DROP COLUMN descr;
+ALTER TABLE ivr_minidisa DROP COLUMN descr;
+
+COMMIT;
+
+-- vim: ft=sql
+
