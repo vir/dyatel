@@ -66,7 +66,7 @@ binary-indep: install
 #	dh_installpam
 #	dh_installmime
 	dh_installinit
-#	dh_installcron
+	dh_installcron
 #	dh_installinfo
 #	dh_installwm
 #	dh_installudev

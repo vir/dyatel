@@ -1,3 +1,9 @@
+dyatel (0.0.48) UNRELEASED; urgency=low
+
+  * Backup cron job added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 20 Jan 2014 09:45:10 +0400
+
 dyatel (0.0.47) UNRELEASED; urgency=low
 
   * Fix BLF

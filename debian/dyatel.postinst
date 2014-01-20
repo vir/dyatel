@@ -42,7 +42,7 @@ case "$1" in
             adduser --system --ingroup ${G} --home ${H} --gecos "Dyael PBX" --shell /bin/sh --disabled-password ${U}
         fi
 
-        for DIR in ${H} /var/run/dyatel /var/log/dyatel
+        for DIR in ${H} /var/run/dyatel /var/log/dyatel /var/backups/dyatel
         do
             mkdir -p ${DIR}
             dpkg-statoverride --list ${DIR} >/dev/null || chown ${U}:${G} ${DIR}

@@ -1,0 +1,93 @@
+#!/usr/bin/perl -w
+#
+# (c) vir
+#
+# Last modified: 2014-01-20 08:30:17 +0400
+#
+
+use strict;
+use warnings FATAL => 'uninitialized';
+use File::Copy;
+use File::Path;
+
+my $verbose = 0;
+my $keep_archives = 25;
+
+my $backup_root = "/var/backups/dyatel";
+
+-d($backup_root) || mkdir($backup_root) || die "Can't create directory $backup_root: $!\n";
+
+my $ts = mk_timestamp();
+my $budir = "$backup_root/$ts";
+mkdir($budir) || die "Can't create directory $budir: $!\n";
+print "Backup directory is $budir\n" if $verbose;
+
+purge_outdated_backups();
+
+my $ver = get_dyatel_version();
+backup_dyatel_package($ver);
+backup_database();
+backup_configs();
+
+
+
+sub mk_timestamp
+{
+	my($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime();
+	return sprintf("%04d-%02d-%02d_%02d%02d%02d", $year + 1900, $mon + 1, $mday, $hour, $min, $sec);
+}
+
+sub get_dyatel_version
+{
+	my $version;
+	open P, "dpkg -l dyatel |" or die "Can't launch dpkg: $!";
+	while(<P>) {
+		s/\s+$//s;
+		/ii\s+dyatel\s+(\S+)\s+/ && ($version = $1);
+	}
+	close P;
+	die "dyatel package version is not found" unless $version;
+	print "Found dyatel package version: $version\n" if $verbose;
+	return $version;
+}
+
+sub backup_dyatel_package
+{
+	my($version) = @_;
+	my $pkg_fn = "/var/cache/apt/archives/dyatel_${version}_all.deb";
+	if(-f $pkg_fn) {
+		print "Found package $pkg_fn\n" if $verbose;
+		copy($pkg_fn, $budir) or die "Can't copy $pkg_fn into $budir: $!";
+	} else {
+		warn "Package $pkg_fn is not found";
+	}
+}
+
+sub backup_database
+{
+	system("pg_dump --blobs --no-owner --no-privileges --clean --exclude-table cdr --exclude-table cdr_id_seq --file $budir/db_dump.sql dyatel") == 0
+		|| die "Can't backup database: $@";
+	system("pg_dump --blobs --no-owner --no-privileges --clean --table cdr --compress 5 --file $budir/cdr_dump.sql.gz dyatel") == 0
+		|| die "Can't backup CDRs: $@";
+}
+
+sub backup_configs
+{
+	system("tar czf $budir/etc_dyatel.tar.gz -C /etc dyatel") == 0
+		|| die "Can't back up /etc/dyatel: $@";
+	system("tar czf $budir/etc_yate.tar.gz -C /etc yate") == 0
+		|| die "Can't back up /etc/yate: $@";
+}
+
+sub purge_outdated_backups
+{
+	opendir D, $backup_root or die "Can't read $backup_root directory: $!\n";
+	my @list = sort grep { !/^\./ && -d "$backup_root/$_" } readdir D;
+	closedir D;
+	splice @list, -$keep_archives + 1 if @list >= $keep_archives;
+	print "Expired archives: @list\n" if $verbose;
+	foreach(@list) {
+		rmtree("$backup_root/$_") || warn "Can't remove archive $_: $!\n";
+	}
+}
+
