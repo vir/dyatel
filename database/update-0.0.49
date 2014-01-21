@@ -1,0 +1,20 @@
+BEGIN;
+
+CREATE TABLE prices(
+	id SERIAL PRIMARY KEY,
+	pref TEXT NOT NULL,
+	price REAL NOT NULL,
+	descr TEXT
+);
+
+CREATE TABLE fingroups(
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	sortkey INTEGER NOT NULL DEFAULT 100
+);
+
+ALTER TABLE users ADD fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL;
+
+COMMIT;
+
+-- vim: ft=sql
