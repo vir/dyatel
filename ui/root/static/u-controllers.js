@@ -25,6 +25,7 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 		filterText: "",
 		useExternalFilter: true,
 		cb_local: true,
+		cb_more: true,
 		cb_private: true,
 		cb_common: true,
 	};
@@ -41,6 +42,7 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 //			p: $scope.pagingOptions.currentPage,
 //			pp: $scope.pagingOptions.pageSize,
 			loc: $scope.filterOptions.cb_local ? 1 : 0,
+			more: $scope.filterOptions.cb_more ? 1 : 0,
 			pvt: $scope.filterOptions.cb_private ? 1 : 0,
 			com: $scope.filterOptions.cb_common ? 1 : 0,
 		}, true); // use jQuery to url-encode object

@@ -23,8 +23,9 @@ sub xsearch
 		my $self = shift;
 		my $dbh = shift;
 		my @selects;
-		push @selects, q"SELECT 'users' AS src, num, descr, 'local' AS numkind FROM users WHERE descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1" if $opts->{loc};
-		push @selects, q"SELECT 'users' AS src, m.val AS num, u.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM users u INNER JOIN morenums m ON m.uid = u.id INNER JOIN numkinds k ON k.id = m.numkind WHERE u.descr ILIKE $1 OR num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1 OR m.val ILIKE $1 OR m.descr ILIKE $1" if $opts->{loc};
+		push @selects, q"SELECT 'directory' AS src, num, descr, numtype AS numkind FROM directory WHERE descr ILIKE $1 OR num ILIKE $1" if $opts->{loc};
+		push @selects, q"SELECT 'users' AS src, d.num, d.descr, 'local' AS numkind FROM users u INNER JOIN directory d ON d.num = u.num WHERE alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1" if $opts->{loc};
+		push @selects, q"SELECT 'users' AS src, m.val AS num, d.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM users u INNER JOIN morenums m ON m.uid = u.id INNER JOIN numkinds k ON k.id = m.numkind INNER JOIN directory d ON d.num = u.num WHERE d.descr ILIKE $1 OR d.num ILIKE $1 OR alias ILIKE $1 OR login ILIKE $1 OR dispname ILIKE $1 OR m.val ILIKE $1 OR m.descr ILIKE $1" if $opts->{more};
 		push @selects, q"SELECT 'cpb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner IS NULL AND (p.descr ILIKE $1 OR p.num ILIKE $1)" if $opts->{com};
 		push @selects, q"SELECT 'ppb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner = ".$opts->{uid}.q" AND (p.descr ILIKE $1 OR p.num ILIKE $1)" if $opts->{pvt};
 		return [ ] unless @selects;
