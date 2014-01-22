@@ -1,0 +1,8 @@
+<div class="controls form-inline row-fluid">
+	<input type="text" class="span2" placeHolder="Number" ng-model="dirNum.num" ng-readonly="ro" ng-change="numCahnge();"/>
+	<input type="text" class="span9" placeHolder="Description" ng-model="dirNum.descr" ng-change="descrChange();" />
+	<div class="small" ng-show="dirNum.num && !ro">
+		<div class="text-warning" ng-show="warns" ng-bind="warns" />
+		<div class="text-success" ng-hide="warns">Ok</div>
+	</div>
+</div>

@@ -39,7 +39,7 @@ my $sth = $dbh->prepare('SELECT * FROM provision');
 $sth->execute();
 while(my $row = $sth->fetchrow_hashref())
 {
-	my $user = $dbh->selectrow_hashref("SELECT * FROM users WHERE id = ?", undef, $row->{uid});
+	my $user = $dbh->selectrow_hashref("SELECT * FROM users INNER JOIN directory ON directory.num = users.num WHERE users.id = ?", undef, $row->{uid});
 	my $blfs = $dbh->selectall_arrayref("SELECT key, num FROM blfs WHERE uid = ? ORDER BY key, id", undef, $row->{uid});
 	my %params;
 	%params = %{ $myconf->{Params} } if $myconf->{Params};
@@ -94,6 +94,7 @@ Usage:
 sub translit
 {
   local($_)=@_;
+	return $_ unless defined $_;
   s/Сх/S\'h/; s/сх/s\'h/; s/СХ/S\'H/;
   s/Ш/Sh/g; s/ш/sh/g;
 

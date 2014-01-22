@@ -444,7 +444,7 @@
 <Proxy_Redundancy_Method_1_ group="Ext_1/Proxy_and_Registration">Normal</Proxy_Redundancy_Method_1_>
 --> %]
 <!-- Per-phone configuration -->
-<Display_Name_1_ group="Ext_1/Subscriber_Information">[% user.descr %]</Display_Name_1_>
+<Display_Name_1_ group="Ext_1/Subscriber_Information">[% params.displayname | xml %]</Display_Name_1_>
 <User_ID_1_ group="Ext_1/Subscriber_Information">[% user.num %]</User_ID_1_>
 <Password_1_ group="Ext_1/Subscriber_Information">[% user.password %]</Password_1_>
 <!-- ======================= -->
