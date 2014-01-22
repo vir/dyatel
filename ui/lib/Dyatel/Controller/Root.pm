@@ -71,7 +71,7 @@ sub id :Local
 {
 	my($self, $c) = @_;
 	my $u = $c->model('DB::Users')->find($c->stash->{uid});
-	$c->stash(login => $c->user->username(), name => $u->dispname || $u->descr, badges => $u->badges);
+	$c->stash(login => $c->user->username(), name => $u->dispname || $u->num->descr, badges => $u->badges);
 }
 
 =head2 default

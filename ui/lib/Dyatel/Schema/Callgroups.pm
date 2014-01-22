@@ -22,13 +22,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => undef,
   },
-  "descr",
-  {
-    data_type => "text",
-    default_value => undef,
-    is_nullable => 1,
-    size => undef,
-  },
   "distr",
   {
     data_type => "calldistribution",
@@ -56,8 +49,9 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("callgroups_pkey", ["id"]);
 __PACKAGE__->add_unique_constraint("callgroups_num_index", ["num"]);
+__PACKAGE__->add_unique_constraint("callgroups_pkey", ["id"]);
+__PACKAGE__->belongs_to("num", "Dyatel::Schema::Directory", { num => "num" });
 __PACKAGE__->has_many(
   "callgrpmembers",
   "Dyatel::Schema::Callgrpmembers",
@@ -70,8 +64,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-25 11:44:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZwNbybf4ithGNiZRkT5iBw
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-19 02:26:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1GiTWOPxBii9xLxCjjh0IA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

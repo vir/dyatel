@@ -37,7 +37,8 @@ dyatelApp.factory('Title', function() {
 dyatelApp.run(['Title', '$rootScope', function(Title, $rootScope) {
 	$rootScope.Title = Title;
 	$rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-		Title.set(current.$$route.title);
+		if(current.$$route)
+			Title.set(current.$$route.title);
 	});
 }]);
 

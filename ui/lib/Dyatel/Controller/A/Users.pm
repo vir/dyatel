@@ -42,17 +42,20 @@ it under the same terms as Perl itself.
 sub list :Local Args(0)
 {
 	my($self, $c) = @_;
-	$c->stash(users => [$c->model('DB::Users')->search({}, { order_by => 'num' })], template => 'users/list.tt');
+	$c->stash(users => [$c->model('DB::Users')->search({}, { prefetch => ['num', {num=>'numtype'}, 'fingrp'], order_by => 'num.num' })], template => 'users/list.tt');
 }
 
 sub create :Local :Args(0)
 {
 	my($self, $c) = @_;
 	if($c->request->params->{save}) {
+		my $scope_guard = $c->model('DB')->txn_scope_guard;
+		return unless $c->forward('/a/directory/create', ['user']);
 		my $user = $c->model('DB::Users')->create(get_user_params($c));
-		my $uid = $user->{id};
+		$scope_guard->commit;
+		my $uid = $user->id;
 		warn "ID: $uid";
-		$c->response->redirect($c->uri_for($self->action_for('list'), {status_msg => "User added"}));
+		$c->response->redirect($c->uri_for($uid, {status_msg => "User added"}));
 	}
 	$c->stash(user => {}, template => 'users/user.tt');
 }
@@ -63,31 +66,41 @@ sub delete :Local :Args(0)
 	my $uid = $c->request->params->{uid};
 	my $user = $c->model('DB::Users')->find({id => $uid});
 	if($c->request->params->{delete}) {
+		my $scope_guard = $c->model('DB')->txn_scope_guard;
 		$user->delete;
+		$user->num->delete;
+		$scope_guard->commit;
 		$c->response->redirect($c->uri_for($self->action_for('list'), { status_msg => "User $uid deleted" }));
+		$c->detach;
 	} elsif($c->request->params->{cancel}) {
 		$c->response->redirect($uid);
+		$c->detach;
 	}
 	$c->stash(user => $user, template => 'users/delete.tt');
 }
 
-use Data::Dumper;
 sub show :Path Args(1)
 {
 	my($self, $c, $id) = @_;
 	my $o = $c->model('DB::Users')->find($id);
+	my $d = $o->num;
 	unless($o) {
 		$c->response->body('User not found');
 		$c->response->status(404);
+		$c->detach;
 		return;
 	}
 	if($c->request->method eq 'POST') {
 		if($c->request->params->{delete}) {
 			warn "del";
 			$c->response->redirect($c->uri_for($self->action_for('delete'), { uid => $o->id }));
+			$c->detach;
 		} else {
 			warn "upd";
+			my $scope_guard = $c->model('DB')->txn_scope_guard;
+			$d->update(get_directory_params($c));
 			$o->update(get_user_params($c));
+			$scope_guard->commit;
 			$c->response->redirect('/'.$c->request->path);
 		}
 	}
@@ -105,7 +118,7 @@ sub get_user_params
 		alias => $c->request->params->{alias} || undef,
 		domain => $c->request->params->{domain} // '',
 		password => $c->request->params->{password},
-		descr => $c->request->params->{descr},
+#		descr => $c->request->params->{descr},
 		nat_support => $c->request->params->{nat_support} || '0',
 		nat_port_support => $c->request->params->{nat_port_support} || '0',
 		media_bypass => $c->request->params->{media_bypass} || undef,

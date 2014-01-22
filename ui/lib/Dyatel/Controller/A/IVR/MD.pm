@@ -30,9 +30,11 @@ sub index :Path :Args(0) {
 sub list :Local
 {
 	my($self, $c) = @_;
-	my $opts = {order_by => 'id'};
+	my $opts = {
+		prefetch => ['num', {num=>'numtype'}],
+		order_by => 'num.num',
+	};
 	my $where = { };
-	$where->{uid} = $c->request->params->{uid} if $c->request->params->{uid};
 	$c->stash(rows => [$c->model(MODELCLASS)->search($where, $opts)]);
 }
 
@@ -40,9 +42,12 @@ sub create :Local :Args(0)
 {
 	my($self, $c) = @_;
 	if($c->request->params->{save}) {
+		my $scope_guard = $c->model('DB')->txn_scope_guard;
+		return unless $c->forward('/a/directory/create', ['ivr']);
 		my $o = $c->model(MODELCLASS)->create(get_item_params($c));
-		my $uid = $o->{id};
-		$c->response->redirect($c->uri_for($self->action_for('list'), {status_msg => "Added"}));
+		$scope_guard->commit;
+		$c->response->redirect($o->id);
+		$c->detach;
 	}
 }
 

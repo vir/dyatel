@@ -6,12 +6,12 @@
 
 <form method="post">
 <dl>
-	<dt>Num</dt><dd><input type="text" name="num"[% IF user.num %] readonly="1"[% END %] value="[% user.num %]" /></dd>
+	<dt>Num</dt><dd><input type="text" name="num"[% IF user.num.num %] readonly="1"[% END %] value="[% user.num.num %]" /></dd>
+	<dt>Description</dt><dd><input name="descr" value="[% user.num.descr %]" /></dd>
 	<dt>Alias</dt><dd><input type="text" name="alias" value="[% user.alias %]" />@<input type="text" name="domain" value="[% user.domain %]" /></dd>
 	<dt>Password</dt><dd><input type="text" name="password" value="[% user.password %]" /></dd>
 	<dt>Last registered</dt><dd>[% user.lastreg || "Never" %]</dd>
 	<dt>Last IP</dt><dd>[% user.lastip || "-" %]</dd>
-	<dt>Description</dt><dd><textarea name="descr">[% user.descr %]</textarea></dd>
 	<dt>NAT support</dt><dd><input type="checkbox" name="nat_support" [% user.nat_support ? 'checked="1"' : "" %]</dd>
 	<dt>NAT port support</dt><dd><input type="checkbox" name="nat_port_support" [% user.nat_port_support ? 'checked="1"' : "" %]</dd>
 </dl>
@@ -25,7 +25,7 @@
 <h1>Provisioned devices</h1>
 <table>
 [% FOREACH p IN provision %]
-<tr><td><a href="/provisions/[% p.id %]">[% p.hw %]</a></td><td><a href="/provisions/[% p.id %]">[% p.devtype %]</a></td></tr>
+<tr><td><a href="/a/provisions/[% p.id %]">[% p.hw %]</a></td><td><a href="/a/provisions/[% p.id %]">[% p.devtype %]</a></td></tr>
 [% END %]
 </table>
 </div>
@@ -40,7 +40,11 @@
 </table>
 </div>
 
+<div id="onject-dump">
+<h1>Object dump</h1>
+<em>Just in case...</em>
 <pre>
 [% Dumper.dump(user) %]
 </pre>
+</div>
 

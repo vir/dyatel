@@ -10,10 +10,10 @@
 [% FOREACH user IN users %]
 <tr>
 	<!-- <td><input type="checkbox" name="sel" value="[% user.id %]" /></td> -->
-	<td><a href="[% user.id %]">[% user.num %]</a></td>
+	<td><a href="[% user.id %]">[% user.num.num %]</a></td>
 	<td>[% user.alias %]</td>
 	<td>[% user.domain %]</td>
-	<td>[% user.descr | html %]</td>
+	<td>[% user.num.descr | html %]</td>
 </tr>
 [% END %]
 </table>

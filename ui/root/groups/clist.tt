@@ -2,7 +2,7 @@
 <table border="1">
 [% FOREACH row IN rows %]
 <tr>
-<td><a href="[% row.id %]">[% row.num %]</a></td><td>[% row.descr %]</td>
+<td><a href="[% row.id %]">[% row.num.num %]</a></td><td>[% row.num.descr %]</td>
 </tr>
 [% END %]
 </table>

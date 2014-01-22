@@ -42,6 +42,37 @@ dyatelControllers.directive('divertionIcon', function () {
 	}
 });
 
+dyatelControllers.directive('dirnum', function ($http) {
+	return {
+		restrict: 'E',
+		templateUrl: '/static/p/dirnum.htm',
+		scope: {
+			dirNum: '=',
+			numType: '@',
+			ro: '=numReadonly',
+			anyChange: '&',
+		},
+		link: function ($scope, element, attrs) {
+			$scope.warns = '';
+			$scope.numCahnge = function() {
+				$http.get('/a/directory/conflicts/' + $scope.dirNum.num).success(function(data) {
+					$scope.warns = data.conflicts ? 'Conflicts: ' + data.conflicts : '';
+				});
+				if($scope.numType)
+					$scope.dirNum.numtype = $scope.numType;
+				console.log('scope.numCahnge: ' + $scope.anyChange);
+				if($scope.anyChange)
+					 $scope.anyChange({field: 'num'});
+			};
+			$scope.descrChange = function() {
+				console.log('scope.descrCahnge: ' + $scope.anyChange);
+				if($scope.anyChange)
+					 $scope.anyChange({field: 'descr'});
+			};
+		},
+	}
+});
+
 dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal) {
 	$scope.possibleBadges = [ 'admin', 'finance' ];
 	$scope.badges = { };
@@ -55,7 +86,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 			$scope.user.badges.forEach(function(b) {
 				$scope.badges[b] = true;
 			});
-			$scope.Title.set(data.user.num + ': ' + data.user.descr);
+			$scope.Title.set(data.user.num.num + ': ' + data.user.num.descr);
 		});
 		$http.get('/a/provisions/list?uid=' + $routeParams.userId).success(function(data) {
 			$scope.provisions = data.rows;
@@ -76,14 +107,26 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		$http({
 			url: $scope.existingUser ? '/a/users/' + $routeParams.userId : '/a/users/create',
 			method: "POST",
-			data: $.param($scope.user, true), // use jQuery to url-encode object
+			data: $.param({
+				num: $scope.user.num.num,
+				descr: $scope.user.num.descr,
+				alias: $scope.user.alias,
+				domain: $scope.user.domain,
+				password: $scope.user.password,
+				nat_support: $scope.user.nat_support,
+				nat_port_support: $scope.user.nat_port_support,
+				media_bypass: $scope.user.media_bypass,
+				dispname: $scope.user.dispname,
+				login: $scope.user.login,
+				badges: $scope.user.badges,
+				save: 1,
+			}, true), // use jQuery to url-encode object
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function (data, status, headers, config) {
-			alert('Saved user');
+			$location.path('/users/' + data.user.id);
 		}).error(function (data, status, headers, config) {
-			alert('Error: ' + status);
+			alert('Error: ' + status + "\n" + data);
 		});
-		delete $scope.user.save;
 	};
 	$scope.deleteUser = function() {
 		$http({
@@ -93,7 +136,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function (data, status, headers, config) {
 			alert('User deleted');
-			$location.path('/a/users/list');
+			$location.path('/users');
 			$scope.$apply();
 		}).error(function (data, status, headers, config) {
 			alert('Error: ' + status);
@@ -171,10 +214,10 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
-			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
-			{field:'descr', displayName:'Name'},
-			{field:'login', displayName:'Login'},
-			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="badge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>'},
+			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field).num}}</a>', width:'10%'},
+			{             displayName:'Name', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(\'num\').descr}}</a>', width:'58%'},
+			{field:'login', displayName:'Login', width:'15%'},
+			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="badge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>', width:'15%'},
 		],
 		showFilter: true,
 	};
@@ -187,14 +230,6 @@ dyatelControllers.controller('CallGroupsListCtrl', function($scope, $http) {
 	$http.get('/a/cgroups/list').success(function(data) {
 		$scope.myData = data.rows;
 	});
-	$scope.gridOptions = {
-		data: 'myData',
-		columnDefs: [
-			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
-			{field:'descr', displayName:'Name'},
-		],
-		showFilter: true,
-	};
 });
 
 dyatelControllers.controller('CallGroupDetailCtrl', function($scope, $routeParams, $http) {
@@ -245,16 +280,16 @@ dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParam
 
 /* * * * * * * * * * IVR * * * * * * * * * */
 
-dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
+function dyatelIvrCommonController($scope, $http, urlBase) {
 	$scope.selection = [ ];
-	$http.get('/a/ivr/aa/list').success(function(data) {
+	$http.get(urlBase + 'list').success(function(data) {
 		$scope.myData = data.rows;
 	});
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
-			{field:'num', displayName:'Number'},
-			{field:'descr', displayName:'Description'},
+			{field:'num.num', displayName:'Number', width:'20%'},
+			{field:'num.descr', displayName:'Description'},
 		],
 		multiSelect: false,
 		selectedItems: $scope.selection,
@@ -270,7 +305,7 @@ dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
 		},
 	};
 	$scope.onNew = function() {
-		var newRow = { id: 'create', changed: true };
+		var newRow = { id: 'create', num: {num:'', numtype:'ivr', desc:''}, changed: true };
 		$scope.myData.push(newRow);
 		var index = $scope.myData.indexOf(newRow);
 		console.log('index: ' + index);
@@ -282,14 +317,23 @@ dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
 		});
 	};
 	$scope.onSave = function() {
-		$scope.selection[0].action = 'save';
+		var saveData = {
+			action: 'save',
+			num: $scope.selection[0].num.num,
+			descr: $scope.selection[0].num.descr,
+		};
+		$.each($scope.selection[0], function(key, value) { // XXX depends on jQuery
+				if(key === 'id' || key === 'changed' || key === 'num')
+					return;
+				saveData[key] = value;
+		});
 		$http({
 			method: 'POST',
-			url: '/a/ivr/aa/' + $scope.selection[0].id,
-			data: $.param($scope.selection[0]), // XXX depends on jQuery
+			url: urlBase + $scope.selection[0].id,
+			data: $.param(saveData), // XXX depends on jQuery
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function(data) {
-			alert(angular.toJson(data));
+			//alert(angular.toJson(data));
 			if(data.obj) {
 				for(k in data.obj) {
 					$scope.selection[0][k] = data.obj[k];
@@ -309,29 +353,20 @@ dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
 		else {
 			$http({
 				method: 'POST',
-				url: '/a/ivr/aa/delete',
+				url: urlBase + 'delete',
 				data: 'id=' + $scope.selection[0].id,
 				headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 			}).success(delRow);
 		}
 	};
+}
+
+dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {
+	dyatelIvrCommonController($scope, $http, '/a/ivr/aa/');
 });
 
 dyatelControllers.controller('IvrMDsCtrl', function($scope, $http) {
-	$scope.selection = [ ];
-	$http.get('/a/ivr/md/list').success(function(data) {
-		$scope.myData = data.rows;
-	});
-	$scope.gridOptions = {
-		data: 'myData',
-		columnDefs: [
-			{field:'num', displayName:'Number'},
-//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
-			{field:'descr', displayName:'Description'},
-		],
-		multiSelect: false,
-		selectedItems: $scope.selection,
-	};
+	dyatelIvrCommonController($scope, $http, '/a/ivr/md/');
 });
 
 /* CDR */

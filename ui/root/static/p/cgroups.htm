@@ -1,3 +1,12 @@
-<h1>Call groups list</h1>
-<div class="gridStyle" ng-grid="gridOptions"></div>
+<div class="container-fluid">
+<div class="row-fluid">
+	<h1>Call groups list</h1>
+	<div class="well">
+		<dl>
+			<dt ng-repeat-start="g in myData"><a ng-href="#/cgroups/{{g.id}}">{{g.num.num}}</a></dt><dd ng-repeat-end="">{{g.num.descr}}</dd>
+		</dl>
+	</div>
+	<a ng-href="#/cgroups/new">New group</a>
+</div>
+</div>
 
