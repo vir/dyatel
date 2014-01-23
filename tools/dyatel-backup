@@ -9,11 +9,16 @@ use strict;
 use warnings FATAL => 'uninitialized';
 use File::Copy;
 use File::Path;
+use Dyatel::ExtConfig;
+use Getopt::Std;
 
-my $verbose = 0;
-my $keep_archives = 25;
+my $conf = Dyatel::ExtConfig::load()->{Model}{Backups};
+my %opts; getopts('hvm:PC', \%opts);
+if(exists $opts{'h'}) { help(); exit 0; }
 
-my $backup_root = "/var/backups/dyatel";
+my $verbose = $opts{v} || $conf->{verbose};
+my $keep_archives = $conf->{keep_archives} || 50;
+my $backup_root = $conf->{root_dir} || "/var/backups/dyatel";
 
 -d($backup_root) || mkdir($backup_root) || die "Can't create directory $backup_root: $!\n";
 
@@ -23,13 +28,11 @@ mkdir($budir) || die "Can't create directory $budir: $!\n";
 print "Backup directory is $budir\n" if $verbose;
 
 purge_outdated_backups();
-
-my $ver = get_dyatel_version();
-backup_dyatel_package($ver);
+write_message($opts{m}) if $opts{m};
+backup_dyatel_package() if $opts{P} || $conf->{backup_pkg};
 backup_database();
+backup_cdr() if $opts{C} || $conf->{backup_cdr};
 backup_configs();
-
-
 
 sub mk_timestamp
 {
@@ -53,7 +56,7 @@ sub get_dyatel_version
 
 sub backup_dyatel_package
 {
-	my($version) = @_;
+	my $version = get_dyatel_version();
 	my $pkg_fn = "/var/cache/apt/archives/dyatel_${version}_all.deb";
 	if(-f $pkg_fn) {
 		print "Found package $pkg_fn\n" if $verbose;
@@ -63,11 +66,24 @@ sub backup_dyatel_package
 	}
 }
 
+sub mk_pg_cmdline
+{
+	my $dbconf = Dyatel::ExtConfig::load()->{Model}{DB}{connect_info};
+	$dbconf->{dsn} =~ /dbname=(\w+)/ or die "Wrong DSN";
+	my $c = " --blobs --no-owner --no-privileges --clean $1";
+	$dbconf->{dsn} =~ /host=([\w\d\.\-]+)/ and ($c .= " --host $1");
+	return $c;
+}
+
 sub backup_database
 {
-	system("pg_dump --blobs --no-owner --no-privileges --clean --exclude-table cdr --exclude-table cdr_id_seq --file $budir/db_dump.sql dyatel") == 0
+	system("pg_dump --exclude-table cdr --exclude-table cdr_id_seq --file $budir/db_dump.sql".mk_pg_cmdline()) == 0
 		|| die "Can't backup database: $@";
-	system("pg_dump --blobs --no-owner --no-privileges --clean --table cdr --compress 5 --file $budir/cdr_dump.sql.gz dyatel") == 0
+}
+
+sub backup_cdr
+{
+	system("pg_dump --table cdr --compress 5 --file $budir/cdr_dump.sql.gz".mk_pg_cmdline()) == 0
 		|| die "Can't backup CDRs: $@";
 }
 
@@ -84,10 +100,32 @@ sub purge_outdated_backups
 	opendir D, $backup_root or die "Can't read $backup_root directory: $!\n";
 	my @list = sort grep { !/^\./ && -d "$backup_root/$_" } readdir D;
 	closedir D;
-	splice @list, -$keep_archives + 1 if @list >= $keep_archives;
+	return if @list < $keep_archives;
+	splice @list, -$keep_archives + 1;
 	print "Expired archives: @list\n" if $verbose;
 	foreach(@list) {
 		rmtree("$backup_root/$_") || warn "Can't remove archive $_: $!\n";
 	}
+}
+
+sub write_message
+{
+	my($msg) = @_;
+	open F, '>:utf8', "$budir/comment.txt" or die "Can't open $budir/comment.txt for writing: $!\n";
+	print F $msg;
+	print F "\n" unless $msg =~ /\n\s*$/s;
+	close F or die "Can't write to $budir/comment.txt: $!\n";
+}
+
+sub help
+{
+	print << "***";
+Usage: $0 [opts]
+	-h : this help
+	-v : verbose output
+	-m MSG : append message to backup (comment.txt)
+	-P : backup package
+	-C : backup CDR database
+***
 }
 

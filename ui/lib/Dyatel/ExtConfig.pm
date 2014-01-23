@@ -18,7 +18,6 @@ sub load
 sub dbh
 {
 	load() unless $conf;
-	my $myconf = $conf->{Provision};
 	my $dbconf = $conf->{Model}{DB}{connect_info};
 	my $dbh = DBI->connect($dbconf->{dsn}, $dbconf->{username}, $dbconf->{password}, { AutoCommit => 1 });
 	$dbh->do("SET CLIENT_ENCODING TO UNICODE");
