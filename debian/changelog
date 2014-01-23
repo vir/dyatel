@@ -1,3 +1,10 @@
+dyatel (0.0.52) UNRELEASED; urgency=low
+
+  * Fix clean install
+  * Fix backup script (supports config now)
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 24 Jan 2014 00:31:50 +0400
+
 dyatel (0.0.51) UNRELEASED; urgency=low
 
   * Fix admin ui
