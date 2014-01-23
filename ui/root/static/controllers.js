@@ -1,6 +1,12 @@
 
 var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid', 'ngCookies' ]);
 
+dyatelControllers.filter('unsafe', function($sce) {
+	return function(val) {
+		return $sce.trustAsHtml(val);
+	};
+});
+
 dyatelControllers.controller('NavbarCtrl', function($scope, $http) {
 	$http.get('/id').success(function(data) {
 		$scope.user = data;
@@ -372,10 +378,6 @@ dyatelControllers.controller('IvrMDsCtrl', function($scope, $http) {
 /* CDR */
 
 dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
-/*	$http.get('/a/cdrs/list').success(function(data) {
-		$scope.myData = data.rows;
-	});
-	*/
 	$scope.selection = [ ];
 	$scope.totalServerItems = 0;
 	$scope.pagingOptions = {
@@ -397,6 +399,15 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 			$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
 		}
 	}, true);
+	$scope.formatCalled = function(row) {
+		var c = row.getProperty('called');
+		var f = row.getProperty('calledfull');
+		if(null === f || f.length === 0 || c === f)
+			return c;
+		if(c.length + f.length <= 10)
+			return c + ' (' + f + ')';
+		return '<abbr title="' + f + '">' + c + '</abbr>';
+	};
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
@@ -407,7 +418,7 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 //			{field:'direction', displayName:'Direction'},
 			{field:'billid', displayName:'Billid'},
 			{field:'caller', displayName:'Caller'},
-			{field:'called', displayName:'Called', cellTemplate:"<span>{{ row.getProperty('called') + (row.getProperty('calledfull') && (' (' + row.getProperty('calledfull') + ')') || '') }}</span>"},
+			{displayName:'Called', cellTemplate:'<div class="ngCellText" ng-bind-html="formatCalled(row) | unsafe"></div>'},
 			{field:'duration', displayName:'Duration'},
 			{field:'billtime', displayName:'Bill Time'},
 			{field:'ringtime', displayName:'Ring Time'},

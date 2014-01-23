@@ -6,7 +6,8 @@ styles = [ 'css/ng-grid.css'
 ];
 javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 	, 'angular-route.min.js', 'ng-grid-2.0.7.min.js'
-	, 'angular-cookies.js', 'angular-ui-utils.min.js'
+	, 'angular-cookies.min.js', 'angular-ui-utils.min.js'
+	, 'angular-sanitize.min.js',
 	, 'ui-bootstrap-tpls-0.6.0.min.js'
 	, 'draganddrop.js'
 	, "${prefix}app.js", "${prefix}controllers.js"
