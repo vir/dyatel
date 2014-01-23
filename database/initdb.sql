@@ -1,12 +1,58 @@
 CREATE DOMAIN phone AS TEXT CHECK( VALUE ~ E'^\+?[0-9\8\#]+$' );
 
+
+CREATE TABLE numtypes (
+	numtype VARCHAR PRIMARY KEY,
+	descr TEXT
+);
+
+CREATE TABLE directory (
+	num PHONE PRIMARY KEY,
+	numtype VARCHAR NOT NULL REFERENCES numtypes(numtype),
+	descr TEXT
+);
+CREATE INDEX directory_prefix_smart_index ON directory USING btree (num text_pattern_ops);
+
+CREATE OR REPLACE FUNCTION directory_check_num(newnum PHONE) RETURNS TEXT[] AS $$
+	SELECT array_agg(num::TEXT) FROM (
+		SELECT num FROM directory WHERE num LIKE $1 || '%' UNION
+		SELECT num FROM directory WHERE $1 LIKE num || '%') ss;
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION directory_uniq_prefix_trigger() RETURNS TRIGGER AS $$
+DECLARE
+	cflct TEXT;
+BEGIN
+	cflct := array_to_string(directory_check_num(NEW.num), ', ');
+	IF LENGTH(cflct) <> 0 THEN
+		RAISE EXCEPTION 'Conflict: %', cflct;
+	END IF;
+	RETURN NEW;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE TRIGGER directory_uniq_prefix_trigger BEFORE INSERT OR UPDATE ON directory
+	FOR EACH ROW EXECUTE PROCEDURE directory_uniq_prefix_trigger();
+
+INSERT INTO numtypes (numtype, descr) VALUES ('user', 'User extension number');
+INSERT INTO numtypes (numtype, descr) VALUES ('callgrp', 'PBX call group');
+INSERT INTO numtypes (numtype, descr) VALUES ('abbr', 'Abbreveated number');
+INSERT INTO numtypes (numtype, descr) VALUES ('ivr', 'Interactive voice response');
+
+
+
+CREATE TABLE fingroups (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	sortkey INTEGER NOT NULL DEFAULT 100
+);
+
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	num PHONE NOT NULL,
 	alias TEXT NULL CHECK(alias ~ E'^\\w+$'),
 	domain TEXT NOT NULL,
 	password TEXT NOT NULL,
-	descr TEXT NULL,
 	lastreg TIMESTAMP WITH TIME ZONE,
 	lastip INET,
 	nat_support BOOLEAN,
@@ -14,8 +60,10 @@ CREATE TABLE users (
 	media_bypass BOOLEAN DEFAULT FALSE,
 	dispname TEXT NULL,
 	login TEXT NULL,
-	badges TEXT[] NOT NULL DEFAULT '{}'
+	badges TEXT[] NOT NULL DEFAULT '{}',
+	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL
 );
+ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 
 CREATE TABLE regs (
 	userid INTEGER NOT NULL REFERENCES users(id),
@@ -388,13 +436,13 @@ CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
 CREATE TABLE callgroups(
 	id SERIAL PRIMARY KEY,
 	num PHONE NOT NULL,
-	descr TEXT,
 	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
 	rotary_last INTEGER NOT NULL DEFAULT 0,
 	ringback TEXT NULL,
 	maxcall INTEGER NOT NULL DEFAULT 0,
 	exitpos PHONE NULL
 );
+ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
 CREATE TABLE callgrpmembers(
 	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
@@ -473,20 +521,22 @@ CREATE TABLE provision (
 
 CREATE TABLE ivr_aa(
 	id SERIAL PRIMARY KEY, num PHONE NOT NULL,
-	descr TEXT, prompt TEXT, timeout INTEGER,
+	prompt TEXT, timeout INTEGER,
 	e0 PHONE, e1 PHONE, e2 PHONE, e3 PHONE,
 	e4 PHONE, e5 PHONE, e6 PHONE, e7 PHONE,
 	e8 PHONE, e9 PHONE, estar PHONE, ehash PHONE,
 	etimeout PHONE
 );
+ALTER TABLE ivr_aa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 
 CREATE TABLE ivr_minidisa(
 	id SERIAL PRIMARY KEY, num PHONE NOT NULL,
-	descr TEXT, prompt TEXT, timeout INTEGER,
+	prompt TEXT, timeout INTEGER,
 	numlen INTEGER NOT NULL DEFAULT 3,
 	firstdigit VARCHAR(12),
 	etimeout PHONE
 );
+ALTER TABLE ivr_minidisa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 
@@ -660,7 +710,13 @@ END;
 $$ LANGUAGE PlPgSql;
 
 -- abbreveated numbers
-CREATE TABLE abbrs(id SERIAL PRIMARY KEY, num PHONE NOT NULL, owner INTEGER REFERENCES users(id) NULL, target TEXT, descr TEXT);
+CREATE TABLE abbrs(
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	owner INTEGER REFERENCES users(id) NULL,
+	target TEXT
+);
+ALTER TABLE abbrs ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE INDEX abbrs_uniq_index ON abbrs(num, owner);
 CREATE INDEX abbrs_num_index ON abbrs(num);
 
@@ -777,4 +833,14 @@ CREATE INDEX phonebook_owner_index ON phonebook(owner);
 CREATE INDEX phonebook_num_index ON phonebook USING gin(num gin_trgm_ops);
 CREATE INDEX phonebook_descr_index ON phonebook USING gin(descr gin_trgm_ops);
 
+
+
+CREATE TABLE prices(
+	id SERIAL PRIMARY KEY,
+	pref TEXT NOT NULL,
+	price REAL NOT NULL,
+	descr TEXT
+);
+
 -- vim: ft=sql
+
