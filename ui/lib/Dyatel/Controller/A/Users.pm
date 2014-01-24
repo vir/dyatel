@@ -83,7 +83,6 @@ sub show :Path Args(1)
 {
 	my($self, $c, $id) = @_;
 	my $o = $c->model('DB::Users')->find($id);
-	my $d = $o->num;
 	unless($o) {
 		$c->response->body('User not found');
 		$c->response->status(404);
@@ -98,7 +97,7 @@ sub show :Path Args(1)
 		} else {
 			warn "upd";
 			my $scope_guard = $c->model('DB')->txn_scope_guard;
-			$d->update(get_directory_params($c));
+			return unless $c->forward('/a/directory/update', [$o->num->num, 'user']);
 			$o->update(get_user_params($c));
 			$scope_guard->commit;
 			$c->response->redirect('/'.$c->request->path);

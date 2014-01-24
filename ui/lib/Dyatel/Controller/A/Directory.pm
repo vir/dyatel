@@ -82,6 +82,27 @@ sub create :Private
 	return '0 but true';
 }
 
+sub update :Private
+{
+	my($self, $c, $num, $numtype) = @_;
+	my $d = $c->model('DB::Directory')->find($num);
+
+	my $params = { };
+	$params->{num} = $c->request->params->{num} unless $d->num eq $c->request->params->{num};
+	$params->{descr} = $c->request->params->{descr} unless $d->descr eq $c->request->params->{descr};
+	$params->{numtype} = $numtype || $c->request->params->{numtype} unless $d->numtype eq $numtype || $c->request->params->{numtype};
+
+	eval { $d->update($params); };
+	if($@) {
+		$c->response->status(400);
+		my $msg = 'Directory number update failed: '.$@;
+		$c->response->body($msg);
+		warn "$msg\n";
+		$c->detach;
+		return undef;
+	}
+	return '0 but true';
+}
 
 =encoding utf8
 

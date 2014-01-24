@@ -21,13 +21,15 @@ $$ LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION directory_uniq_prefix_trigger() RETURNS TRIGGER AS $$
 DECLARE
-	cflct TEXT;
+        cflct TEXT;
 BEGIN
-	cflct := array_to_string(directory_check_num(NEW.num), ', ');
-	IF LENGTH(cflct) <> 0 THEN
-		RAISE EXCEPTION 'Conflict: %', cflct;
-	END IF;
-	RETURN NEW;
+        IF NEW.num <> OLD.num THEN
+                cflct := array_to_string(directory_check_num(NEW.num), ', ');
+        END IF;
+        IF LENGTH(cflct) <> 0 THEN
+                RAISE EXCEPTION 'Conflict: %', cflct;
+        END IF;
+        RETURN NEW;
 END;
 $$ LANGUAGE PlPgSQL;
 
