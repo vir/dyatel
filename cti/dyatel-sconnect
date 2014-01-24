@@ -172,7 +172,7 @@ sub on_call_answered
 	my $msg = shift;
 	my $id = $msg->param('id');
 	my $targetid = $msg->param('targetid');
-	my $call = $byid{$id} || $byid{$targetid} || return undef;
+	my $call = $byid{$id} || $byid{$targetid || ''} || return undef;
 
 	if($id eq $call->{callerid} or $targetid eq $call->{dumb1}) {
 		$msg->dumpmsg('Originator answered, going on') if $debug;
