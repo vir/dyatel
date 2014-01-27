@@ -1,0 +1,61 @@
+BEGIN;
+
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+		PERFORM pg_notify(linetracker, u);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+		PERFORM pg_notify(linetracker, u);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		DELETE FROM  linetracker WHERE uid = u AND chan = msg->'chan';
+		PERFORM pg_notify(linetracker, u);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callpickup_route(clrnum TEXT, cldnum TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+BEGIN
+	IF cldnum <> service_code('pickupgroup') THEN
+		RETURN;
+	END IF;
+
+	RETURN QUERY SELECT 'location'::TEXT, ('pickup/' || chan)::TEXT
+		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
+		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
+		WHERE direction = 'outgoing' AND status = 'ringing'
+			AND m2.uid = userid(clrnum) ORDER BY m2.id LIMIT 1;
+--			AND m2.uid = 180 AND m1.uid = 179;
+END;
+$$ LANGUAGE PlPgSql;
+
+ALTER TABLE linetracker DROP COLUMN usecount;
+
+COMMIT;
+
+-- vim: ft=sql
+
+

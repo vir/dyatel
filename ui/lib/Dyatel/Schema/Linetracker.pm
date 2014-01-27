@@ -10,8 +10,6 @@ __PACKAGE__->table("linetracker");
 __PACKAGE__->add_columns(
   "uid",
   { data_type => "integer", default_value => undef, is_nullable => 0, size => 4 },
-  "usecount",
-  { data_type => "integer", default_value => 0, is_nullable => 0, size => 4 },
   "direction",
   {
     data_type => "text",
@@ -58,8 +56,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7ftuksRVsuKPi4SUsDOJvg
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-27 11:17:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rr2SHhzVMasb6H3MbVgg6g
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

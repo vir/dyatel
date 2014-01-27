@@ -609,7 +609,6 @@ $$ LANGUAGE PlPgSQL;
 -- Line tracker
 CREATE TABLE linetracker(
 	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	usecount INTEGER NOT NULL DEFAULT 0,
 	direction TEXT,
 	status TEXT,
 	chan TEXT,
@@ -629,15 +628,10 @@ DECLARE
 	u INTEGER;
 BEGIN
 	u := userid(msg->'external');
-	IF u IS NULL THEN
-		RETURN;
+	IF u IS NOT NULL THEN
+		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+		PERFORM pg_notify(linetracker, u);
 	END IF;
-
-	UPDATE linetracker SET usecount = usecount + 1, direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
-	IF NOT FOUND THEN
-		INSERT INTO linetracker(uid, usecount, direction, status, chan, caller, called, billid) VALUES (u, 1, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
-	END IF;
-	NOTIFY linetracker;
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -646,7 +640,10 @@ DECLARE
 	u INTEGER;
 BEGIN
 	u := userid(msg->'external');
-	UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+	IF u IS NOT NULL THEN
+		UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+		PERFORM pg_notify(linetracker, u);
+	END IF;
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -655,9 +652,13 @@ DECLARE
 	u INTEGER;
 BEGIN
 	u := userid(msg->'external');
-	UPDATE linetracker SET usecount = (CASE WHEN usecount > 0 THEN usecount - 1 ELSE 0 END) WHERE uid = u;
+	IF u IS NOT NULL THEN
+		DELETE FROM  linetracker WHERE uid = u AND chan = msg->'chan';
+		PERFORM pg_notify(linetracker, u);
+	END IF;
 END;
 $$ LANGUAGE PlPgSQL;
+
 
 
 -- Call pickup
@@ -705,8 +706,8 @@ BEGIN
 	RETURN QUERY SELECT 'location'::TEXT, ('pickup/' || chan)::TEXT
 		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
 		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
-		WHERE usecount > 0 AND direction = 'outgoing' AND status = 'ringing'
-			AND m2.uid = userid(clrnum) LIMIT 1;
+		WHERE direction = 'outgoing' AND status = 'ringing'
+			AND m2.uid = userid(clrnum) ORDER BY m2.id LIMIT 1;
 --			AND m2.uid = 180 AND m1.uid = 179;
 END;
 $$ LANGUAGE PlPgSql;
