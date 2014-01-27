@@ -6,7 +6,7 @@ var dyatelApp = angular.module('dyatelApp', [
 
 dyatelApp.config(['$routeProvider', function($routeProvider) {
 	$routeProvider.
-	when('/home',            { templateUrl: '/static/p/home.htm',       controller: 'HomePageCtrl',           title: 'Start page' }).
+	when('/home',            { templateUrl: '/static/u/home.htm',       controller: 'HomePageCtrl',           title: 'Моя телефония' }).
 	when('/phonebook',       { templateUrl: '/static/u/phonebook.htm',  controller: 'PhoneBookCtrl',          title: 'Телефонная книга' }).
 	when('/calllist',        { templateUrl: '/static/u/calllist.htm',   controller: 'CallListCtrl',           title: 'История вызовов' }).
 	when('/myphone',         { templateUrl: '/static/u/myphone.htm',    controller: 'MyPhoneCtrl',            title: 'Мой телефон' }).
@@ -26,7 +26,8 @@ dyatelApp.factory('Title', function() {
 dyatelApp.run(['Title', '$rootScope', function(Title, $rootScope) {
 	$rootScope.Title = Title;
 	$rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-		Title.set(current.$$route.title);
+		if(current.$$route)
+			Title.set(current.$$route.title);
 	});
 }]);
 

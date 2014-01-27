@@ -50,6 +50,19 @@ sub dir_conflict
 	});
 }
 
+sub user_blfs
+{
+	my $self = shift;
+	my($uid) = @_;
+	my $sql = "SELECT b.key, b.num, u.id AS uid, EXISTS (SELECT * FROM regs WHERE userid = u.id) AS online, EXISTS(SELECT * FROM linetracker WHERE uid = u.id) AS busy FROM blfs b LEFT JOIN USERS u ON u.num = b.num WHERE b.uid = ? ORDER BY b.key;";
+	return $self->storage->dbh_do(sub {
+		my $self = shift;
+		my $dbh = shift;
+		my $r = $dbh->selectall_arrayref($sql, { Slice => {} }, $uid);
+		return $r;
+	});
+}
+
 =head1 NAME
 
 Dyatel::Model::DB - Catalyst DBIC Schema Model

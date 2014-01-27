@@ -42,6 +42,13 @@ sub call : Local
 	$c->stash(result => $x);
 }
 
+sub blfs : Local
+{
+	my($self, $c) = @_;
+	my $rows = $c->model('DB')->user_blfs($c->stash->{uid});
+	$c->stash(rows => $rows);
+}
+
 =encoding utf8
 
 =head1 AUTHOR

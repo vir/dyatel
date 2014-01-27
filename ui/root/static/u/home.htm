@@ -1,0 +1,48 @@
+<!-- Begin page content -->
+<div class="container-fluid">
+ <div class="row-fluid">
+  <h1>Dyatel web interface</h1>
+ </div>
+ <form class="form-inline" novalidate="1">
+  <div class="row-fluid">
+   <div class="span4"><!-- left column -->
+    <div class="well controls">
+     <h2>Call 'em all!</h2>
+     <div class="input-append">
+      <input type="text" ng-model="phone" typeahead="x as x.label for x in dataSource($viewValue) | limitTo:25" typeahead-on-select="selectionDone($item)" focus-me />
+      <button class="btn" ng-click="doCall({num: phone, op: 'button'})"><i class="icon-fire"></i></button>
+     </div>
+    </div>
+
+    <div class="well">
+     <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
+     <a title="Edit" href="#/u/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
+     <h2>My BLFs</h2>
+     <table class="table table-hover table-condensed">
+      <tr ng-repeat="r in blfs">
+       <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy, 'blf-offline': !r.online, 'blf-busy': r.busy}"></div></td>
+       <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
+       <td>User {{ r.uid }}</td>
+      </tr>
+     </table>
+    </div>
+   </div> <!-- /left column -->
+
+   <div class="well span8 controls">
+    <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
+    <h2>My active calls</h2>
+    <em ng-show="linetracker.length === 0">None</em>
+    <table ng-hide="linetracker.length === 0" class="table table-condensed">
+     <tr ng-repeat="r in linetracker">
+      <td>{{ r.direction }}</td><td>{{ r.chan }}</td><td>{{ r.status }}</td><td>{{ r.caller }}</td><td>{{ r.called }}</td><td>{{ r.billid }}</td>
+     </tr>
+    </table>
+    <h2>My last calls</h2>
+    <em>TODO</em>
+   </div>
+  </div> <!-- row-fluid -->
+ </form>
+</div>
+
+
+

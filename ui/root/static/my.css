@@ -101,3 +101,23 @@ span.member {
 	padding:1px 8px;
 }
 
+.blf-led {
+	width: 12px;
+	height: 12px;
+	-webkit-border-radius: 7px;
+	-moz-border-radius: 7px;
+	border-radius: 7px;
+	border: 1px solid #000;
+}
+
+.blf-online {
+	background-color: green;
+}
+.blf-offline {
+	background-color: #444;
+}
+.blf-busy {
+	background-color: red;
+}
+
+

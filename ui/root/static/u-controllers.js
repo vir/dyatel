@@ -1,5 +1,33 @@
+angular.module('dyatelServices', [], function($provide) {
+	$provide.factory('CTI', ['$http', function($http) {
+		var inst = {
 
-var ctrlrModule = angular.module('userControllers', [ 'ngGrid' ]);
+			newCall: function(num) {
+				console.log('CTI.newCall(' + num + ') called');
+				var postdata = {
+					called: num,
+					linehint: 'xz',
+				};
+				return $http({
+					method: 'POST',
+					url: '/u/cti/call',
+					data: $.param(postdata),
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+				}).success(function(data) {
+					console.log('Call result: ' + angular.toJson(data));
+				});
+			},
+
+			transferCall: function(chan, num) {
+				alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
+			},
+
+		};
+		return inst;
+	}]);
+});
+
+var ctrlrModule = angular.module('userControllers', [ 'ngGrid', 'dyatelServices' ]);
 
 ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
 	$http.get('/id').success(function(data) {
@@ -17,10 +45,72 @@ ctrlrModule.directive('focusMe', function ($timeout) {
 	};
 });
 
-ctrlrModule.controller('HomePageCtrl', function($scope, $http) {
+ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
+	$scope.phone = '';
+	$scope.linetracker = [ ];
+	$scope.blfs = [ ];
+
+	$scope.selectionDone = function (item) {
+		$scope.phone = item.num;
+		$scope.doCall(item);
+	};
+	$scope.dataSource = function (a) {
+		var url = '/u/phonebook/search?' + $.param({ q: a, loc: 1, more: 1, pvt: 1, com: 1 }, true); // use jQuery to url-encode object
+		return $http.get(url).then(function (response) {
+			return response.data.result.map(function(a) { return {
+				num: a.num,
+				label: a.num + ' ' + a.descr,
+			}});
+		});
+	};
+	$scope.doCall = function(o) {
+		if(! o.num.length)
+			return;
+		var modalInstance = $modal.open({
+			templateUrl: '/static/u/calldialog.htm',
+			controller: function($scope, $modalInstance, num, calls) {
+				$scope.num = num;
+				$scope.calls = calls;
+				$scope.info = 'No info :(';
+				$scope.log = 'ok\n';
+
+				$scope.btnNewCall = function() {
+					CTI.newCall($scope.num);
+					$modalInstance.close('newCall');
+				};
+				$scope.btnTransfer = function() {
+					CTI.transferCall($scope.calls[0].chan, $scope.num);
+					$modalInstance.close('newCall');
+				};
+				$scope.btnCancel = function () {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+			resolve: {
+				num: function () { return o.num; },
+				calls: function() { return $scope.linetracker; },
+			},
+		});
+		//alert('call: ' + angular.toJson(o));
+		return false;
+	};
+
+	$scope.updateLinetracker = function() {
+		$http.get('/u/linetracker').success(function (data) {
+			$scope.linetracker = data.rows;
+		});
+	};
+	$scope.updateBLFs = function() {
+		$http.get('/u/cti/blfs').success(function (data) {
+			$scope.blfs = data.rows;
+		});
+	};
+
+	$scope.updateLinetracker();
+	$scope.updateBLFs();
 });
 
-ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
+ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
 	$scope.filterOptions = {
 		filterText: "",
 		useExternalFilter: true,
@@ -64,18 +154,7 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout) {
 	};
 
 	$scope.call = function(arg) {
-		var postdata = {
-			called: arg,
-			linehint: 'xz',
-		};
-		$http({
-			method: 'POST',
-			url: '/u/cti/call',
-			data: $.param(postdata),
-			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).success(function(data) {
-			alert(angular.toJson(data));
-		});
+		CTI.newCall(arg);
 	};
 
 	$scope.$watch('pagingOptions', function (newVal, oldVal) {
