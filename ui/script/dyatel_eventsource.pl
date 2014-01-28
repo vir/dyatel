@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-01-28 15:47:40 +0400
+# Last modified: 2014-01-28 22:43:48 +0400
 #
 
 use strict;
@@ -10,6 +10,17 @@ use warnings FATAL => 'uninitialized';
 use IO::Select;
 use IO::Socket;
 use HTTP::Request;
+use DBI;
+use Getopt::Std;
+use Dyatel::ExtConfig;
+
+my %opts; getopts('hd', \%opts);
+if(exists $opts{'h'}) { help(); exit 0; }
+eval "require Data::Dumper; import Data::Dumper;" if $opts{d};
+
+my $conf = Dyatel::ExtConfig::load();
+my $myconf = $conf->{EventSource};
+my $dbh = Dyatel::ExtConfig::dbh();
 
 {
 	package EventSourceClient;
@@ -38,15 +49,18 @@ use HTTP::Request;
 	}
 }
 
+$dbh->do("LISTEN $_") foreach(qw( linetracker test ));
+my $pg = IO::Socket->new_from_fd($dbh->{pg_socket}, "r+") or die "Can't fdopen postgres's socket: $!";
+
 my $lsn = IO::Socket::INET->new(Listen => 1, LocalPort => 8080, ReuseAddr => 1);
-my $sel = IO::Select->new( $lsn );
+my $sel = IO::Select->new( $lsn, $pg );
 my $timeout = 5.0;
 my %clients;
 
 for(;;) {
 	my @ready = $sel->can_read($timeout);
 	unless(@ready) {
-		broadcast_event();
+		broadcast_event('keepalive');
 		next;
 	}
 	foreach my $fh (@ready) {
@@ -54,6 +68,13 @@ for(;;) {
 			my $new = $lsn->accept;
 			$new->autoflush(1);
 			$sel->add($new);
+		} elsif($fh->fileno == $dbh->{pg_socket}) {
+			print "Postgres's socket is ready\n";
+			my $notify = $dbh->func('pg_notifies');
+			next unless $notify;
+			my($name, $pid, $payload) = @$notify;
+			print "Got database notification $name from backend $pid, payload: $payload\n";
+			broadcast_event("$name $payload");
 		} else {
 			if($clients{$fh->fileno}) {
 				disconnect_client($fh);
@@ -91,11 +112,12 @@ sub check_request
 
 sub broadcast_event
 {
+	my($data) = @_;
 	print "Broadcasting to ".scalar(keys %clients)." clients\n";
 	foreach my $key(keys %clients) {
 		my $fh = $clients{$key}->fh;
 		if(IO::Select->new($fh)->can_write) {
-			$fh->print("data: message\n\n") or warn "Can't write to client: $!";
+			$fh->print("data: $data\n\n") or warn "Can't write to client: $!";
 		} else {
 			disconnect_client($fh);
 		}
@@ -111,6 +133,7 @@ sub disconnect_client
 	$fh->shutdown(2);
 	$fh->close;
 }
+
 
 
 
