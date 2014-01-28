@@ -10,6 +10,7 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 	, 'angular-sanitize.min.js',
 	, 'ui-bootstrap-tpls-0.6.0.min.js'
 	, 'draganddrop.js'
+	, 'eventsource.js'
 	, "${prefix}app.js", "${prefix}controllers.js"
 ];
 %]

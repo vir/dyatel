@@ -108,6 +108,11 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
 
 	$scope.updateLinetracker();
 	$scope.updateBLFs();
+
+
+	(new EventSource('http://192.168.2.57:8080/events')).addEventListener('message', function (e) {
+		document.getElementById('body').innerHTML += e.data + ' ';
+	}, false);
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
