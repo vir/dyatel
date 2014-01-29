@@ -630,7 +630,6 @@ BEGIN
 	u := userid(msg->'external');
 	IF u IS NOT NULL THEN
 		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
-		PERFORM pg_notify(linetracker, u);
 	END IF;
 END;
 $$ LANGUAGE PlPgSQL;
@@ -642,7 +641,6 @@ BEGIN
 	u := userid(msg->'external');
 	IF u IS NOT NULL THEN
 		UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
-		PERFORM pg_notify(linetracker, u);
 	END IF;
 END;
 $$ LANGUAGE PlPgSQL;
@@ -654,7 +652,6 @@ BEGIN
 	u := userid(msg->'external');
 	IF u IS NOT NULL THEN
 		DELETE FROM  linetracker WHERE uid = u AND chan = msg->'chan';
-		PERFORM pg_notify(linetracker, u);
 	END IF;
 END;
 $$ LANGUAGE PlPgSQL;

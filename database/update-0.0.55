@@ -1,0 +1,40 @@
+BEGIN;
+
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NOT NULL THEN
+		DELETE FROM  linetracker WHERE uid = u AND chan = msg->'chan';
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
+
