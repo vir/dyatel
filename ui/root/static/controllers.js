@@ -223,7 +223,7 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
 			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field).num}}</a>', width:'10%'},
 			{             displayName:'Name', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(\'num\').descr}}</a>', width:'58%'},
 			{field:'login', displayName:'Login', width:'15%'},
-			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="badge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>', width:'15%'},
+			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="mybadge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>', width:'15%'},
 		],
 		showFilter: true,
 	};

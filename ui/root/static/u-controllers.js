@@ -1,5 +1,5 @@
 angular.module('dyatelServices', [], function($provide) {
-	$provide.factory('CTI', ['$http', function($http) {
+	$provide.factory('CTI', ['$http', '$rootScope', function($http, $rootScope) {
 		var inst = {
 
 			newCall: function(num) {
@@ -20,6 +20,30 @@ angular.module('dyatelServices', [], function($provide) {
 
 			transferCall: function(chan, num) {
 				alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
+			},
+
+			eventHandler: function(name, handlerFunc, stateFunc) {
+				var es = new EventSource('/u/eventsource/' + name);
+				es.addEventListener('message', function (e) {
+					if(e.data === 'keepalive')
+						return;
+					$rootScope.$apply(function() {
+						handlerFunc(JSON.parse(e.data));
+					});
+				});
+				if(stateFunc) {
+					es.onopen = function() {
+						$rootScope.$apply(function() {
+							stateFunc(true);
+						});
+					};
+					es.onerror = function() {
+						$rootScope.$apply(function() {
+							stateFunc(false);
+						});
+					};
+				}
+				return es;
 			},
 
 		};
@@ -49,6 +73,7 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
 	$scope.phone = '';
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
+	$scope.connected = false;
 
 	$scope.selectionDone = function (item) {
 		$scope.phone = item.num;
@@ -109,10 +134,16 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
 	$scope.updateLinetracker();
 	$scope.updateBLFs();
 
-
-	(new EventSource('http://192.168.2.57:8080/events')).addEventListener('message', function (e) {
-		document.getElementById('body').innerHTML += e.data + ' ';
-	}, false);
+	$scope.es = CTI.eventHandler('home', function(msg) {
+		if(msg.event === 'linetracker')
+			$scope.updateLinetracker();
+		else if(msg.event === 'blf_state')
+			$scope.updateBLFs();
+		else
+			console.log('Unknown event received: ' + JSON.stringify(msg));
+	}, function(state) {
+		$scope.connected = state;
+	});
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {

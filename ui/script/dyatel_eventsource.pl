@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-01-28 22:43:48 +0400
+# Last modified: 2014-01-29 15:33:50 +0400
 #
 
 use strict;
@@ -25,27 +25,57 @@ my $dbh = Dyatel::ExtConfig::dbh();
 {
 	package EventSourceClient;
 	use Socket qw( AF_INET sockaddr_in inet_ntoa );
+	use IO::Select;
+	use JSON;
 
 	sub new
 	{
 		my $class = shift;
-		my($fh, $req) = @_;
+		my $fh = shift;
 
 		my($port, $iaddr) = sockaddr_in($fh->connected);
 		my $name = gethostbyaddr($iaddr, AF_INET);
 		my $peer = "$name [".inet_ntoa($iaddr)."] at port $port";
 
-		return bless { FH => $fh, PEER => $peer, REQ => $req }, $class;
+		return bless { FH => $fh, PEER => $peer, LAST_EVENT => time(), @_ }, $class;
 	}
 
 	sub fh { return shift->{FH}; }
-	sub peer { return shift->{PEER}; }
+	sub peer { my $self = shift; my $r = $self->{PEER}; $r .= " (user $self->{uid})" if $self->{uid}; return $r; }
 	sub initial_response
 	{
 		my $self = shift;
 		$self->fh->print("HTTP/1.1 200 OK\nContent-Type: text/event-stream\nCache-Control: no-cache\n");
-		$self->fh->print("Access-Control-Allow-Origin: ".$self->{REQ}->header('Origin')) if $self->{REQ}->header('Origin');
+		$self->fh->print("Access-Control-Allow-Origin: ".$self->{req}->header('Origin')) if $self->{req} && $self->{req}->header('Origin');
 		$self->fh->print("\n");
+		$self->{LAST_EVENT} = time();
+	}
+	sub send_event
+	{
+		my $self = shift;
+		my($data) = @_;
+		IO::Select->new($self->fh)->can_write or return undef;
+		$self->{LAST_EVENT} = time();
+		print "Sending '$data' to ".$self->peer."\n";
+		return $self->fh->print("data: ".(ref($data) ? to_json($data) : $data)."\n\n");
+	}
+	sub send_keepalive
+	{
+		my $self = shift;
+		my $now = time();
+		return $self->send_event('keepalive') if $now - $self->{LAST_EVENT} > ($self->{keepalive} // 30);
+		return '0E0';
+	}
+	sub format_event
+	{
+		my $self = shift;
+		my($dbev, $payload) = @_;
+		if(($dbev eq 'linetracker' || $dbev eq 'blfs') && $payload == $self->{uid}) {
+			return { event => $dbev };
+		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && grep({ $payload == $_ } @{ $self->{blfusers} })) {
+			return { event => 'blf_state', uid => $payload };
+		}
+		return { event => $dbev, payload => $payload };
 	}
 }
 
@@ -60,7 +90,7 @@ my %clients;
 for(;;) {
 	my @ready = $sel->can_read($timeout);
 	unless(@ready) {
-		broadcast_event('keepalive');
+		broadcast_keepalive(); # XXX make sure it is actually called every N seconds!!!
 		next;
 	}
 	foreach my $fh (@ready) {
@@ -70,11 +100,11 @@ for(;;) {
 			$sel->add($new);
 		} elsif($fh->fileno == $dbh->{pg_socket}) {
 			print "Postgres's socket is ready\n";
-			my $notify = $dbh->func('pg_notifies');
-			next unless $notify;
-			my($name, $pid, $payload) = @$notify;
-			print "Got database notification $name from backend $pid, payload: $payload\n";
-			broadcast_event("$name $payload");
+			while(my $notify = $dbh->func('pg_notifies')) {
+				my($name, $pid, $payload) = @$notify;
+				print "Got database notification $name from backend $pid, payload: $payload\n";
+				database_notification($name, $payload);
+			}
 		} else {
 			if($clients{$fh->fileno}) {
 				disconnect_client($fh);
@@ -85,8 +115,7 @@ for(;;) {
 				sysread $fh, $buf, 8192 or die "Error reading request: $!\n";
 				print "Request: $buf\n";
 				my $req = HTTP::Request->parse($buf) or die "Bad request";
-				if(check_request($req)) {
-					my $cl = new EventSourceClient($fh, $req);
+				if(my $cl = check_request($fh, $req)) {
 					$cl->initial_response();
 					$clients{$fh->fileno} = $cl;
 					print "New client from ".$cl->peer."\n";
@@ -105,22 +134,22 @@ for(;;) {
 
 sub check_request
 {
-	my($req) = @_;
+	my($fh, $req) = @_;
 	print "Got ".$req->method." request for ".$req->uri."\n";
-	return 1;
+	return undef unless $req->method eq 'GET' && $req->uri =~ /\/(\w+)/;
+	my($info) = $dbh->selectrow_hashref("SELECT * FROM sessions WHERE token = ?", undef, $1) or return undef;
+	my $blfusers = $dbh->selectcol_arrayref("SELECT users.id FROM blfs INNER JOIN users ON users.num = blfs.num WHERE blfs.uid = ?", undef, $info->{uid});
+	my $cl = new EventSourceClient($fh, %$info, req => $req, blfusers => $blfusers, keepalive => $conf->{keepalive});
+	return $cl;
 }
 
-sub broadcast_event
+sub broadcast_keepalive
 {
 	my($data) = @_;
 	print "Broadcasting to ".scalar(keys %clients)." clients\n";
 	foreach my $key(keys %clients) {
-		my $fh = $clients{$key}->fh;
-		if(IO::Select->new($fh)->can_write) {
-			$fh->print("data: $data\n\n") or warn "Can't write to client: $!";
-		} else {
-			disconnect_client($fh);
-		}
+		my $c = $clients{$key};
+		$c->send_keepalive() or disconnect_client($c->fh);
 	}
 }
 
@@ -134,6 +163,20 @@ sub disconnect_client
 	$fh->close;
 }
 
+sub database_notification
+{
+	my($name, $payload) = @_;
+	print "Got database notification $name with payload $payload, checking ".scalar(keys %clients)." clients\n";
+	foreach my $key(keys %clients) {
+		my $c = $clients{$key};
+		my $obj = $c->format_event($name, $payload);
+		if($obj) {
+			$c->send_event($obj) or disconnect_client($c->fh);
+		} else {
+			$c->send_keepalive();
+		}
+	}
+}
 
 
 

@@ -145,8 +145,13 @@ __PACKAGE__->has_many(
   "Dyatel::Schema::Roster",
   { "foreign.uid" => "self.id" },
 );
-__PACKAGE__->belongs_to("num", "Dyatel::Schema::Directory", { num => "num" });
+__PACKAGE__->has_many(
+  "sessions",
+  "Dyatel::Schema::Sessions",
+  { "foreign.uid" => "self.id" },
+);
 __PACKAGE__->belongs_to("fingrp", "Dyatel::Schema::Fingroups", { id => "fingrp" });
+__PACKAGE__->belongs_to("num", "Dyatel::Schema::Directory", { num => "num" });
 __PACKAGE__->has_many(
   "vcards",
   "Dyatel::Schema::Vcards",
@@ -154,8 +159,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-19 02:26:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:azd1T0iGKs0DPPxPItdyaQ
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-01-29 09:58:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pZILxQtBr8yvchnQtEP6/w
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
