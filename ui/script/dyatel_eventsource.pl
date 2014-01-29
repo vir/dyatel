@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-01-29 15:33:50 +0400
+# Last modified: 2014-01-30 00:03:54 +0400
 #
 
 use strict;
@@ -70,7 +70,7 @@ my $dbh = Dyatel::ExtConfig::dbh();
 	{
 		my $self = shift;
 		my($dbev, $payload) = @_;
-		if(($dbev eq 'linetracker' || $dbev eq 'blfs') && $payload == $self->{uid}) {
+		if(($dbev eq 'linetracker' || $dbev eq 'blfs' || $dbev eq 'testevent') && $payload == $self->{uid}) {
 			return { event => $dbev };
 		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && grep({ $payload == $_ } @{ $self->{blfusers} })) {
 			return { event => 'blf_state', uid => $payload };
@@ -79,10 +79,10 @@ my $dbh = Dyatel::ExtConfig::dbh();
 	}
 }
 
-$dbh->do("LISTEN $_") foreach(qw( linetracker test ));
+$dbh->do("LISTEN $_") foreach(qw( linetracker blfs regs testevent ));
 my $pg = IO::Socket->new_from_fd($dbh->{pg_socket}, "r+") or die "Can't fdopen postgres's socket: $!";
 
-my $lsn = IO::Socket::INET->new(Listen => 1, LocalPort => 8080, ReuseAddr => 1);
+my $lsn = IO::Socket::INET->new(Listen => 5, LocalAddr => $conf->{host}, LocalPort => $conf->{port} || 8080, ReuseAddr => 1, ReusePort => 1);
 my $sel = IO::Select->new( $lsn, $pg );
 my $timeout = 5.0;
 my %clients;
@@ -157,7 +157,9 @@ sub disconnect_client
 {
 	my($fh) = @_;
 	print "Disconnecting client\n";
-	delete $clients{$fh->fileno} if $clients{$fh->fileno};
+	my $c;
+	$c = delete $clients{$fh->fileno} if $clients{$fh->fileno};
+	$dbh->do("DELETE FROM sessions WHERE token = ?", undef, $c->{token}) if $c;
 	$sel->remove($fh);
 	$fh->shutdown(2);
 	$fh->close;

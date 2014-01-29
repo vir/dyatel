@@ -25,7 +25,7 @@ angular.module('dyatelServices', [], function($provide) {
 			eventHandler: function(name, handlerFunc, stateFunc) {
 				var es = new EventSource('/u/eventsource/' + name);
 				es.addEventListener('message', function (e) {
-					if(e.data === 'keepalive')
+					if(e.data === 'keepalive' || e.data === 'testevent')
 						return;
 					$rootScope.$apply(function() {
 						handlerFunc(JSON.parse(e.data));

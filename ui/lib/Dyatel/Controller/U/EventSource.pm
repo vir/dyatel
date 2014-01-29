@@ -26,6 +26,7 @@ sub index :Path :Args(0) {
     $c->response->body('Matched Dyatel::Controller::U::EventSource in U::EventSource.');
 }
 
+use Data::Dumper;
 sub Go :Path :Args(1)
 {
 	my($self, $c) = @_;
@@ -33,8 +34,9 @@ sub Go :Path :Args(1)
 		my $s = $c->model('DB::Sessions')->create({uid => $c->stash->{uid}, events => [ 'linetracker' ]});
 # TODO: store lastEventId & r parameters
 		my $u = $c->uri_for("/".$s->token);
-		$u->port(8080);
-		warn "Ridrecting to $u ".ref($u);
+		$u->scheme($c->config->{EventSource}{scheme}) if $c->config->{EventSource}{scheme};
+		$u->host($c->config->{EventSource}{host}) if $c->config->{EventSource}{host};
+		$u->port($c->config->{EventSource}{port} || 8080);
 		$c->response->redirect($u);
 	};
 	if($@) {
