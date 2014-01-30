@@ -63,6 +63,13 @@ sub user_blfs
 	});
 }
 
+sub notify
+{
+	my $self = shift;
+	my($name, $payload) = @_;
+	return $self->storage->dbh_do(sub { shift; return shift->do("NOTIFY $name, ?", undef, $payload); });
+}
+
 =head1 NAME
 
 Dyatel::Model::DB - Catalyst DBIC Schema Model

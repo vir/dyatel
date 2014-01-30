@@ -27,9 +27,10 @@ sub index :Path :Args(0) {
 }
 
 use Data::Dumper;
-sub Go :Path :Args(1)
+sub Go :Path :GET :Args(1)
 {
-	my($self, $c) = @_;
+	my($self, $c, $arg) = @_;
+	print "CONFIG: ".Dumper($c->config);
 	eval {
 		my $s = $c->model('DB::Sessions')->create({uid => $c->stash->{uid}, events => [ 'linetracker' ]});
 # TODO: store lastEventId & r parameters
@@ -49,6 +50,11 @@ sub Go :Path :Args(1)
 	}
 }
 
+sub Fire :Path :POST :Args(1)
+{
+	my($self, $c, $arg) = @_;
+	$c->model('DB')->notify('testevent', $c->stash->{uid});
+}
 
 =encoding utf8
 

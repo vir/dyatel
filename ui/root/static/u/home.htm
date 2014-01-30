@@ -1,7 +1,9 @@
 <!-- Begin page content -->
 <div class="container-fluid">
  <div class="row-fluid">
-  <div class="pull-right"><span ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected}">Connection: {{ connected }}</span></div>
+  <div class="pull-right">
+   <span ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected}" ng-click="testEvent()">Connection: {{ connected }}</span>
+  </div>
   <h1>Dyatel web interface</h1>
  </div>
  <form class="form-inline" novalidate="1">
