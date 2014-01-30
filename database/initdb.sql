@@ -81,6 +81,19 @@ CREATE TABLE regs (
 	route_params HSTORE;
 );
 
+CREATE OR REPLACE FUNCTION regs_change_trigger() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.userid::TEXT);
+	ELSE
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.userid::TEXT);
+	END IF;
+	RETURN NEW;
+END $$ LANGUAGE PlPgSQL;
+
+CREATE TRIGGER regs_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON regs FOR EACH ROW EXECUTE PROCEDURE regs_change_trigger();
+
 CREATE TABLE subscriptions (
 	id BIGSERIAL PRIMARY KEY,
 	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -605,6 +618,15 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+CREATE OR REPLACE FUNCTION any_change_trigger_uid() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.uid::TEXT);
+	ELSE
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.uid::TEXT);
+	END IF;
+	RETURN NEW;
+END $$ LANGUAGE PlPgSQL;
 
 -- Line tracker
 CREATE TABLE linetracker(
@@ -616,6 +638,9 @@ CREATE TABLE linetracker(
 	called TEXT,
 	billid TEXT
 );
+
+CREATE TRIGGER linetracker_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON linetracker FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
 
 CREATE OR REPLACE FUNCTION linetracker_flush() RETURNS VOID AS $$
 BEGIN
@@ -818,6 +843,9 @@ CREATE TABLE blfs(
 );
 CREATE UNIQUE INDEX blfs_uniqe_index ON blfs(uid, key);
 
+CREATE TRIGGER blfs_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON blfs FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
+
 
 
 CREATE TABLE phonebook (
@@ -841,6 +869,16 @@ CREATE TABLE prices(
 	price REAL NOT NULL,
 	descr TEXT
 );
+
+CREATE TABLE sessions (
+	token VARCHAR PRIMARY KEY DEFAULT random_string(16),
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	events TEXT[]
+);
+
+CREATE TRIGGER sessions_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON sessions FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
 
 -- vim: ft=sql
 

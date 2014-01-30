@@ -1,5 +1,5 @@
 angular.module('dyatelServices', [], function($provide) {
-	$provide.factory('CTI', ['$http', function($http) {
+	$provide.factory('CTI', ['$http', '$rootScope', function($http, $rootScope) {
 		var inst = {
 
 			newCall: function(num) {
@@ -20,6 +20,34 @@ angular.module('dyatelServices', [], function($provide) {
 
 			transferCall: function(chan, num) {
 				alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
+			},
+
+			eventHandler: function(name, handlerFunc, stateFunc) {
+				var es = new EventSource('/u/eventsource/' + name);
+				es.addEventListener('message', function (e) {
+					if(e.data === 'keepalive')
+						return;
+					if(e.data === 'testevent') {
+						console.log('Got testevent');
+						return;
+					}
+					$rootScope.$apply(function() {
+						handlerFunc(JSON.parse(e.data));
+					});
+				});
+				if(stateFunc) {
+					es.onopen = function() {
+						$rootScope.$apply(function() {
+							stateFunc(true);
+						});
+					};
+					es.onerror = function() {
+						$rootScope.$apply(function() {
+							stateFunc(false);
+						});
+					};
+				}
+				return es;
 			},
 
 		};
@@ -45,10 +73,11 @@ ctrlrModule.directive('focusMe', function ($timeout) {
 	};
 });
 
-ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
+ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout, CTI) {
 	$scope.phone = '';
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
+	$scope.connected = false;
 
 	$scope.selectionDone = function (item) {
 		$scope.phone = item.num;
@@ -108,6 +137,34 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, CTI) {
 
 	$scope.updateLinetracker();
 	$scope.updateBLFs();
+
+	$scope.es = CTI.eventHandler('home', function(msg) {
+		if(msg.event === 'linetracker')
+			$scope.updateLinetracker();
+		else if(msg.event === 'blf_state')
+			$scope.updateBLFs();
+		else
+			console.log('Unknown event received: ' + JSON.stringify(msg));
+	}, function(state) {
+		$scope.connected = state;
+		if(state)
+			$timeout.cancel($scope.testEventTimeout);
+	});
+
+	$scope.testEvent = function() {
+		return $http({
+			method: 'POST',
+			url: '/u/eventsource/testevent',
+			data: $.param({ event: 'testevent' }),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			console.log('Posted testevent');
+		});
+	};
+	$scope.testEventTimeout = $timeout(function() {
+		if(! $scope.connected)
+			$scope.testEvent();
+	}, 500);
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
