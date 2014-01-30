@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-01-30 11:47:57 +0400
+# Last modified: 2014-01-30 23:06:24 +0400
 #
 
 use strict;
@@ -46,6 +46,7 @@ my $dbh = Dyatel::ExtConfig::dbh();
 		my $self = shift;
 		$self->fh->print("HTTP/1.1 200 OK\nContent-Type: text/event-stream\nCache-Control: no-cache\n");
 		$self->fh->print("Access-Control-Allow-Origin: ".$self->{req}->header('Origin')."\n") if $self->{req} && $self->{req}->header('Origin');
+		$self->fh->print("Access-Control-Allow-Credentials: true\n");
 		$self->fh->print("\n");
 		$self->{LAST_EVENT} = time();
 	}

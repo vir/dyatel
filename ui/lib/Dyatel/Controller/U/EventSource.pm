@@ -26,11 +26,21 @@ sub index :Path :Args(0) {
     $c->response->body('Matched Dyatel::Controller::U::EventSource in U::EventSource.');
 }
 
-use Data::Dumper;
-sub Go :Path :GET :Args(1)
+# We have to do another dispatching here because catalyst 5.9.15 does not
+# know about GET/POST attributes
+sub dispatch :Path :Args(1)
 {
 	my($self, $c, $arg) = @_;
-	print "CONFIG: ".Dumper($c->config);
+	if($c->request->method eq 'POST') {
+		$c->forward('Fire', $arg);
+	} else {
+		$c->forward('Go', $arg);
+	}
+}
+
+sub Go :Private # :Path :GET :Args(1)
+{
+	my($self, $c, $arg) = @_;
 	eval {
 		my $s = $c->model('DB::Sessions')->create({uid => $c->stash->{uid}, events => [ 'linetracker' ]});
 # TODO: store lastEventId & r parameters
@@ -50,7 +60,7 @@ sub Go :Path :GET :Args(1)
 	}
 }
 
-sub Fire :Path :POST :Args(1)
+sub Fire :Private # :Path :POST :Args(1)
 {
 	my($self, $c, $arg) = @_;
 	$c->model('DB')->notify('testevent', $c->stash->{uid});

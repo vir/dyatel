@@ -23,7 +23,7 @@ angular.module('dyatelServices', [], function($provide) {
 			},
 
 			eventHandler: function(name, handlerFunc, stateFunc) {
-				var es = new EventSource('/u/eventsource/' + name);
+				var es = new EventSource('/u/eventsource/' + name, { withCredentials: true });
 				es.addEventListener('message', function (e) {
 					if(e.data === 'keepalive')
 						return;
