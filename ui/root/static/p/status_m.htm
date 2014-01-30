@@ -13,8 +13,11 @@
 <pre>{{ data.params }}</pre>
 </div>
 
-<div class="row-fluid">
+<div class="row-fluid" ng-show="data.rows">
 	<div class="gridStyle span11" ng-grid="gridOptions"></div>
+</div>
+<div class="row-fluid" ng-show="data.details">
+	<pre>{{ data.details }}</pre>
 </div>
 
 <!-- <div class="row-fluid"><pre>{{ data | json }}</pre></div> -->
