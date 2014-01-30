@@ -111,13 +111,13 @@ span.member {
 }
 
 .blf-online {
-	background-color: green;
+	background-color: #0E0;
 }
 .blf-offline {
 	background-color: #444;
 }
 .blf-busy {
-	background-color: red;
+	background-color: #E00;
 }
 
 
