@@ -23,7 +23,7 @@
      <h2>My BLFs</h2>
      <table class="table table-hover table-condensed">
       <tr ng-repeat="r in blfs">
-       <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy, 'blf-offline': !r.online, 'blf-busy': r.busy}"></div></td>
+       <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
        <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
        <td>User {{ r.uid }}</td>
       </tr>
@@ -41,7 +41,20 @@
      </tr>
     </table>
     <h2>My last calls</h2>
-    <em>TODO</em>
+    <tabset>
+     <tab heading="All">
+	<em>TODO</em>
+     </tab>
+     <tab heading="Missed">
+	<em>TODO</em>
+     </tab>
+     <tab heading="Answered">
+	<em>TODO</em>
+     </tab>
+     <tab heading="Outgoing">
+	<em>TODO</em>
+     </tab>
+    </tabset>
    </div>
   </div> <!-- row-fluid -->
  </form>

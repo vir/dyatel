@@ -119,5 +119,12 @@ span.member {
 .blf-busy {
 	background-color: #E00;
 }
+.blf-ring {
+	-webkit-animation: blink 0.2s linear infinite;
+	animation: blink 0.2s linear infinite;
+}
+@keyframes         blink { 0% { background-color: #FF0; } 100% { background-color: #E84; } }
+@-webkit-keyframes blink { 0% { background-color: #FF0; } 100% { background-color: #E84; } }
+
 
 
