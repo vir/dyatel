@@ -442,9 +442,13 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 
 /* Status */
 
-dyatelControllers.controller('StatusCtrlOverview', function($scope, $http) {
+dyatelControllers.controller('StatusCtrlOverview', function($scope, $routeParams, $http) {
 	$scope.data = [ ];
-	$http.get('/a/status/overview').success(function(data) {
+	var uri = '/a/status/overview';
+	$scope.rp = $routeParams;
+	if($routeParams.f)
+		uri += '?filter=' + $routeParams.f;
+	$http.get(uri).success(function(data) {
 		$scope.data = data.result;
 	});
 });
@@ -469,10 +473,11 @@ dyatelControllers.controller('StatusCtrlModule', function($scope, $routeParams, 
 dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $cookieStore) {
 	$scope.history = $cookieStore.get('statushistory');
 	if($scope.history)
-		$scope.history = $scope.history.filter(function(x) { return x != $routeParams.module });
+		$scope.history = $scope.history.filter(function(x) { return x && x != $routeParams.module });
 	else
 		$scope.history = [ ];
-	$scope.history.unshift($routeParams.module);
+	if($routeParams.module)
+		$scope.history.unshift($routeParams.module);
 	while($scope.history.length > $scope.hist_length)
 		$scope.history.pop();
 	$cookieStore.put('statushistory', $scope.history);

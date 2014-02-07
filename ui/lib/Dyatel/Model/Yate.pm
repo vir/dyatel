@@ -119,10 +119,11 @@ sub _parse_status
 sub status_overview
 {
 	my $self = shift;
+	my($filter) = @_;
 	my $text = $self->send_message_wait_response('engine.status', undef, undef, details => 'false');
 	my $r = [ ];
 	foreach my $line(split(/[\r\n]+/, $text)) {
-		push @$r, _parse_status($line, 0);
+		push @$r, _parse_status($line, 0) if(! defined($filter) || $line =~ /\Q$filter\E/i);
 	}
 	return $r;
 }

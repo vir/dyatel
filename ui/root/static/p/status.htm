@@ -1,6 +1,10 @@
+<div class="container-fluid">
+<div class="row-fluid">
+
 <div ng-controller="StatusCtrlNav2">
 	<ul class="inline">
 		<li><a href="#/status">Overview</a></li>
+		<li><a href="#/status?f=chans">Chans</a></li>
 		<li ng-repeat="h in history"><a href="#/status/{{h}}">{{h}}</a></li>
 	</ul>
 </div>
@@ -10,4 +14,5 @@
 <tr ng-repeat="row in data"><td><a ng-href="#/status/{{row.name}}">{{ row.name }}</a></td><td>{{ row.type }}</td><td>{{ row.params | json }}</td></tr>
 </table>
 
-
+</div>
+</div>

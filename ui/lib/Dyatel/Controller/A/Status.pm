@@ -29,7 +29,7 @@ sub index :Path :Args(0) {
 sub overview : Local
 {
 	my($self, $c) = @_;
-	my $x = $c->model('Yate')->status_overview;
+	my $x = $c->model('Yate')->status_overview($c->request->params->{filter});
 	$c->stash(result => $x);
 }
 
