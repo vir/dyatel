@@ -3,13 +3,20 @@
 </div>
 
 <div class="modal-body">
-	<div ng-bind="info"></div>
+	<div ng-bind="info" />
+	<div>
+		<em>TODO:</em><ul>
+			<li>Search directory</li>
+			<li>Search phonebook</li>
+			<li>Search dossier</li>
+			<li>Geographical info</li>
+		</li>
+	</div>
 	<pre ng-bind="log"></pre>
 </div>
 
 <div class="modal-footer">
-	<button class="btn btn-large" ng-click="btnNewCall()" focus-me>New call</button>
-	<button class="btn btn-large" ng-click="btnTransfer()" ng-enable="calls && calls.length">Transfer current call</button>
+	<button class="btn btn-large" ng-repeat="(name, callback) in buttons" type="button" id="btn-{{name}}" ng-click="callback()">{{name | capitalize}}</button>
 	<button class="btn btn-large" ng-click="btnCancel()">Cancel</button>
 </div>
 

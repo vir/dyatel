@@ -22,6 +22,14 @@ angular.module('dyatelServices', [], function($provide) {
 				alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
 			},
 
+			transferChan: function(chan, other) {
+				alert('Unimplemented CTI.transferChan(' + chan + ', ' + other + ') called');
+			},
+
+			conference: function(chan, other) {
+				alert('Unimplemented CTI.conference(' + chan + ', ' + other + ') called');
+			},
+
 			eventHandler: function(name, handlerFunc, stateFunc) {
 				var es = new EventSource('/u/eventsource/' + name, { withCredentials: true });
 				es.addEventListener('message', function (e) {
@@ -73,6 +81,55 @@ ctrlrModule.directive('focusMe', function ($timeout) {
 	};
 });
 
+ctrlrModule.filter('capitalize', function() {
+	return function(input, scope) {
+		return input.substring(0,1).toUpperCase()+input.substring(1);
+	}
+});
+
+ctrlrModule.controller('CallDlgCtrl', function($scope, $modalInstance, $timeout, CTI, num, activeCall, usage) {
+	$scope.num = num;
+	$scope.activeCall = activeCall;
+	$scope.info = 'No info';
+	$scope.log = 'ok\n';
+	var targetIsAChannel = -1 !== $scope.num.indexOf('/');
+	$scope.buttons = { };
+
+	var focusId;
+	if(! targetIsAChannel) {
+		$scope.buttons.call = function() {
+			CTI.newCall($scope.num);
+			$modalInstance.close('call');
+		};
+		focusId = '#btn-call';
+	}
+	if($scope.activeCall) {
+		$scope.log += 'Active call: ' + angular.toJson($scope.activeCall) + "\r\n";
+		$scope.buttons.transfer = function() {
+			if(targetIsAChannel)
+				CTI.transferChan($scope.activeCall.chan, $scope.num);
+			else
+				CTI.transferCall($scope.activeCall.chan, $scope.num);
+			$modalInstance.close('transfer');
+		};
+		if(usage === 'dnd')
+			focusId = '#btn-transfer';
+	}
+	if(targetIsAChannel) {
+		$scope.buttons.conference = function() {
+			CTI.conference($scope.activeCall.chan, $scope.num);
+			$modalInstance.close('conf');
+		};
+	}
+	$scope.btnCancel = function () {
+		$modalInstance.dismiss('cancel');
+	};
+	$scope.log += 'Buttons: ' + angular.toJson($scope.buttons) + "\r\n";
+	$timeout(function () {
+		$(focusId).focus();
+	});
+});
+
 ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout, CTI) {
 	$scope.phone = '';
 	$scope.linetracker = [ ];
@@ -97,27 +154,11 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			return;
 		var modalInstance = $modal.open({
 			templateUrl: '/static/u/calldialog.htm',
-			controller: function($scope, $modalInstance, num, calls) {
-				$scope.num = num;
-				$scope.calls = calls;
-				$scope.info = 'No info :(';
-				$scope.log = 'ok\n';
-
-				$scope.btnNewCall = function() {
-					CTI.newCall($scope.num);
-					$modalInstance.close('newCall');
-				};
-				$scope.btnTransfer = function() {
-					CTI.transferCall($scope.calls[0].chan, $scope.num);
-					$modalInstance.close('newCall');
-				};
-				$scope.btnCancel = function () {
-					$modalInstance.dismiss('cancel');
-				};
-			},
+			controller: 'CallDlgCtrl',
 			resolve: {
 				num: function () { return o.num; },
-				calls: function() { return $scope.linetracker; },
+				activeCall: function () { return $scope.linetracker.length ? $scope.linetracker[0] : null; },
+				usage: function() { return o.op; },
 			},
 		});
 		//alert('call: ' + angular.toJson(o));
@@ -151,6 +192,7 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			$timeout.cancel($scope.testEventTimeout);
 	});
 
+	// Connection loopback test
 	$scope.testEvent = function() {
 		return $http({
 			method: 'POST',
@@ -165,6 +207,20 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 		if(! $scope.connected)
 			$scope.testEvent();
 	}, 500);
+
+	// Calls drag-and-drop support
+	$scope.onDrop = function(obj, what, target) {
+		console.log('Dropped ' + obj.direction + ' channel ' + obj.chan + ' on ' + what + ' ' + target);
+		var modalInstance = $modal.open({
+			templateUrl: '/static/u/calldialog.htm',
+			controller: 'CallDlgCtrl',
+			resolve: {
+				num: function () { return target; },
+				activeCall: function () { return $scope.linetracker.length ? $scope.linetracker[0] : null; },
+				usage: function() { return 'dnd' },
+			},
+		});
+	};
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {

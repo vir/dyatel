@@ -81,7 +81,8 @@ span.member {
 }
 
 .on-drag-enter{
-	background-color : #aaaaaa;
+	background-color : #DDEEDD;
+	border:1px dotted #40FF40;
 }
 
 [ui-draggable] {

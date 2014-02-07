@@ -21,8 +21,11 @@
      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
      <a title="Edit" href="#/u/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
      <h2>My BLFs</h2>
+     <div ng-hide="blfs.length">
+      No BLFs <a href="#/u/blfs">define</a>d
+     </div>
      <table class="table table-hover table-condensed">
-      <tr ng-repeat="r in blfs">
+      <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
        <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
        <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
        <td>User {{ r.uid }}</td>
@@ -36,7 +39,8 @@
     <h2>My active calls</h2>
     <em ng-show="linetracker.length === 0">None</em>
     <table ng-hide="linetracker.length === 0" class="table table-condensed">
-     <tr ng-repeat="r in linetracker">
+     <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
+      <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
       <td>{{ r.direction }}</td><td>{{ r.chan }}</td><td>{{ r.status }}</td><td>{{ r.caller }}</td><td>{{ r.called }}</td><td>{{ r.billid }}</td>
      </tr>
     </table>
