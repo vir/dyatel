@@ -1,3 +1,9 @@
+dyatel (0.0.57) UNRELEASED; urgency=low
+
+  * UI improvements and small fixes
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 10 Feb 2014 17:50:12 +0400
+
 dyatel (0.0.56) UNRELEASED; urgency=low
 
   * User UI: Reworked dynamically-updated home screen added.
