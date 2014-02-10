@@ -252,17 +252,22 @@ sub on_engine_status
 	my $name = $0;
 	$name =~ s#.*/##;
 	$name =~ s/\.pl$//;
-	return undef unless $name eq ($msg->param('module') || $name);
-	my $mystatus = "name=$name,type=ext,format=caller|callerid|called|calledid;";
-	$mystatus .= "calls=$count_all,connected=$count_connected,active=".scalar(keys(%calls));
-	if(($msg->param('details')||'') ne 'false') {
-		$mystatus .= ",calls=".scalar(keys(%calls)). ",byid=".scalar(keys(%byid));
-		foreach my $k(sort keys %calls) {
-			my $c = $calls{$k};
-			$mystatus .= ";$k=$c->{caller}|".($c->{callerid}||'-')."|$c->{called}|".($c->{calledid}||'-');
+	my $mystatus = '';
+	if($name eq ($msg->param('module') || $name)) {
+		$mystatus = "name=$name,type=ext,format=caller|callerid|called|calledid;";
+		$mystatus .= "calls=$count_all,connected=$count_connected,active=".scalar(keys(%calls));
+		if(($msg->param('details')||'') ne 'false') {
+			$mystatus .= ",calls=".scalar(keys(%calls)). ",byid=".scalar(keys(%byid));
+			my $sep = ';';
+			foreach my $k(sort keys %calls) {
+				my $c = $calls{$k};
+				$mystatus .= "${sep}$k=$c->{caller}|".($c->{callerid}||'-')."|$c->{called}|".($c->{calledid}||'-');
+				$sep = ',';
+			}
 		}
+		$mystatus .= "\r\n";
 	}
-	return ['false', $msg->header('retvalue').$mystatus."\r\n"];
+	return ['false', $msg->header('retvalue').$mystatus];
 }
 
 sub _to_boolean
