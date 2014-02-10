@@ -2,7 +2,7 @@
 <div class="row-fluid">
 	<h1>Call groups list</h1>
 	<div class="well">
-		<dl>
+		<dl class="dl-horizontal">
 			<dt ng-repeat-start="g in myData"><a ng-href="#/cgroups/{{g.id}}">{{g.num.num}}</a></dt><dd ng-repeat-end="">{{g.num.descr}}</dd>
 		</dl>
 	</div>
