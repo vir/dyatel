@@ -19,7 +19,13 @@ angular.module('dyatelServices', [], function($provide) {
 			},
 
 			transferCall: function(chan, num) {
-				alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
+				return $http({
+					method: 'POST',
+					url: '/u/cti/transfer',
+					data: $.param({ chan: chan, target: num }),
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+				});
+				//alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
 			},
 
 			transferChan: function(chan, other) {

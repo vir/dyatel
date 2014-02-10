@@ -155,6 +155,35 @@ sub sconnect
 	return $retval;
 }
 
+sub transfer
+{
+	my $self = shift;
+	my($chan, $num, $billid) = @_;
+	$log->debug("Switching $chan to $num");
+if(0) {
+	$self->yate->message('chan.masquerade', undef, undef,
+		id => $chan,
+		message => 'call.execute',
+		callto => 'lateroute/'.$num,
+		called => $num,
+		billid => $billid,
+	);
+} else {
+	$self->yate->message('chan.masquerade', undef, undef,
+		id => $chan,
+		message => 'call.execute',
+		callto => 'fork',
+		'callto.1' => 'tone/ring',
+		'callto.1.fork.calltype' => 'persistent',
+		'callto.1.fork.autoring' => 'true',
+		'callto.1.fork.automessage' => 'call.progress',
+		'callto.2' => 'lateroute/'.$num,
+		called => $num,
+		billid => $billid,
+	);
+}
+}
+
 =head1 NAME
 
 Dyatel::Model::Yate - Catalyst Model
