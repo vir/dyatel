@@ -2,6 +2,7 @@
     %]"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 [%
 styles = [ 'css/ng-grid.css'
+	, 'Flaticon_WebFont/flaticon.css'
 	, 'css/bootstrap.css', 'css/bootstrap-responsive.css', 'my.css'
 ];
 javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
