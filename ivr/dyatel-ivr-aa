@@ -88,6 +88,7 @@ sub new
 	foreach my $k(COPYPARAMS) {
 		$self->{$k} = $msg->param($k);
 	}
+	$self->{formats} = $self->{format} unless $self->{formats};
 	warn "Channel id $id already in registry" if $registry{$id};
 	$registry{$id} = $self;
 #	$self->debug("New call from ".$self->{caller});
@@ -232,12 +233,22 @@ sub replace_chan
 {
 	my $self = shift;
 	my($msg) = @_;
-$msg->dumpmsg("$self replace_chan");
+#$msg->dumpmsg("$self replace_chan");
 	my $obj = delete $registry{$msg->param('id')};
 	warn "Wrong object in chan.replace handler" unless $obj == $self;
 	$registry{$msg->param('newid')} = $obj;
 	foreach my $k(qw( id targetid dump slavedumb destinationid )) {
-		$obj->{$k} = $msg->param('newid') if $obj->{$k} && $obj->{$k} eq $msg->param('id');
+		my $newid = $msg->param('newid');
+		if($obj->{$k} && $obj->{$k} eq $msg->param('id')) {
+			if($k =~ /dumb$/ and $newid !~/^dumb\//) {
+# Just do nothing here
+#				$self->debug("Removing replaced '$k': '$obj->{$k}' => '$newid'");
+#				delete $obj->{$k};
+			} else {
+				$self->debug("Replaced '$k': '$obj->{$k}' => '$newid'");
+				$obj->{$k} = $newid;
+			}
+		}
 	}
 	if($self->{wait_replace}) {
 		$self->{wait_replace}->($self); # delayed event
@@ -256,11 +267,23 @@ sub timer
 	}
 }
 
+sub connected
+{
+	my $self = shift;
+	my($msg) = @_;
+#	if($msg->header('processed')) {
+#		delete $self->{id};
+#		delete $self->{destinationid};
+#	}
+	$self->event('connected');
+}
+
+use Data::Dumper;
 sub destruct
 {
 	my $self = shift;
 	foreach my $k(qw( id targetid dumb destinationid slavedumb )) {
-		delete $registry{$self->{$k}} if $self->{$k} && $registry{$self->{$k}} && $registry{$self->{$k}} == $self;
+		delete $registry{$self->{$k}} if $self->{$k} && $registry{$self->{$k}} && $registry{$self->{$k}} eq $self;
 	}
 	foreach my $k(keys %responses) {
 		if($responses{$k} == $self) {
@@ -276,6 +299,9 @@ sub destruct
 			);
 		}
 	}
+	$self->dump("Final dump");
+	print "registry: ".Dumper(\%registry);
+	print "responses: ".Dumper(\%responses);
 }
 
 # === === === Actions === === ===
@@ -410,12 +436,13 @@ sub action_connect
 {
 	my $self = shift;
 	die "Can't connect - no destinationid" unless $self->{destinationid};
-	$self->yate->message('chan.connect', undef, undef,
+	my $msgid = $self->yate->generate_id;
+	$responses{$msgid} = $self;
+	$self->yate->message('chan.connect', undef, $msgid,
 		id => $self->{id},
 		targetid => $self->{destinationid},
 		billid => $self->{billid},
 	);
-	$self->destruct;
 }
 
 sub action_drop
@@ -484,6 +511,7 @@ sub init
 	$yate->install_watcher('call.answered', _make_handler(\&Yate::IVR::Call::answered));
 	$yate->install('chan.replaced', _make_handler(\&Yate::IVR::Call::replace_chan));
 	$yate->install_incoming('call.execute', \&_call_execute_result);
+	$yate->install_incoming('chan.connect', \&_chan_connect_result);
 	$yate->install('engine.timer', \&_broadcast_engine_timer);
 	$yate->install('engine.status', \&_engine_status_handler, 150);
 }
@@ -542,17 +570,22 @@ sub _engine_status_handler
 	my $name = $0;
 	$name =~ s#.*/##;
 	$name =~ s/\.pl$//;
-	my $mystatus = "name=$name,type=ext,format=".join('|', map({ucfirst($_)} @format)).";";
-	$mystatus .= "calls=$count_all,ivrs=".scalar(keys %ivrs).",registry=".scalar(keys %Yate::IVR::Call::registry).",responses=".scalar(keys %Yate::IVR::Call::responses);
-	if(($msg->param('details')||'') ne 'false') {
-		my $calls = Yate::IVR::Call::get_calls_list();
-		$mystatus .=",active=".scalar(@$calls);
-		for(my $i = 0; $i < @$calls; ++$i) {
-			my $s = $calls->[$i]->status;
-			$mystatus .= ";$i=".join('|', map({ defined($s->{$_}) ? $s->{$_} : '-' } @format));
+	my $mystatus = '';
+	if($name eq ($msg->param('module') || $name)) {
+		$mystatus = "name=$name,type=ext,format=".join('|', map({ucfirst($_)} @format)).";";
+		$mystatus .= "calls=$count_all,ivrs=".scalar(keys %ivrs).",registry=".scalar(keys %Yate::IVR::Call::registry).",responses=".scalar(keys %Yate::IVR::Call::responses);
+		if(($msg->param('details')||'') ne 'false') {
+			my $calls = Yate::IVR::Call::get_calls_list();
+			$mystatus .=",active=".scalar(@$calls);
+			for(my $i = 0; $i < @$calls; ++$i) {
+				my $s = $calls->[$i]->status;
+				$mystatus .= $i ? ',' : ';';
+				$mystatus .= "$i=".join('|', map({ defined($s->{$_}) ? $s->{$_} : '-' } @format));
+			}
 		}
+		$mystatus .= "\r\n";
 	}
-	return ['false', $msg->header('retvalue').$mystatus."\r\n"];
+	return ['false', $msg->header('retvalue').$mystatus];
 }
 
 sub _call_execute_result
@@ -560,6 +593,13 @@ sub _call_execute_result
 	my $msg = shift;
 	my $call = delete $Yate::IVR::Call::responses{$msg->header('id')} || return;
 	$call->set_slave($msg);
+}
+
+sub _chan_connect_result
+{
+	my $msg = shift;
+	my $call = delete $Yate::IVR::Call::responses{$msg->header('id')} || return;
+	$call->connected($msg);
 }
 
 sub _broadcast_engine_timer
@@ -704,9 +744,11 @@ sub load_aa
 			[ 'switching', 'timeout', 'drop', 'answered' ],
 			[ 'switching', 'dtmf', 'drop', 'answered' ],
 			[ 'switching', 'ringing', 'playtone ring', 'switching' ],
-			[ 'switching', 'answered', 'connect', 'finish' ],
+			[ 'switching', 'answered', ['timer 5', 'connect'], 'connecting' ],
 			[ 'switching', 'hangup', 'drop', 'answered' ],
 			[ 'switching', 'disconnect', 'drop', 'finish' ],
+			[ 'connecting', 'connected', 'suicide', 'finish' ],
+			[ 'connecting', 'timeout', 'suicide', 'finish' ],
 			[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
 		];
 		push @$table, [ 'playing', 'finished', 'timer 5', undef ] if $h->{timeout};
