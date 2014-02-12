@@ -54,7 +54,7 @@ sub transfer : Local
 	my($self, $c) = @_;
 	my $line = $c->model('DB::Linetracker')->search({uid => $c->stash->{uid}, chan => $c->request->params->{chan}})->first;
 	if($line) {
-		$c->model('Yate')->transfer($c->request->params->{chan}, $c->request->params->{target}, $line->billid);
+		$c->model('Yate')->transfer($c->request->params->{chan}, $c->request->params->{target}, $line->caller, $line->billid);
 	} else {
 		$c->response->body( 'Not your channel' );
 		$c->response->status(403);

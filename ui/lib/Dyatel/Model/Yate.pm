@@ -158,7 +158,7 @@ sub sconnect
 sub transfer
 {
 	my $self = shift;
-	my($chan, $num, $billid) = @_;
+	my($chan, $num, $caller, $billid) = @_;
 	$log->debug("Switching $chan to $num");
 if(0) {
 	$self->yate->message('chan.masquerade', undef, undef,
