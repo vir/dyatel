@@ -31,15 +31,22 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => undef,
   },
+  "label",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 1,
+    size => undef,
+  },
 );
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("blfs_uniqe_index", ["uid", "key"]);
 __PACKAGE__->add_unique_constraint("blfs_pkey", ["id"]);
+__PACKAGE__->add_unique_constraint("blfs_uniqe_index", ["uid", "key"]);
 __PACKAGE__->belongs_to("uid", "Dyatel::Schema::Users", { id => "uid" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-25 11:44:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/B09qwFh5ln5F8045NpISA
+# Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-02-12 15:11:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:skY5uaUO8S14MpQUG+2Mnw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

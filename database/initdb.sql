@@ -839,7 +839,8 @@ CREATE TABLE blfs(
 	id SERIAL PRIMARY KEY,
 	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	key TEXT NOT NULL,
-	num PHONE NOT NULL
+	num PHONE NOT NULL,
+	label TEXT
 );
 CREATE UNIQUE INDEX blfs_uniqe_index ON blfs(uid, key);
 

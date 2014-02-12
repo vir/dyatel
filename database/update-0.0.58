@@ -1,0 +1,9 @@
+BEGIN;
+
+ALTER TABLE blfs ADD label TEXT;
+
+COMMIT;
+
+-- vim: ft=sql
+
+

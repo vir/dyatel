@@ -316,5 +316,101 @@ ctrlrModule.controller('MyPhoneCtrl', function($scope, $http) {
 ctrlrModule.controller('MyAbbrsCtrl', function($scope, $http) {
 });
 
+ctrlrModule.controller('MyBLFsCtrl', function($scope, $http) {
+	var urlBase = '/u/blfs/';
+	$scope.selection = [ ];
+	$http.get(urlBase + 'list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'key', displayName:'Key', width:'15%'},
+			{field:'num', displayName:'Number', width:'15%'},
+			{field:'label', displayName:'Label'},
+		],
+		multiSelect: false,
+		selectedItems: $scope.selection,
+		/*
+		rowTemplate:
+			'<div style="height: 100%" ng-class="{changed: !!row.getProperty(\'changed\')}">' +
+				'<div ng-repeat="col in renderedColumns" ng-class="col.colIndex()" class="ngCell">' +
+					'<div ng-cell></div>' +
+				'</div>' +
+			'</div>',
+		beforeSelectionChange: function() {
+			$scope.editForm.$pristine = true;
+			return true;
+		},
+		*/
+	};
+	$scope.onNew = function() {
+		var newRow = { id: 'create', key:1, num:'', label:'', changed: true };
+		if($scope.myData.length)
+			newRow.key = parseFloat($scope.myData[$scope.myData.length - 1].key) + 1;
+		$scope.myData.push(newRow);
+		var index = $scope.myData.indexOf(newRow);
+		var e = $scope.$on('ngGridEventData', function() {
+			$scope.gridOptions.selectItem(index, true);
+			var grid = $scope.gridOptions.ngGrid;
+			grid.$viewport.scrollTop((grid.rowMap[index] + 1) * grid.config.rowHeight);
+//			e();
+		});
+	};
+	$scope.onSave = function() {
+		var saveData = {
+			action: 'save',
+			key: $scope.selection[0].key,
+			num: $scope.selection[0].num,
+			label: $scope.selection[0].label,
+		};
+		$.each($scope.selection[0], function(key, value) { // XXX depends on jQuery
+				if(key === 'id' || key === 'changed')
+					return;
+				saveData[key] = value;
+		});
+		$http({
+			method: 'POST',
+			url: urlBase + $scope.selection[0].id,
+			data: $.param(saveData), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			//alert(angular.toJson(data));
+			if(data.obj) {
+				for(k in data.obj) {
+					$scope.selection[0][k] = data.obj[k];
+				}
+			}
+			$scope.selection[0].changed = false;
+		});
+	};
+	$scope.onDelete = function() {
+		var delRow = function() {
+			var index = $scope.myData.indexOf($scope.selection[0]);
+			$scope.gridOptions.selectItem(index, false);
+			$scope.myData.splice(index, 1);
+		};
+		if(isNaN(parseFloat($scope.selection[0].id)))
+			delRow();
+		else {
+			$http({
+				method: 'POST',
+				url: urlBase + 'delete',
+				data: 'id=' + $scope.selection[0].id,
+				headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+			}).success(delRow);
+		}
+	};
+	$scope.dataSource = function (a) {
+		var url = '/u/phonebook/search?' + $.param({ q: a, loc: 1, more: 1, pvt: 1, com: 1 }, true); // use jQuery to url-encode object
+		return $http.get(url).then(function (response) {
+			return response.data.result.map(function(a) { return {
+				num: a.num,
+				label: a.num + ' ' + a.descr,
+			}});
+		});
+	};
+});
+
 
 

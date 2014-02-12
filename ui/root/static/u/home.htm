@@ -19,16 +19,16 @@
 
     <div class="well">
      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
-     <a title="Edit" href="#/u/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
+     <a title="Edit" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
      <h2>My BLFs</h2>
      <div ng-hide="blfs.length">
-      No BLFs <a href="#/u/blfs">define</a>d
+      No BLFs <a href="#/blfs">define</a>d
      </div>
      <table class="table table-hover table-condensed">
       <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
        <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
        <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
-       <td>User {{ r.uid }}</td>
+       <td>{{ r.label || r.dirdescr }}</td>
       </tr>
      </table>
     </div>

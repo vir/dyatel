@@ -1,0 +1,18 @@
+<!-- Begin page content -->
+<div class="container-fluid">
+ <div class="row-fluid">
+  <div class="gridStyle span6" ng-grid="gridOptions"></div>
+  <div class="span6">
+   <label>Key <input type="text" ng-model="selection[0].key" ng-change="selection[0].changed=true" /></label>
+   <label>Number <input type="text" ng-model="selection[0].num" ng-change="selection[0].changed=true" typeahead="x.num as x.label for x in dataSource($viewValue) | limitTo:25"/></label>
+   <label>Label <input type="text" ng-model="selection[0].label" ng-change="selection[0].changed=true" /></label>
+   <button class="btn" ng-click="onNew()">New</button>
+   <button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed">Save</button>
+   <button class="btn" ng-click="onDelete()" ng-disabled="!selection[0].id">Delete</button>
+   <p class="warning" ng-show="selection[0].changed">Current row is not saved</p>
+  </div>
+ </div>
+</div>
+
+
+
