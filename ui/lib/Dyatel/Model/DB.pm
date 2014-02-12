@@ -56,7 +56,7 @@ sub user_blfs
 	my($uid) = @_;
 	my $sql = << '***';
 SELECT b.key, b.num, u.id AS uid,
-		EXISTS (SELECT * FROM regs WHERE userid = u.id) AS online,
+		EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > CURRENT_TIMESTAMP) AS online,
 		EXISTS(SELECT * FROM linetracker WHERE uid = u.id) AS busy,
 		EXISTS(SELECT * FROM linetracker WHERE uid = u.id AND direction = 'outgoing' AND status = 'ringing') AS ring
 	FROM blfs b LEFT JOIN USERS u ON u.num = b.num WHERE b.uid = ? ORDER BY b.key;
