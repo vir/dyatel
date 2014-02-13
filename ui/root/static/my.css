@@ -127,5 +127,7 @@ span.member {
 @keyframes         blink { 0% { background-color: #FF0; } 100% { background-color: #E84; } }
 @-webkit-keyframes blink { 0% { background-color: #FF0; } 100% { background-color: #E84; } }
 
-
+#connection-state a { line-height:20px; font-size:130%; padding:1px 2px 1px 4px; }
+#fullscreen-button { font-size:150%; margin:2px; cursor:pointer; }
+#mytoolbar { position:absolute; top:0; right:0; z-index:100; color:#EEE; padding:8px 10px; }
 

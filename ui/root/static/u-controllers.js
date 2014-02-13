@@ -93,6 +93,39 @@ ctrlrModule.filter('capitalize', function() {
 	}
 });
 
+ctrlrModule.directive('fullscreen', function() {
+	return {
+		restrict: 'E',
+		replace: true,
+		scope: {
+		},
+		link: function (scope, element, attrs, model) {
+			var el = document.documentElement;
+			var rfs = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen;
+			var cfs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+			if(rfs && cfs) {
+				scope.fs = function(st) {
+					if(st)
+						rfs.call(document.documentElement);
+					else
+						cfs.call(document);
+				};
+			}
+		},
+		template: '<i ng-click="toggle()" title="{{title}}" ng-class="{\'flaticon-fullscreen2\':state, \'flaticon-fullscreen3\':!state}"></i>',
+		controller: function($scope) {
+			$scope.state = false;
+			$scope.title = 'Full screen';
+			$scope.toggle = function() {
+				$scope.state = !$scope.state;
+				if($scope.fs)
+					$scope.fs($scope.state);
+				$scope.title = $scope.state ? 'Exit full screen' : 'Full screen';
+			};
+		},
+	};
+});
+
 ctrlrModule.controller('CallDlgCtrl', function($scope, $modalInstance, $timeout, CTI, num, activeCall, usage) {
 	$scope.num = num;
 	$scope.activeCall = activeCall;
