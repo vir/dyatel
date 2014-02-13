@@ -1,3 +1,9 @@
+dyatel (0.0.58) UNRELEASED; urgency=low
+
+  * UI: BLF editor and small fixes
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 13 Feb 2014 06:35:03 +0400
+
 dyatel (0.0.57) UNRELEASED; urgency=low
 
   * UI improvements and small fixes
