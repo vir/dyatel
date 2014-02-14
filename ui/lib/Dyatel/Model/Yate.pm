@@ -43,7 +43,7 @@ sub yate
 sub send_message_wait_response
 {
 	my $self = shift;
-	my $msgname = $_[0];
+    my($msgname, $return_value, $id, %params) = @_;
 	my $y = $self->yate;
 	my($result, $params, $processed);
 	my $lambda = sub {
@@ -53,12 +53,13 @@ sub send_message_wait_response
 		$processed = $y->header('processed');
 		die "ok\n";
 	};
-	$y->install_incoming($msgname, $lambda);
-	$y->message(@_);
+    my $respname = ($msgname eq 'chan.masquerade') ? $params{message} : $msgname;
+	$y->install_incoming($respname, $lambda);
+	$y->message($msgname, $return_value, $id, %params);
 	eval {
 		$y->listen;
 	};
-	$y->uninstall_incoming($msgname, $lambda);
+	$y->uninstall_incoming($respname, $lambda);
 	die $@ unless $@ eq "ok\n";
 	if(wantarray) {
 		return($result, $params, $processed);
@@ -155,22 +156,43 @@ sub sconnect
 	return $retval;
 }
 
+sub _get_peerid
+{
+    my $self = shift;
+    my($chan) = @_;
+    my($result, $params, $processed) = $self->send_message_wait_response('chan.masquerade', undef, undef, message => 'complete.me', id => $chan);
+    if(0) {
+        my $msg = "complete.me returned: $processed";
+        foreach my $k(sort keys %$params) {
+            $msg .= ", $k => $params->{$k}";
+        }
+        $log->debug($msg);
+    }
+    return $params->{peerid};
+}
+
 sub transfer
 {
 	my $self = shift;
 	my($chan, $num, $caller, $billid) = @_;
-	$log->debug("Switching $chan to $num");
-if(0) {
+    my $peerid = $self->_get_peerid($chan);
+    unless($peerid) {
+        $log->warning("Can't find peerid for channel $chan");
+        return undef;
+    }
+	$log->debug("Switching $chan to $num, peerid: $peerid");
+if(1) {
 	$self->yate->message('chan.masquerade', undef, undef,
-		id => $chan,
+		id => $peerid,
 		message => 'call.execute',
 		callto => 'lateroute/'.$num,
+		caller => $caller,
 		called => $num,
 		billid => $billid,
 	);
 } else {
 	$self->yate->message('chan.masquerade', undef, undef,
-		id => $chan,
+		id => $peerid,
 		message => 'call.execute',
 		callto => 'fork',
 		'callto.1' => 'tone/ring',
@@ -178,6 +200,7 @@ if(0) {
 		'callto.1.fork.autoring' => 'true',
 		'callto.1.fork.automessage' => 'call.progress',
 		'callto.2' => 'lateroute/'.$num,
+		caller => $caller,
 		called => $num,
 		billid => $billid,
 	);
