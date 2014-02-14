@@ -1,3 +1,11 @@
+dyatel (0.0.59) UNRELEASED; urgency=low
+
+  * UI: call transfer implemented
+  * UI: phonebook additional numbers search fixed
+  * UI: fullscreen mode added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Sat, 15 Feb 2014 01:33:14 +0400
+
 dyatel (0.0.58) UNRELEASED; urgency=low
 
   * UI: BLF editor and small fixes
