@@ -33,7 +33,7 @@ sub search :Local
 	my %opts = (
 		uid => $c->stash->{uid},
 	);
-	foreach my $k(qw( loc pvt com )) {
+	foreach my $k(qw( loc pvt com more )) {
 		$opts{$k} = $c->request->params->{$k};
 	}
 	my $res = $c->model('DB')->xsearch($c->request->params->{q}, \%opts);
