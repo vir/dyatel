@@ -175,11 +175,11 @@ sub transfer
 {
 	my $self = shift;
 	my($chan, $num, $caller, $billid) = @_;
-    my $peerid = $self->_get_peerid($chan);
-    unless($peerid) {
-        $log->warning("Can't find peerid for channel $chan");
-        return undef;
-    }
+	my $peerid = $self->_get_peerid($chan);
+	unless($peerid) {
+			$log->warning("Can't find peerid for channel $chan");
+			return undef;
+	}
 	$log->debug("Switching $chan to $num, peerid: $peerid");
 if(1) {
 	$self->yate->message('chan.masquerade', undef, undef,
@@ -205,6 +205,40 @@ if(1) {
 		billid => $billid,
 	);
 }
+}
+
+sub transferchan
+{
+	my $self = shift;
+	my($chan, $other) = @_;
+	my($result, $params, $processed) = $self->send_message_wait_response('chan.connect', undef, undef,
+		id => $chan,
+		targetid => $other,
+		id_peer => 'true',
+		targetid_peer => 'true',
+	);
+	return $processed && $result;
+}
+
+sub conference
+{
+	my $self = shift;
+	my($chan, $other) = @_;
+	my($result, $params, $processed) = $self->send_message_wait_response('chan.masquerade', undef, undef,
+		message => 'call.conference'.
+		id => $chan,
+	);
+	die unless $processed;
+	my $room = $params->{room};
+	$log->debug("Created conference room: $room");
+	my $peerid = $self->_get_peerid($chan);
+
+	$log->debug("Switching $peerid new conference room $room");
+	$self->yate->message('chan.masquerade', undef, undef,
+		id => $peerid,
+		message => 'call.execute',
+		callto => 'conf/'.$room
+	);
 }
 
 =head1 NAME

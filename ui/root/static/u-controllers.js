@@ -25,15 +25,24 @@ angular.module('dyatelServices', [], function($provide) {
 					data: $.param({ chan: chan, target: num }),
 					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 				});
-				//alert('Unimplemented CTI.transferCall(' + chan + ', ' + num + ') called');
 			},
 
 			transferChan: function(chan, other) {
-				alert('Unimplemented CTI.transferChan(' + chan + ', ' + other + ') called');
+				return $http({
+					method: 'POST',
+					url: '/u/cti/transfer2',
+					data: $.param({ chan: chan, target: other }),
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+				});
 			},
 
 			conference: function(chan, other) {
-				alert('Unimplemented CTI.conference(' + chan + ', ' + other + ') called');
+				return $http({
+					method: 'POST',
+					url: '/u/cti/conference',
+					data: $.param({ chan: chan, target: other }),
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+				});
 			},
 
 			eventHandler: function(name, handlerFunc, stateFunc) {

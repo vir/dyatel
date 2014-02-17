@@ -54,7 +54,36 @@ sub transfer : Local
 	my($self, $c) = @_;
 	my $line = $c->model('DB::Linetracker')->search({uid => $c->stash->{uid}, chan => $c->request->params->{chan}})->first;
 	if($line) {
-		$c->model('Yate')->transfer($c->request->params->{chan}, $c->request->params->{target}, $line->caller, $line->billid);
+		my $res = $c->model('Yate')->transfer($c->request->params->{chan}, $c->request->params->{target}, $line->caller, $line->billid);
+		$c->stash(result => $res);
+	} else {
+		$c->response->body( 'Not your channel' );
+		$c->response->status(403);
+		$c->detach;
+	}
+}
+
+sub transfer2 : Local
+{
+	my($self, $c) = @_;
+	my $line = $c->model('DB::Linetracker')->search({uid => $c->stash->{uid}, chan => $c->request->params->{chan}})->first;
+	if($line) {
+		my $res = $c->model('Yate')->transferchan($c->request->params->{chan}, $c->request->params->{target});
+		$c->stash(result => $res);
+	} else {
+		$c->response->body( 'Not your channel' );
+		$c->response->status(403);
+		$c->detach;
+	}
+}
+
+sub conference : Local
+{
+	my($self, $c) = @_;
+	my $line = $c->model('DB::Linetracker')->search({uid => $c->stash->{uid}, chan => $c->request->params->{chan}})->first;
+	if($line) {
+		my $res = $c->model('Yate')->conference($c->request->params->{chan}, $c->request->params->{target});
+		$c->stash(result => $res);
 	} else {
 		$c->response->body( 'Not your channel' );
 		$c->response->status(403);
