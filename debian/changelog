@@ -1,3 +1,10 @@
+dyatel (0.0.60) UNRELEASED; urgency=low
+
+  * UI: transferchan and conference implementations added
+  * Connection icon fix
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 17 Feb 2014 23:26:32 +0400
+
 dyatel (0.0.59) UNRELEASED; urgency=low
 
   * UI: call transfer implemented
