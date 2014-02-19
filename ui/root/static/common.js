@@ -6,7 +6,7 @@ dyatelCommon.filter('unsafe', function($sce) {
 	};
 });
 
-ctrlrModule.directive('focusMe', function ($timeout) {
+dyatelCommon.directive('focusMe', function ($timeout) {
 	return {
 		link: function (scope, element, attrs, model) {
 			$timeout(function () {
@@ -16,7 +16,7 @@ ctrlrModule.directive('focusMe', function ($timeout) {
 	};
 });
 
-ctrlrModule.filter('capitalize', function() {
+dyatelCommon.filter('capitalize', function() {
 	return function(input, scope) {
 		return input.substring(0,1).toUpperCase()+input.substring(1);
 	}
