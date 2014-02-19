@@ -660,24 +660,14 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
-DECLARE
-	u INTEGER;
 BEGIN
-	u := userid(msg->'external');
-	IF u IS NOT NULL THEN
-		UPDATE linetracker SET direction = msg->'direction', status = msg->'status', chan = msg->'chan', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE uid = u;
-	END IF;
+	UPDATE linetracker SET direction = msg->'direction', status = msg->'status', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE chan = msg->'chan';
 END;
 $$ LANGUAGE PlPgSQL;
 
 CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
-DECLARE
-	u INTEGER;
 BEGIN
-	u := userid(msg->'external');
-	IF u IS NOT NULL THEN
-		DELETE FROM  linetracker WHERE uid = u AND chan = msg->'chan';
-	END IF;
+	DELETE FROM linetracker WHERE chan = msg->'chan';
 END;
 $$ LANGUAGE PlPgSQL;
 

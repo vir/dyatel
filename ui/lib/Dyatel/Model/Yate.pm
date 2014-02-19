@@ -225,19 +225,20 @@ sub conference
 	my $self = shift;
 	my($chan, $other) = @_;
 	my($result, $params, $processed) = $self->send_message_wait_response('chan.masquerade', undef, undef,
-		message => 'call.conference'.
+		message => 'call.conference',
 		id => $chan,
 	);
 	die unless $processed;
 	my $room = $params->{room};
 	$log->debug("Created conference room: $room");
-	my $peerid = $self->_get_peerid($chan);
 
-	$log->debug("Switching $peerid new conference room $room");
+	my $peerid = $self->_get_peerid($other);
+	$log->debug("Switching $peerid to conference room $room");
 	$self->yate->message('chan.masquerade', undef, undef,
 		id => $peerid,
 		message => 'call.execute',
-		callto => 'conf/'.$room
+		callto => $room,
+		existing => 'true',
 	);
 }
 

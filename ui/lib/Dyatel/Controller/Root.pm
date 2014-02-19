@@ -49,7 +49,7 @@ sub auto : Private {
 			$c->response->body($msg);
 			return 0;
 	}
-	$c->stash(uid => $u->id, badges => $u->badges);
+	$c->stash(uid => $u->id, unum => $u->num->num, badges => $u->badges);
 	return 1;
 }
 

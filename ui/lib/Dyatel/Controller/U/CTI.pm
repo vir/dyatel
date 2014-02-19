@@ -37,8 +37,7 @@ sub test : Local
 sub call : Local
 {
 	my($self, $c) = @_;
-	my $u = $c->model('DB::Users')->find($c->stash->{uid});
-	my $x = $c->model('Yate')->sconnect($u->num->num, $c->request->params->{called}, $c->request->params->{linehint});
+	my $x = $c->model('Yate')->sconnect($c->stash->{unum}, $c->request->params->{called}, $c->request->params->{linehint});
 	$c->stash(result => $x);
 }
 

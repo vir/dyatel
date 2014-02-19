@@ -1,0 +1,21 @@
+BEGIN;
+
+CREATE INDEX cdr_called_index ON cdr(called);
+
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+        UPDATE linetracker SET direction = msg->'direction', status = msg->'status', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE chan = msg->'chan';
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+        DELETE FROM linetracker WHERE chan = msg->'chan';
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+
+-- vim: ft=sql
+
+

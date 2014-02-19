@@ -57,18 +57,18 @@
      </tr>
     </table>
     <h2>My last calls</h2>
-    <tabset>
-     <tab heading="All">
-	<em>TODO</em>
+    <tabset ng-init="lightVersion=true" ng-controller="CallListCtrl">
+     <tab heading="All"      select="setSection('all')">
+      <div class="gridStyle span12" ng-grid="gridOptions"></div>
      </tab>
-     <tab heading="Missed">
-	<em>TODO</em>
+     <tab heading="Missed"   select="setSection('missed')">
+      <div class="gridStyle span12" ng-grid="gridOptions"></div>
      </tab>
-     <tab heading="Answered">
-	<em>TODO</em>
+     <tab heading="Answered" select="setSection('answered')">
+      <div class="gridStyle span12" ng-grid="gridOptions"></div>
      </tab>
-     <tab heading="Outgoing">
-	<em>TODO</em>
+     <tab heading="Outgoing" select="setSection('outgoing')">
+      <div class="gridStyle span12" ng-grid="gridOptions"></div>
      </tab>
     </tabset>
    </div>

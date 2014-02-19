@@ -1,11 +1,5 @@
 
-var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid', 'ngCookies' ]);
-
-dyatelControllers.filter('unsafe', function($sce) {
-	return function(val) {
-		return $sce.trustAsHtml(val);
-	};
-});
+var dyatelControllers = angular.module('dyatelControllers', [ 'ngGrid', 'ngCookies', 'dyatelCommon' ]);
 
 dyatelControllers.controller('NavbarCtrl', function($scope, $http) {
 	$http.get('/id').success(function(data) {

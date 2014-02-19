@@ -78,28 +78,12 @@ angular.module('dyatelServices', [], function($provide) {
 	}]);
 });
 
-var ctrlrModule = angular.module('userControllers', [ 'ngGrid', 'dyatelServices' ]);
+var ctrlrModule = angular.module('userControllers', [ 'ngGrid', 'dyatelServices', 'dyatelCommon' ]);
 
 ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
 	$http.get('/id').success(function(data) {
 		$scope.user = data;
 	});
-});
-
-ctrlrModule.directive('focusMe', function ($timeout) {
-	return {
-		link: function (scope, element, attrs, model) {
-			$timeout(function () {
-				element[0].focus();
-			});
-		}
-	};
-});
-
-ctrlrModule.filter('capitalize', function() {
-	return function(input, scope) {
-		return input.substring(0,1).toUpperCase()+input.substring(1);
-	}
 });
 
 ctrlrModule.directive('fullscreen', function() {
@@ -264,7 +248,7 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			controller: 'CallDlgCtrl',
 			resolve: {
 				num: function () { return target; },
-				activeCall: function () { return $scope.linetracker.length ? $scope.linetracker[0] : null; },
+				activeCall: function () { return obj; },
 				usage: function() { return 'dnd' },
 			},
 		});
@@ -350,6 +334,80 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
 });
 
 ctrlrModule.controller('CallListCtrl', function($scope, $http) {
+	$scope.section = 'all';
+	$scope.selection = [ ];
+	$scope.totalServerItems = 0;
+	$scope.pagingOptions = {
+		pageSizes: [50, 100, 200, 500],
+		pageSize: 50,
+		currentPage: 1
+	};
+	$scope.getData = function(pageSize, page) {
+		$http.get('/u/cdr/list/' + $scope.section + '?page=' + page + '&perpage=' + pageSize).success(function(data) {
+			$scope.myData = data.rows;
+			$scope.totalServerItems = data.totalrows;
+			if (!$scope.$$phase) {
+				$scope.$apply();
+			}
+		});
+	};
+	$scope.$watch('pagingOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
+			$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+		}
+	}, true);
+	$scope.setSection = function(s) {
+		$scope.section = s;
+		$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+	};
+	$scope.formatPeer = function(row) {
+		var inc = 'outgoing' === row.getProperty('direction');
+		var dir = inc
+			? '<abbr title="Incoming"><i class="flaticon-arrow219"></i></abbr> '
+			: '<abbr title="Outgoing"><i class="flaticon-arrow217"></i></abbr> ';
+		var peer;
+		if(inc) {
+			peer = row.getProperty('caller');
+		} else {
+			var c = row.getProperty('called');
+			var f = row.getProperty('calledfull');
+			if(null === f || f.length === 0 || c === f)
+				peer = c;
+			else if(c.length + f.length <= 10)
+				peer = c + ' (' + f + ')';
+			else
+				peer = '<abbr title="' + f + '">' + c + '</abbr>';
+		}
+		return dir + ' ' + peer;
+	};
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+//			{field:'id', displayName:'id'},
+			{field:'ts', displayName:'Time', cellTemplate:'<div class="ngCellText"><abbr title="{{row.getProperty(\'ts\')}}">{{row.getProperty(\'ts\').substr(8,11)}}</abbr></div>' },
+			{field:'billid', displayName:'Billid'},
+			{displayName:'Peer', cellTemplate:'<div class="ngCellText" ng-bind-html="formatPeer(row) | unsafe"></div>'},
+//			{field:'direction', displayName:'Direction'},
+//			{field:'caller'}, {field:'called'},
+//			{field:'duration', displayName:'Duration'},
+			{field:'billtime', displayName:'Bill Time'},
+			{field:'ringtime', displayName:'Ring Time'},
+			{field:'status', displayName:'Status'},
+			{field:'reason', displayName:'Reason'},
+//			{field:'ended', displayName:'ended'},
+//			{field:'callid', displayName:'callid'},
+
+//			{field:'id', displayName:'Id', cellTemplate: '<a ng-href="#/pgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+		],
+		showFilter: true,
+		multiSelect: false,
+		selectedItems: $scope.selection,
+		enablePaging: true,
+		showFooter: true,
+		totalServerItems: 'totalServerItems',
+		pagingOptions: $scope.pagingOptions,
+	};
+	$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
 });
 
 ctrlrModule.controller('MyPhoneCtrl', function($scope, $http) {
