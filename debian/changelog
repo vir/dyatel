@@ -1,3 +1,9 @@
+dyatel (0.0.62) UNRELEASED; urgency=low
+
+  * Fix prev. build
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 19 Feb 2014 18:08:09 +0400
+
 dyatel (0.0.61) UNRELEASED; urgency=low
 
   * User UI: aded calls list. Linetracker fixed.
