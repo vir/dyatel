@@ -129,5 +129,57 @@ span.member {
 
 #connection-state a { line-height:20px; font-size:130%; padding:1px 2px 1px 4px; }
 #fullscreen-button { font-size:150%; margin:2px; cursor:pointer; }
-#mytoolbar { position:absolute; top:0; right:0; z-index:100; color:#EEE; padding:8px 10px; }
+#mytoolbar { position:absolute; top:-40px; right:0; z-index:100; color:#EEE; padding:8px 10px; }
+
+.nav-tabs a { cursor:pointer; }
+
+/* 100% height
+   ,-----#wholescreen---------,
+   |  ... some header ...     |
+   |,--#viewwrapper----------,|
+   ||,--#view---------------,||
+   |||                      |||
+   |||  content             |||
+   |||                      |||
+   ||`----------------------'||
+   |`------------------------'|
+   `--------------------------'
+*/
+html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
+#wholescreen:before {
+	content: '';
+	height: 100%;
+	float: left;
+}
+#viewwrapper {
+	position: relative;
+	z-index: 1;
+}
+#viewwrapper:after {
+	content: '';
+	clear: both;
+	display: block;
+}
+#view {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+
+.fillpage { height:100%; margin:0; padding:0; }
+.allow-scroll { overflow:auto; }
+.noscroll { overflow:hidden; }
+#myheader .navbar-inner:after, #myheader .container:after { clear:none; } /* navbar needs to be fixed */
+
+/* one more animation */
+@keyframes rainbow {
+  0%   { color: rgb(255,  0,  0); }
+  17%  { color: rgb(255,255,  0); }
+  33%  { color: rgb(0,  255,  0); }
+  50%  { color: rgb(0,  255,255); }
+  66%  { color: rgb(0,    0,255); }
+  83%  { color: rgb(255,  0,255); }
+  100% { color: rgb(255,  0,  0); }
+}
+.rainbow { animation: rainbow 3s ease infinite; }
 

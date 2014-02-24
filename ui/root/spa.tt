@@ -26,10 +26,14 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 [% END %]
  <!-- <title ng-bind="'DYATEL &mdash; ' + title">DYATEL</title> -->
  <title>{{ Title.get() }}</title>
-</head><body>
- <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/[% prefix %]navbar.htm'"></div>
- <div id="view" ng-view></div>
-</body></html>
+</head><body><div id="wholescreen">
+ <div id="myheader">
+  <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/[% prefix %]navbar.htm'"></div>
+ </div>
+ <div id="viewwrapper">
+  <div id="view" ng-view></div>
+ </div>
+</div></body></html>
 <!-- user: [% c.user.username %] -->
 
 

@@ -41,7 +41,7 @@ sub auto : Private {
 			return 0;
 		}
 	}
-	my($u) = $c->model('DB::Users')->search({login => lc $c->user->username }, {});
+	my($u) = $c->model('DB::Users')->search({login => lc $c->user->username }, { prefetch => ['num', {num=>'numtype'}, 'fingrp'] });
 	unless($u) {
 			$c->response->status(403);
 			my $msg = 'Unknown user '.$c->user->username;

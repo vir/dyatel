@@ -1,17 +1,17 @@
 <!-- Begin page content -->
-<div class="container-fluid">
- <div class="row-fluid">
-  <div id="mytoolbar">
-   <div id="fullscreen-button" class="pull-right"><fullscreen></fullscreen></div>
-   <div id="connection-state" class="pull-right">
-    <a href="javascript:void(0)" title="Check connection" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
-   </div>
+<div class="fillpage container-fluid">
+
+ <div id="mytoolbar">
+  <div id="fullscreen-button" class="pull-right"><fullscreen></fullscreen></div>
+  <div id="connection-state" class="pull-right">
+   <a href="javascript:void(0)" title="Check connection" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
   </div>
-  <h1>Dyatel web interface</h1>
  </div>
- <form class="form-inline" novalidate="1">
-  <div class="row-fluid">
-   <div class="span4"><!-- left column -->
+
+ <form class="fillpage form-inline" novalidate="1">
+  <div class="fillpage row-fluid">
+   <div class="fillpage span4 noscroll" style="padding:12px;"><!-- left column -->
+
     <div class="well controls">
      <h2>Call 'em all!</h2>
      <div class="input-append">
@@ -20,55 +20,60 @@
      </div>
     </div>
 
-    <div class="well">
-     <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
-     <a title="Edit" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
-     <h2>My BLFs</h2>
-     <div ng-hide="blfs.length">
-      No BLFs <a href="#/blfs">define</a>d
-     </div>
-     <table class="table table-hover table-condensed">
-      <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
-       <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
-       <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
-       <td>{{ r.label || r.dirdescr }}</td>
-      </tr>
-     </table>
-    </div>
-   </div> <!-- /left column -->
-
-   <div class="well span8 controls">
-    <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
-    <h2>My active calls</h2>
-    <em ng-show="linetracker.length === 0">None</em>
-    <table ng-hide="linetracker.length === 0" class="table table-condensed">
-     <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
-      <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
-      <td><abbr title="{{ r.direction }}"><i ng-class="{ 'flaticon-incoming2': r.direction == 'incoming', 'flaticon-outgoing2': r.direction != 'incoming' }"></i></abbr></td>
-      <td>{{ r.status }}</td>
-      <td>{{ r.chan }}</td><td>{{ r.billid }}</td>
-      <!--
-      <td>
-       <button class="btn btn-mini" title="Hold Call"><i class="flaticon-pause10"></i></button>
-       <button class="btn btn-mini" title="Record conversation"><i class="flaticon-record1"></i></button>
-       <button class="btn btn-mini" title="Drop call"><i class="flaticon-phone59"></i></button>
-      </td>
-      -->
+    <div ng-hide="blfs.length">No BLFs <a href="#/blfs">define</a>d</div>
+    <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
+    <a title="Edit" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
+    <table class="table table-condensed table-hover">
+     <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
+      <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
+      <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
+      <td>{{ r.label || r.dirdescr }}</td>
      </tr>
     </table>
-    <h2>My last calls</h2>
-    <tabset ng-init="lightVersion=true" ng-controller="CallListCtrl">
-     <tab heading="All"      select="setSection('all')">
-      <div class="gridStyle span12" ng-grid="gridOptions"></div>
+   </div> <!-- /left column -->
+
+   <div class="fillpage span8 controls allow-scroll" style="padding:12px;">
+    <tabset class="fillpage">
+     <tab>
+      <tab-heading>
+       <ng-switch on="incomingcall">
+        <span ng-switch-default>Active</span>
+        <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> Alert!</span>
+       </calls-tab-heading>
+      </tab-heading>
+      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
+      <em ng-show="linetracker.length === 0">None</em>
+      <table ng-hide="linetracker.length === 0" class="table table-condensed">
+       <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
+        <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
+        <td><abbr title="{{ r.direction }}"><i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i></abbr></td>
+        <td>{{ r.status }}</td>
+        <td>{{ r.chan }}</td><td>{{ r.billid }}</td>
+        <!--
+        <td>
+         <button class="btn btn-mini" title="Hold Call"><i class="flaticon-pause10"></i></button>
+         <button class="btn btn-mini" title="Record conversation"><i class="flaticon-record1"></i></button>
+         <button class="btn btn-mini" title="Drop call"><i class="flaticon-phone59"></i></button>
+        </td>
+        -->
+       </tr>
+      </table>
      </tab>
-     <tab heading="Missed"   select="setSection('missed')">
-      <div class="gridStyle span12" ng-grid="gridOptions"></div>
-     </tab>
-     <tab heading="Answered" select="setSection('answered')">
-      <div class="gridStyle span12" ng-grid="gridOptions"></div>
-     </tab>
-     <tab heading="Outgoing" select="setSection('outgoing')">
-      <div class="gridStyle span12" ng-grid="gridOptions"></div>
+     <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize}}" select="setSection(t)">
+      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
+      <div>
+       <table class="table table-condensed table-hover">
+        <tr><th>Time</th><th>BillId</th><th>Peer</th><th>Bill Time</th><th>Ring Time</th><th>Status + Reason</th></tr>
+        <tr ng-repeat="r in calls[section]">
+         <td><abbr title="{{r.ts}}">{{r.ts.substr(8,11)}}</abbr></td> <td>{{r.billid}}</td>
+         <td>
+	  <abbr title="{{{outgoing: 'Incoming', incoming: 'Outgoing'}[r.direction]}}"><i ng-class="{outgoing: 'flaticon-arrow219', incoming: 'flaticon-arrow217'}[r.direction]"></i></abbr>
+          <a href="javascript:void(0)" ng-click="reCall(r)">{{ 'outgoing' === r.direction && r.caller || r.called }}</a>
+	 </td>
+         <td>{{r.billtime}}</td><td>{{r.ringtime}}</td> <td>{{r.status}} {{r.reason}}</td>
+        </tr>
+       </table>
+      </div>
      </tab>
     </tabset>
    </div>

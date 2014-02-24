@@ -1,0 +1,4 @@
+
+CREATE INDEX users_login_index ON users(login);
+
+

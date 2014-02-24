@@ -30,8 +30,6 @@ sub list :Local Args(1)
 {
 	my($self, $c, $filter) = @_;
 	my $opts = {
-		page => $c->request->params->{page},
-		rows => $c->request->params->{perpage} || 50,
 		columns => [qw/ id ts direction billid caller called duration billtime ringtime status reason ended calledfull /],
 #		columns => [qw/ id ts chan address direction billid caller called duration billtime ringtime status reason ended callid calledfull /],
 		order_by => 'ts DESC'
@@ -77,14 +75,22 @@ sub list :Local Args(1)
 	);
 	my $where = $filters{$filter} || $filters{all};
 
-	my $row = $c->model('DB::Cdr')->search($where, {
-		columns => [qw/ /],
-		'+select' => [{ MIN => 'id', -as => 'min' }, { MAX => 'id', -as => 'max' }],
-		'+as' =>   [qw/ min max /],
-	})->first();
-	my $total = $row->get_column('max') - $row->get_column('min');
+	if($c->request->params->{page}) {
+		$opts->{page} = $c->request->params->{page};
+		$opts->{rows} = $c->request->params->{perpage} || 50;
 
-	$c->stash(rows => [$c->model('DB::Cdr')->search($where, $opts)], totalrows => $total, template => 'cdrs/list.tt');
+		my $row = $c->model('DB::Cdr')->search($where, {
+			columns => [qw/ /],
+			'+select' => [{ MIN => 'id', -as => 'min' }, { MAX => 'id', -as => 'max' }],
+			'+as' =>   [qw/ min max /],
+		})->first();
+		my $total = $row->get_column('max') - $row->get_column('min');
+		$c->stash(totalrows => $total);
+	} else {
+		$opts->{rows} = $c->request->params->{limit} || 50;
+	}
+
+	$c->stash(rows => [$c->model('DB::Cdr')->search($where, $opts)]);
 }
 
 

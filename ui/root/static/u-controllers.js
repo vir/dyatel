@@ -167,6 +167,7 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
 	$scope.connected = false;
+	$scope.incomingcall = false;
 
 	$scope.selectionDone = function (item) {
 		$scope.phone = item.num;
@@ -200,6 +201,11 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.updateLinetracker = function() {
 		$http.get('/u/linetracker').success(function (data) {
 			$scope.linetracker = data.rows;
+			$scope.incomingcall = false;
+			$scope.linetracker.forEach(function(e) {
+				if(e.status === 'ringing' && e.direction === 'outgoing')
+					$scope.incomingcall = true;
+			});
 		});
 	};
 	$scope.updateBLFs = function() {
@@ -253,6 +259,26 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			},
 		});
 	};
+
+	// Call list
+	$scope.section = 'all';
+	$scope.calls = { };
+	$scope.updateCallList = function() {
+		$http.get('/u/cdr/list/' + $scope.section + '?limit=30').success(function(data) {
+			$scope.calls[$scope.section] = data.rows;
+			if (!$scope.$$phase) {
+				$scope.$apply();
+			}
+		});
+	};
+	$scope.setSection = function(s) {
+		$scope.section = s;
+		$scope.updateCallList();
+	};
+	$scope.reCall = function(row) {
+		$scope.doCall({num: ('outgoing' === row.direction ? row.caller : row.called), op: 'clst'});
+	};
+	$scope.updateCallList();
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
