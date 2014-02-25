@@ -340,7 +340,7 @@ CREATE TABLE config (
 	section TEXT NOT NULL,
 	params HSTORE NOT NULL,
 	ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	uid INTEGER NULL REFERENCES users(id) ON DELETE SET NULL
+	uid INTEGER NULL
 );
 CREATE UNIQUE INDEX config_section_index ON config(section);
 
@@ -349,18 +349,18 @@ CREATE OR REPLACE FUNCTION config(section_name TEXT) RETURNS HSTORE AS $$
 $$ LANGUAGE SQL STABLE;
 
 -- calls log
-CREATE TABLE callog(
+CREATE TABLE calllog(
 	id BIGSERIAL PRIMARY KEY,
 	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	billid TEXT NOT NULL,
 	tag TEXT,
-	uid INTEGER NULL REFERENCES users(id) ON DELETE SET NULL,
+	uid INTEGER NULL,
 	value TEXT NULL,
 	params HSTORE NULL
 );
-CREATE INDEX callog_ts_index ON callog(ts);
-CREATE INDEX callog_billid_index ON callog(billid);
-CREATE INDEX callog_tag_index ON callog(tag);
+CREATE INDEX calllog_ts_index     ON calllog(ts);
+CREATE INDEX calllog_billid_index ON calllog(billid);
+CREATE INDEX calllog_tag_index    ON calllog(tag);
 
 
 CREATE TABLE ipnetworks (
