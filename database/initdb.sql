@@ -66,6 +66,8 @@ CREATE TABLE users (
 	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL
 );
 ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+CREATE UNIQUE INDEX users_num_index ON users(num);
+CREATE INDEX users_login_index ON users(login);
 
 CREATE TABLE regs (
 	userid INTEGER NOT NULL REFERENCES users(id),
@@ -331,6 +333,34 @@ BEGIN
 	UPDATE regs SET audio = msg->'caps.audio' WHERE location = loc;
 END;
 $$ LANGUAGE PlPgSQL;
+
+-- config
+CREATE TABLE config (
+	id SERIAL PRIMARY KEY,
+	section TEXT NOT NULL,
+	params HSTORE NOT NULL,
+	ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	uid INTEGER NULL REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE UNIQUE INDEX config_section_index ON config(section);
+
+CREATE OR REPLACE FUNCTION config(section_name TEXT) RETURNS HSTORE AS $$
+	SELECT params FROM config WHERE section = $1;
+$$ LANGUAGE SQL STABLE;
+
+-- calls log
+CREATE TABLE callog(
+	id BIGSERIAL PRIMARY KEY,
+	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	billid TEXT NOT NULL,
+	tag TEXT,
+	uid INTEGER NULL REFERENCES users(id) ON DELETE SET NULL,
+	value TEXT NULL,
+	params HSTORE NULL
+);
+CREATE INDEX callog_ts_index ON callog(ts);
+CREATE INDEX callog_billid_index ON callog(billid);
+CREATE INDEX callog_tag_index ON callog(tag);
 
 
 CREATE TABLE ipnetworks (
@@ -766,7 +796,7 @@ INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (10, '{1,2,3,4,5}', 
 -- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night');
 -- INSERT INTO schedule (mday, days, tstart, tend, mode) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday');
 
-CREATE OR REPLACE FUNCTION sceduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT 'now', tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT 'now', tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
 DECLARE
 	wts TIMESTAMP WITH TIME ZONE;
 	d DATE;
@@ -801,7 +831,7 @@ CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, 
 DECLARE
 	m TEXT;
 BEGIN
-	m := sceduled_mode();
+	m := scheduled_mode();
 	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || route FROM incoming
 		WHERE (ctx IS NULL OR ctx = msg->'context')
 			AND (called IS NULL OR called = msg->'called')
@@ -861,6 +891,7 @@ CREATE TABLE prices(
 	descr TEXT
 );
 
+-- http events receivers' sessions
 CREATE TABLE sessions (
 	token VARCHAR PRIMARY KEY DEFAULT random_string(16),
 	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
