@@ -8,6 +8,7 @@ install:
 	for d in ${SUBDIRS}; do $(MAKE) -C $$d install; done
 	install -d ${DESTDIR}@sysconfdir@/dyatel
 	install -m 644 supervisor.conf ${DESTDIR}@sysconfdir@/dyatel/
+	install -m 644 config_params.yml ${DESTDIR}@sysconfdir@/dyatel/
 	install -d ${DESTDIR}@sysconfdir@/dyatel/yate
 	install -m 644 yateconf/* ${DESTDIR}@sysconfdir@/dyatel/yate/
 

@@ -47,6 +47,17 @@ __PACKAGE__->add_unique_constraint("config_section_index", ["section"]);
 # Created by DBIx::Class::Schema::Loader v0.04006 @ 2014-02-26 00:20:06
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vA3v8EWi+0I+fHuEPwhDag
 
+__PACKAGE__->add_columns(
+  "params",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 0,
+    size => undef,
+    serializer_class => 'Hstore',
+    recursive_encode => 1, # (optional) 
+  },
+);
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;
