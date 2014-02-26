@@ -348,6 +348,19 @@ CREATE OR REPLACE FUNCTION config(section_name TEXT) RETURNS HSTORE AS $$
 	SELECT params FROM config WHERE section = $1;
 $$ LANGUAGE SQL STABLE;
 
+CREATE OR REPLACE FUNCTION toBoolean(s TEXT, def BOOLEAN DEFAULT NULL) RETURNS BOOLEAN AS $$
+BEGIN
+	IF LOWER(s) IN('false', 'no', 'off', 'disable', 'f') THEN
+		RETURN FALSE;
+	END IF;
+	IF LOWER(s) IN('true', 'yes', 'on', 'enable', 't') THEN
+		RETURN TRUE;
+	END IF;
+	RETURN def;
+END;
+$$ LANGUAGE PlPgSQL IMMUTABLE;
+
+
 -- calls log
 CREATE TABLE calllog(
 	id BIGSERIAL PRIMARY KEY,
@@ -841,7 +854,14 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	cf HSTORE;
 BEGIN
+	cf := config('route');
+	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
+		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
+	END IF;
+
 	RETURN QUERY
 		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
 	UNION
