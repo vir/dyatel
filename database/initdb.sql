@@ -696,6 +696,9 @@ DECLARE
 	u INTEGER;
 BEGIN
 	u := userid(msg->'external');
+	IF u IS NULL AND msg->'direction' = 'outgoing' AND (msg->'calledfull') IS NOT NULL THEN
+		u := userid(msg->'calledfull');
+	END IF;
 	IF u IS NOT NULL THEN
 		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
 	END IF;
