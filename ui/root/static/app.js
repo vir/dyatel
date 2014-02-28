@@ -22,6 +22,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/status',          { templateUrl: '/static/p/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
 	when('/status/:module',  { templateUrl: '/static/p/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
 	when('/schedule',        { templateUrl: '/static/p/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
+	when('/config',          { templateUrl: '/static/p/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);

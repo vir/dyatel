@@ -7,13 +7,12 @@
     - name: mode_override
       type: string
       defval: null
-      descr: Override calculated routing mode.
+      descr: Override calculated (day/night) routing mode.
 - section: route
   params:
     - name: debug
       type: boolean
       defval: false
-      x: true
       descr: Store call.route parameters and resulting decision in call's log.
 
 

@@ -536,3 +536,41 @@ dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
 	};
 });
 
+dyatelControllers.controller('ConfigCtrl', function($scope, $http) {
+	$scope.defs = [ ];
+	$scope.conf = { };
+	$http.get('/a/config/defs').success(function(data) {
+		$scope.defs = data.defs;
+		$scope.defs.forEach(function(e) {
+			e.isopen = false;
+			$scope.conf[e.section] = { params: { } };
+		});
+	});
+	$scope.loadGroup = function(sec) {
+		console.log('Loading group ' + sec);
+		$http.get('/a/config/section/' + sec).success(function(data) {
+			$scope.conf[sec] = data.row ? data.row : { params: { } };
+		});
+	};
+	$scope.saveGroup = function(sec) {
+		console.log('Loading group ' + sec);
+		$http({
+			url: '/a/config/section/' + sec,
+			method: "POST",
+			data: $.param($scope.conf[sec].params, true), // use jQuery to url-encode object
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function (data, status, headers, config) {
+		}).error(function (data, status, headers, config) {
+			alert('Error: ' + status + "\n" + data);
+		});
+	};
+});
+dyatelControllers.controller('ConfigAccordionLoadingController', function($scope) {
+	$scope.$watch('d.isopen', function(n, o) {
+		if(n) {
+			$scope.loadGroup($scope.d.section);
+		}
+	});
+});
+
+

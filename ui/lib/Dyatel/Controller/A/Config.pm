@@ -38,7 +38,13 @@ sub section :Local :Args(1)
 			my $v = $c->request->params->{$p->{name}} or next;
 			$h{$p->{name}} = $v;
 		}
-		$o->update(\%h) if %h;
+		if(%h) {
+			if($o) {
+				$o->update({ uid => $c->stash->{uid}, ts => 'now()', params => \%h });
+			} else {
+				$o = $c->model('DB::Config')->create({ uid => $c->stash->{uid}, section => $section, params => \%h });
+			}
+		}
 		$c->response->redirect('/'.$c->request->path);
 		$c->detach;
 	}
