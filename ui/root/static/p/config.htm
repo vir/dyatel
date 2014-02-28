@@ -1,0 +1,39 @@
+
+
+<div class="container-fluid">
+<div class="row-fluid form-inline">
+<h1>Server configuration</h1>
+
+<accordion close-others="true">
+	<accordion-group is-open="d.isopen" ng-repeat="d in defs">
+		<accordion-heading>
+			{{d.section}} <i class="pull-right" ng-class="{'flaticon-close15': d.isopen, 'flaticon-menu14': !d.isopen}"></i>
+		</accordion-heading>
+		<div class="well" ng-controller="ConfigAccordionLoadingController">
+			Last modified {{conf[d.section].ts}}
+			<span ng-if="conf[d.section].uid"> by <a href="#/users/{{conf[d.section].uid}}">user {{conf[d.section].uid}}</a></span>
+			<button class="btn" ng-click="saveGroup(d.section)">Save</button>
+			<button class="btn" ng-click="loadGroup(d.section)">Reload</button>
+		</div>
+		<table class="table table-condensed">
+			<tr><th>Parameter</th><th>Value</th><th>Description</th><th>Default</th></tr>
+			<tr ng-repeat="p in d.params">
+				<td>{{p.name}}</td>
+				<td><ng-switch on="p.type">
+					<div ng-switch-when="boolean">
+						<label><input type="radio" ng-model="conf[d.section].params[p.name]" value="false" /> False</label>
+						<label><input type="radio" ng-model="conf[d.section].params[p.name]" value="true" /> True</label>
+					</div>
+					<div ng-switch-default><input type="text" ng-model="conf[d.section].params[p.name]" /></div>
+				</ng-switch></td>
+				<td>{{p.descr}}</td>
+				<td>{{p.defval}}</td>
+			</tr>
+		</table>
+	</accordion-group>
+</accordion>
+
+</div>
+</div>
+
+

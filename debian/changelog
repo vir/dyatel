@@ -1,3 +1,9 @@
+dyatel (0.0.65) UNRELEASED; urgency=low
+
+  * Fix missing file
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Sat, 01 Mar 2014 00:03:47 +0400
+
 dyatel (0.0.64) UNRELEASED; urgency=low
 
   * Admin UI: Configuration editor implemented
