@@ -1,0 +1,13 @@
+/var/log/dyatel/* {
+    weekly
+    rotate 52
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    create 644 dyatel dyatel
+    postrotate
+	[ -f /var/run/dyatel/supervisor.pid ] && kill -HUP `cat /var/run/dyatel/supervisor.pid`
+    endscript
+}
+
