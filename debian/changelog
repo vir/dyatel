@@ -1,3 +1,12 @@
+dyatel (0.0.64) UNRELEASED; urgency=low
+
+  * Admin UI: Configuration editor implemented
+  * Added logrotate configuration file
+  * Fix linetracker for group calls
+  * User's home page improvements
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 28 Feb 2014 23:16:27 +0400
+
 dyatel (0.0.63) UNRELEASED; urgency=low
 
   * User's home page improvements
