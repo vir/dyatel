@@ -1,21 +1,5 @@
 BEGIN;
 
--- Fix typo in function name
-ALTER FUNCTION sceduled_mode(ts TIMESTAMP WITH TIME ZONE, tz TEXT) RENAME TO scheduled_mode;
-
-CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
-DECLARE
-	m TEXT;
-BEGIN
-	m := scheduled_mode();
-	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || route FROM incoming
-		WHERE (ctx IS NULL OR ctx = msg->'context')
-			AND (called IS NULL OR called = msg->'called')
-			AND (mode IS NULL OR mode = m)
-		ORDER BY ctx IS NULL, called IS NULL, mode IS NULL LIMIT 1;
-END;
-$$ LANGUAGE PlPgSQL;
-
 -- missing indices
 CREATE UNIQUE INDEX users_num_index ON users(num);
 
@@ -58,6 +42,28 @@ BEGIN
 	RETURN def;
 END;
 $$ LANGUAGE PlPgSQL IMMUTABLE;
+
+-- Fix typo in function name
+ALTER FUNCTION sceduled_mode(ts TIMESTAMP WITH TIME ZONE, tz TEXT) RENAME TO scheduled_mode;
+
+CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	m TEXT;
+	cf HSTORE;
+BEGIN
+	cf := config('route');
+	IF (cf->'schedule_override') IS NOT NULL AND LENGTH(cf->'schedule_override') > 0 THEN
+		m := cf->'schedule_override';
+	ELSE
+		m := scheduled_mode();
+	END IF;
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || route FROM incoming
+		WHERE (ctx IS NULL OR ctx = msg->'context')
+			AND (called IS NULL OR called = msg->'called')
+			AND (mode IS NULL OR mode = m)
+		ORDER BY ctx IS NULL, called IS NULL, mode IS NULL LIMIT 1;
+END;
+$$ LANGUAGE PlPgSQL;
 
 -- Adding routing debugging
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$

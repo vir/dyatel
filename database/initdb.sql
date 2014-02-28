@@ -846,8 +846,14 @@ CREATE TABLE incoming(
 CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
 DECLARE
 	m TEXT;
+	cf HSTORE;
 BEGIN
-	m := scheduled_mode();
+	cf := config('route');
+	IF (cf->'schedule_override') IS NOT NULL AND LENGTH(cf->'schedule_override') > 0 THEN
+		m := cf->'schedule_override';
+	ELSE
+		m := scheduled_mode();
+	END IF;
 	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || route FROM incoming
 		WHERE (ctx IS NULL OR ctx = msg->'context')
 			AND (called IS NULL OR called = msg->'called')

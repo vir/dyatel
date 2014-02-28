@@ -2,17 +2,15 @@
 # It is used (ok, it should be used) for at least 2 purposes: Configuration
 # editor page building and poor man's internal documentation.
 ---
-- section: schedule
-  params:
-    - name: mode_override
-      type: string
-      defval: null
-      descr: Override calculated (day/night) routing mode.
 - section: route
   params:
     - name: debug
       type: boolean
       defval: false
       descr: Store call.route parameters and resulting decision in call's log.
+    - name: schedule_override
+      type: string
+      defval: null
+      descr: Override calculated (day/night) routing mode.
 
 
