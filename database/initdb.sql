@@ -23,9 +23,13 @@ CREATE OR REPLACE FUNCTION directory_uniq_prefix_trigger() RETURNS TRIGGER AS $$
 DECLARE
         cflct TEXT;
 BEGIN
-        IF NEW.num <> OLD.num THEN
-                cflct := array_to_string(directory_check_num(NEW.num), ', ');
-        END IF;
+	IF TG_OP = 'UPDATE' THEN
+		IF NEW.num <> OLD.num THEN
+			cflct := array_to_string(directory_check_num(NEW.num), ', ');
+		END IF;
+	ELSE
+		cflct := array_to_string(directory_check_num(NEW.num), ', ');
+	END IF;
         IF LENGTH(cflct) <> 0 THEN
                 RAISE EXCEPTION 'Conflict: %', cflct;
         END IF;
@@ -812,7 +816,7 @@ INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (10, '{1,2,3,4,5}', 
 -- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night');
 -- INSERT INTO schedule (mday, days, tstart, tend, mode) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday');
 
-CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT 'now', tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
 DECLARE
 	wts TIMESTAMP WITH TIME ZONE;
 	d DATE;
