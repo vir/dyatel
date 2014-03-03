@@ -145,6 +145,7 @@ sub set_dumb
 	my $self = shift;
 	my($msg) = @_;
 	my $dumb = $msg->param('targetid'); # or peerid?
+	return undef unless $dumb =~ /^dumb\//;
 	$self->{dumb} = $dumb;
 	$registry{$dumb} = $self;
 	$self->debug("New call from $self->{caller} to $self->{called} ($self->{id} to $self->{dumb})");
@@ -237,7 +238,7 @@ sub replace_chan
 	my $obj = delete $registry{$msg->param('id')};
 	warn "Wrong object in chan.replace handler" unless $obj == $self;
 	$registry{$msg->param('newid')} = $obj;
-	foreach my $k(qw( id targetid dump slavedumb destinationid )) {
+	foreach my $k(qw( id targetid dumb slavedumb destinationid )) {
 		my $newid = $msg->param('newid');
 		if($obj->{$k} && $obj->{$k} eq $msg->param('id')) {
 			if($k =~ /dumb$/ and $newid !~/^dumb\//) {
@@ -246,7 +247,9 @@ sub replace_chan
 #				delete $obj->{$k};
 			} else {
 				$self->debug("Replaced '$k': '$obj->{$k}' => '$newid'");
+				delete $registry{$obj->{$k}};
 				$obj->{$k} = $newid;
+				$registry{$newid} = $self;
 			}
 		}
 	}
@@ -736,7 +739,7 @@ sub load_aa
 	my $sth = $dbh->prepare("SELECT * FROM ivr_aa");
 	$sth->execute();
 	while(my $h = $sth->fetchrow_hashref) {
-		print "Loading autoattendant $h->{num} ($h->{descr})\n";
+		print "Loading autoattendant $h->{num}\n";
 		my $table = [
 			[ 'start', 'enter', 'answer', 'answered' ],
 			[ 'answered', 'enter', 'playfile '.$h->{prompt}, 'playing' ],
@@ -773,7 +776,7 @@ sub load_md
 	$sth->execute();
 	my $pos = 1;
 	while(my $h = $sth->fetchrow_hashref) {
-		print "Loading minidisa $h->{num} ($h->{descr})\n";
+		print "Loading minidisa $h->{num}\n";
 		my $table = [
 			[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
 			[ undef, 'timeout', undef, 'error' ],
