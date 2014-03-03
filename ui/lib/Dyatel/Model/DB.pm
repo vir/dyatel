@@ -38,6 +38,28 @@ sub xsearch
 	});
 }
 
+sub xinfo
+{
+	my $self = shift;
+	my($q, $opts) = @_;
+	my $storage = $self->storage;
+	return $storage->dbh_do(sub {
+		my $self = shift;
+		my $dbh = shift;
+		my @selects;
+		push @selects, q"SELECT 'directory' AS src, num, descr, numtype AS numkind FROM directory WHERE num = $1";
+		push @selects, q"SELECT 'morenums' AS src, m.val AS num, d.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM users u INNER JOIN morenums m ON m.uid = u.id INNER JOIN numkinds k ON k.id = m.numkind INNER JOIN directory d ON d.num = u.num WHERE normalize_num(m.val) = normalize_num($1)";
+		push @selects, q"SELECT 'cpb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner IS NULL AND p.num = $1";
+		push @selects, q"SELECT 'ppb' AS src, p.num, p.descr, LOWER(COALESCE(k.tag, k.descr)) AS numkind FROM phonebook p INNER JOIN numkinds k ON k.id = p.numkind WHERE owner = ".$opts->{uid}.' AND p.num = $1';
+		my $sql = join(' UNION ', @selects)." ORDER BY num;";
+    $log->debug("Search SQL: $sql, arg: <<$q>>");
+		my $sth = $dbh->prepare($sql);
+		$sth->execute($q);
+		my $r = $sth->fetchall_arrayref( { } ); # note empty hash ref - makes array of hashes
+		return $r;
+	});
+}
+
 sub dir_conflict
 {
 	my $self = shift;

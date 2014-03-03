@@ -449,6 +449,12 @@ CREATE TABLE morenums(
 --	div_busy BOOLEAN NOT NULL DEFAULT FALSE,
 );
 
+CREATE OR REPLACE FUNCTION normalize_num(n TEXT) RETURNS PHONE AS $$
+	SELECT regexp_replace($1, '[^0-9\*\#\+]', '', 'g')::PHONE;
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
+
 CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
@@ -463,7 +469,7 @@ BEGIN
 	uoffline := res::TEXT = '';
 
 	-- Add 'offline' and 'No answer' divertions
-	FOR t IN SELECT regexp_replace(n.val, '[^0-9\*\#\+]', '', 'g') AS val, n.timeout, k.*
+	FOR t IN SELECT normalize_num(n.val) AS val, n.timeout, k.*
 			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
 			WHERE uid = userid(called_arg) AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
 		IF res::TEXT <> '' THEN

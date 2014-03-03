@@ -40,6 +40,18 @@ sub search :Local
 	$c->stash(result => $res);
 }
 
+sub info :Local Args(1)
+{
+	my($self, $c, $num) = @_;
+	my $res = $c->model('DB')->xinfo($num, { uid => $c->stash->{uid} });
+	unless(@$res) {
+		$c->response->status(404);
+		$c->response->body('Unknown number');
+		$c->detach;
+	}
+	$c->stash(result => $res);
+}
+
 =head1 LICENSE
 
 This library is free software. You can redistribute it and/or modify

@@ -3,16 +3,18 @@
 </div>
 
 <div class="modal-body">
-	<div ng-bind="info" />
-	<div>
-		<em>TODO:</em><ul>
-			<li>Search directory</li>
-			<li>Search phonebook</li>
-			<li>Search dossier</li>
-			<li>Geographical info</li>
-		</li>
+	<div ng-switch on="infstatus">
+		<div ng-switch-when="here">
+			<dl>
+				<dt ng-repeat-start="(k, v) in info">{{k}}</dt>
+				<dd ng-repeat-end="">{{v}}</dd>
+			</dl>
+		</div>
+		<div ng-switch-default>
+			<strong>{{infstatus}}</strong>
+		</div>
 	</div>
-	<pre ng-bind="log"></pre>
+	<pre ng-bind="log" style="font-size:70%"></pre>
 </div>
 
 <div class="modal-footer">

@@ -119,10 +119,10 @@ ctrlrModule.directive('fullscreen', function() {
 	};
 });
 
-ctrlrModule.controller('CallDlgCtrl', function($scope, $modalInstance, $timeout, CTI, num, activeCall, usage) {
+ctrlrModule.controller('CallDlgCtrl', function($http, $scope, $modalInstance, $timeout, CTI, num, activeCall, usage) {
 	$scope.num = num;
 	$scope.activeCall = activeCall;
-	$scope.info = 'No info';
+	$scope.infstatus = 'Loading...';
 	$scope.log = 'ok\n';
 	var targetIsAChannel = -1 !== $scope.num.indexOf('/');
 	$scope.buttons = { };
@@ -159,6 +159,20 @@ ctrlrModule.controller('CallDlgCtrl', function($scope, $modalInstance, $timeout,
 	$scope.log += 'Buttons: ' + angular.toJson($scope.buttons) + "\r\n";
 	$timeout(function () {
 		$(focusId).focus();
+	});
+
+	$http.get('/u/phonebook/info/' + $scope.num).success(function(data) {
+		$scope.info = data.result[0];
+		$scope.log += 'Loaded info, typeof=' + typeof($scope.info) + "\r\n";
+		$scope.infstatus = 'here';
+	}).error(function(data, status) {
+		$scope.infstatus = 'No info';
+		$scope.log += 'Error ' + status + ' loading directory info: ' + data + "\r\n";
+		/*
+		 * TODO:
+		 *  Search dossier
+		 *  Geographical info
+		 */
 	});
 });
 
