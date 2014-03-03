@@ -11,7 +11,11 @@ configure-stamp
 ui/MANIFEST
 ui/META.yml
 ui/MYMETA.yml
+ui/MYMETA.json
 ui/Makefile.old
 ui/inc/
 ui/pm_to_blib
+ui/dyatel_local.conf
+provision/output/
+tools/bu_root/
 
