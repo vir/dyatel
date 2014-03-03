@@ -71,6 +71,10 @@ sub list :Local Args(1)
 		outgoing => {
 			caller => $num,
 			direction => 'incoming',
+			-not => {
+				billtime => '0s',
+				status => 'rejected',
+			},
 		},
 	);
 	my $where = $filters{$filter} || $filters{all};
