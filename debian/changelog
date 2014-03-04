@@ -1,3 +1,9 @@
+dyatel (0.0.68) UNRELEASED; urgency=low
+
+  * Fix fatabase upgrade script
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 04 Mar 2014 22:18:19 +0400
+
 dyatel (0.0.67) UNRELEASED; urgency=low
 
   * Several bugfixes
