@@ -1,3 +1,10 @@
+dyatel (0.0.67) UNRELEASED; urgency=low
+
+  * Several bugfixes
+  * Added directory info in call dialog
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 04 Mar 2014 14:34:31 +0400
+
 dyatel (0.0.66) UNRELEASED; urgency=low
 
   * Fix direcory numbers addition.
