@@ -181,7 +181,10 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
 	$scope.connected = false;
-	$scope.incomingcall = false;
+	$scope.current = {
+		incomingcall: false,
+		activecallid: '',
+	};
 
 	$scope.selectionDone = function (item) {
 		$scope.phone = item.num;
@@ -215,11 +218,19 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.updateLinetracker = function() {
 		$http.get('/u/linetracker').success(function (data) {
 			$scope.linetracker = data.rows;
-			$scope.incomingcall = false;
+			$scope.current.incomingcall = false;
 			$scope.linetracker.forEach(function(e) {
-				if(e.status === 'ringing' && e.direction === 'outgoing')
-					$scope.incomingcall = true;
+				if(e.status === 'ringing' && e.direction === 'outgoing') {
+					$scope.current.activecallid = e.billid;
+					$scope.current.incomingcall = true;
+				}
 			});
+			if(! $scope.current.activecallid) {
+				if($scope.linetracker.length)
+					$scope.current.activecallid = $scope.linetracker[0].billid;
+				else
+					$scope.current.activecallid = '';
+			}
 		});
 	};
 	$scope.updateBLFs = function() {
@@ -293,6 +304,20 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 		$scope.doCall({num: ('outgoing' === row.direction ? row.caller : row.called), op: 'clst'});
 	};
 	$scope.updateCallList();
+
+	// Call log
+	$scope.updateCallLog = function() {
+		$http.get('/u/calllog/call/' + $scope.current.activecallid + '/list').success(function(data) {
+			$scope.calllog = data.rows;
+		});
+	};
+	$scope.$watch('current.activecallid', $scope.updateCallLog);
+
+	$scope.calllogtext = '';
+	$scope.onCallLogTextUpdate = function() {
+		console.log('onCallLogTextUpdate');
+	};
+
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {

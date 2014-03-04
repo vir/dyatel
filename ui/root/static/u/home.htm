@@ -36,7 +36,7 @@
     <tabset class="fillpage">
      <tab>
       <tab-heading>
-       <ng-switch on="incomingcall">
+       <ng-switch on="current.incomingcall">
         <span ng-switch-default>Active</span>
         <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> Alert!</span>
        </calls-tab-heading>
@@ -45,6 +45,7 @@
       <em ng-show="linetracker.length === 0">None</em>
       <table ng-hide="linetracker.length === 0" class="table table-condensed">
        <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
+        <td><input type="radio" name="activecallid" ng-model="current.activecallid" ng-value="r.billid" />
         <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
         <td><abbr title="{{ r.direction }}"><i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i></abbr></td>
         <td>{{ r.status }}</td>
@@ -58,6 +59,15 @@
         -->
        </tr>
       </table>
+      <pre>Active call billid: {{current.activecallid}}</pre>
+      <div>
+       <div ng-repeat="x in calllog">
+        <pre>Log entry: {{x | json }}</pre>
+       </div>
+      </div>
+      <div>
+       <textarea ng-model="calllogtext" ng-change="onCallLogTextUpdate()"></textarea>
+      </div>
      </tab>
      <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize}}" select="setSection(t)">
       <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
