@@ -1,4 +1,4 @@
-var dyatelCommon = angular.module('dyatelCommon', [ ]);
+var dyatelCommon = angular.module('dyatelCommon', [ 'ngSanitize' ]);
 
 dyatelCommon.filter('unsafe', function($sce) {
 	return function(val) {
@@ -22,4 +22,19 @@ dyatelCommon.filter('capitalize', function() {
 	}
 });
 
+dyatelCommon.directive('markdown', function($sanitize) {
+	var converter = new Showdown.converter();
+	return {
+		restrict: 'AE',
+		link: function(scope, element, attrs, model) {
+			if (attrs.markdown) {
+				attrs.$observe('markdown', function(v) {
+					element.html(v ? $sanitize(converter.makeHtml(v)) : '');
+				});
+			} else {
+				element.html($sanitize(converter.makeHtml(element.text())));
+			}
+		},
+	};
+});
 
