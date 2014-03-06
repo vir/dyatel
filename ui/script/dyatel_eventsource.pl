@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-01-30 23:06:24 +0400
+# Last modified: 2014-03-06 16:30:21 +0400
 #
 
 use strict;
@@ -22,6 +22,31 @@ my $myconf = $conf->{EventSource};
 my $dbh = Dyatel::ExtConfig::dbh();
 
 {
+	package CachedList;
+	use DBI;
+
+	sub new
+	{
+		my $class = shift;
+		my($getter) = @_;
+		my $self = bless { getter => $getter }, $class;
+		$self->reload();
+		return $self;
+	}
+	sub reload
+	{
+		my $self = shift;
+		$self->{data} = $self->{getter}->();
+	}
+	sub find
+	{
+		my $self = shift;
+		my($item) = @_;
+		return scalar grep { $_ eq $item } @{ $self->{data} };
+	}
+}
+
+{
 	package EventSourceClient;
 	use Socket qw( AF_INET sockaddr_in inet_ntoa );
 	use IO::Select;
@@ -33,8 +58,9 @@ my $dbh = Dyatel::ExtConfig::dbh();
 		my $fh = shift;
 
 		my($port, $iaddr) = sockaddr_in($fh->connected);
+		my $peer = "[".inet_ntoa($iaddr)."] at port $port";
 		my $name = gethostbyaddr($iaddr, AF_INET);
-		my $peer = "$name [".inet_ntoa($iaddr)."] at port $port";
+		$peer = "$name $peer" if $name;
 
 		return bless { FH => $fh, PEER => $peer, LAST_EVENT => time(), @_ }, $class;
 	}
@@ -71,15 +97,20 @@ my $dbh = Dyatel::ExtConfig::dbh();
 		my $self = shift;
 		my($dbev, $payload) = @_;
 		if(($dbev eq 'linetracker' || $dbev eq 'blfs' || $dbev eq 'testevent') && $payload == $self->{uid}) {
+			$self->{blfusers}->reload() if $dbev eq 'blfs';
 			return { event => $dbev };
-		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && grep({ $payload == $_ } @{ $self->{blfusers} })) {
+		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && $self->{blfusers}->find($payload)) {
+			$self->{calls}->reload() if $dbev eq 'linetracker';
 			return { event => 'blf_state', uid => $payload };
+		} elsif($dbev eq 'calllog' && $self->{calls}->find($payload)) {
+			return { event => 'calllog', billid => $payload };
+		} else {
+			return { event => $dbev, payload => $payload };
 		}
-		return { event => $dbev, payload => $payload };
 	}
 }
 
-$dbh->do("LISTEN $_") foreach(qw( linetracker blfs regs testevent ));
+$dbh->do("LISTEN $_") foreach(qw( linetracker blfs regs testevent calllog ));
 my $pg = IO::Socket->new_from_fd($dbh->{pg_socket}, "r+") or die "Can't fdopen postgres's socket: $!";
 
 my %sockparams = (
@@ -145,8 +176,14 @@ sub check_request
 	print "Got ".$req->method." request for ".$req->uri."\n";
 	return undef unless $req->method eq 'GET' && $req->uri =~ /\/(\w+)/;
 	my($info) = $dbh->selectrow_hashref("SELECT * FROM sessions WHERE token = ?", undef, $1) or return undef;
-	my $blfusers = $dbh->selectcol_arrayref("SELECT users.id FROM blfs INNER JOIN users ON users.num = blfs.num WHERE blfs.uid = ?", undef, $info->{uid});
-	my $cl = new EventSourceClient($fh, %$info, req => $req, blfusers => $blfusers, keepalive => $conf->{keepalive}, verbose => $opts{v});
+	my $blfusers = sub { $dbh->selectcol_arrayref("SELECT users.id FROM blfs INNER JOIN users ON users.num = blfs.num WHERE blfs.uid = ?", undef, $info->{uid}); };
+	my $cl = new EventSourceClient($fh, %$info,
+		req => $req,
+		blfusers => new CachedList($blfusers),
+		calls => new CachedList(sub { $dbh->selectcol_arrayref("SELECT billid FROM linetracker WHERE uid = ?", undef, $info->{uid}); }),
+		keepalive => $conf->{keepalive},
+		verbose => $opts{v},
+	);
 	return $cl;
 }
 

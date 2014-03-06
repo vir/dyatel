@@ -1,0 +1,18 @@
+BEGIN;
+
+CREATE OR REPLACE FUNCTION calllog_change_trigger() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.billid::TEXT);
+	ELSE
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.billid::TEXT);
+	END IF;
+	RETURN NEW;
+END $$ LANGUAGE PlPgSQL;
+
+CREATE TRIGGER calllog_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON calllog FOR EACH ROW EXECUTE PROCEDURE calllog_change_trigger();
+
+COMMIT;
+
+-- vim: ft=sql

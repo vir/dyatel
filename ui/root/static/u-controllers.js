@@ -54,9 +54,16 @@ angular.module('dyatelServices', [], function($provide) {
 						console.log('Got testevent');
 						return;
 					}
-					$rootScope.$apply(function() {
-						handlerFunc(JSON.parse(e.data));
-					});
+//					console.log('Got notification from server: ' + e.data);
+					var d = JSON.parse(e.data);
+					if(handlerFunc) {
+						$rootScope.$apply(function() {
+							handlerFunc(d);
+						});
+					}
+					if(d.event) {
+						$rootScope.$broadcast(d.event, d);
+					}
 				});
 				if(stateFunc) {
 					es.onopen = function() {
@@ -248,8 +255,6 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			$scope.updateLinetracker();
 		else if(msg.event === 'blf_state')
 			$scope.updateBLFs();
-		else
-			console.log('Unknown event received: ' + JSON.stringify(msg));
 	}, function(state) {
 		$scope.connected = state;
 		if(state)
@@ -319,7 +324,7 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 		$scope.addNote = true;
 	};
 	$scope.addNote = false;
-
+	$scope.$on('calllog', $scope.updateCallLog);
 });
 ctrlrModule.directive('callTime', function() {
 	return {

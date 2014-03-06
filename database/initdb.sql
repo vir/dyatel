@@ -379,6 +379,20 @@ CREATE INDEX calllog_ts_index     ON calllog(ts);
 CREATE INDEX calllog_billid_index ON calllog(billid);
 CREATE INDEX calllog_tag_index    ON calllog(tag);
 
+CREATE OR REPLACE FUNCTION calllog_change_trigger() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.billid::TEXT);
+	ELSE
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.billid::TEXT);
+	END IF;
+	RETURN NEW;
+END $$ LANGUAGE PlPgSQL;
+
+CREATE TRIGGER calllog_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON calllog FOR EACH ROW EXECUTE PROCEDURE calllog_change_trigger();
+
+
 
 CREATE TABLE ipnetworks (
 	net CIDR NOT NULL UNIQUE,
