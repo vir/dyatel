@@ -34,7 +34,7 @@ sub call :Chained(index) :CaptureArgs(1)
 sub list :Chained(call) :Args(0)
 {
 	my($self, $c) = @_;
-	$c->stash(rows => [$c->stash->{m}->search({ }, {columns => [qw/ id ts tag /], order_by => [qw/ts/]})->all]);
+	$c->stash(rows => [$c->stash->{m}->search({ }, {columns => [qw/ id ts tag value /], order_by => [qw/ts/]})->all]);
 }
 
 sub record :Chained(call) :Args(1)
@@ -42,12 +42,19 @@ sub record :Chained(call) :Args(1)
 	my($self, $c, $id) = @_;
 	my $o = ($id =~ /^\d+$/) ? $c->stash->{m}->find($id) : undef;
 	if($c->request->method eq 'POST') {
+		my $value = $c->request->params->{text};
+		if($o && ! length $value) {
+			$o->delete;
+			$c->response->status(204);
+			$c->response->body('removed');
+			return $c->detach;
+		}
 		my %params = (
 			ts => 'now()',
 			uid => $c->stash->{uid},
 			billid => $c->stash->{billid},
 			tag => 'NOTE',
-			value => $c->request->params->{text},
+			value => $value,
 			params => undef,
 		);
 		if($o) {
@@ -55,16 +62,14 @@ sub record :Chained(call) :Args(1)
 		} else {
 			$o = $c->model('DB::CallLog')->create(\%params);
 		}
-		$c->response->status(202);
-		return $c->detach;
 	} else {
 		unless($o) {
 			$c->response->status(404);
 			$c->response->body('Record not found');
 			return $c->detach;
 		}
-		$c->stash(row => $o);
 	}
+	$c->stash(row => $o);
 }
 
 

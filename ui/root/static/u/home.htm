@@ -43,30 +43,33 @@
       </tab-heading>
       <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
       <em ng-show="linetracker.length === 0">None</em>
-      <table ng-hide="linetracker.length === 0" class="table table-condensed">
-       <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
-        <td><input type="radio" name="activecallid" ng-model="current.activecallid" ng-value="r.billid" />
-        <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
-        <td><abbr title="{{ r.direction }}"><i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i></abbr></td>
-        <td>{{ r.status }}</td>
-        <td>{{ r.chan }}</td><td>{{ r.billid }}</td>
-        <!--
-        <td>
-         <button class="btn btn-mini" title="Hold Call"><i class="flaticon-pause10"></i></button>
-         <button class="btn btn-mini" title="Record conversation"><i class="flaticon-record1"></i></button>
-         <button class="btn btn-mini" title="Drop call"><i class="flaticon-phone59"></i></button>
-        </td>
-        -->
-       </tr>
-      </table>
-      <pre>Active call billid: {{current.activecallid}}</pre>
-      <div>
-       <div ng-repeat="x in calllog">
-        <pre>Log entry: {{x | json }}</pre>
+      <div  ng-hide="linetracker.length === 0">
+       <table class="table table-condensed">
+        <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
+         <td><input type="radio" name="activecallid" ng-model="current.activecallid" ng-value="r.billid" />
+         <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
+         <td><abbr title="{{ r.direction }}"><i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i></abbr></td>
+         <td>{{ r.status }}</td>
+         <td>{{ r.billid }}</td>
+        </tr>
+       </table>
+       <div class="callpanel">
+        <call-time time="42"></call-time>
+        <button class="btn btn-small" btn-checkbox ng-model="addNote" id="buttonNote" title="Add note"><i class="flaticon-pen31"></i></button>
+        <button class="btn btn-small" btn-checkbox ng-model="recordCall" id="buttonRec" title="Record converstion"><i class="flaticon-record1"></i></button>
+        <button class="btn btn-small" btn-checkbox ng-model="holdCall" id="buttonHold" title="Hold call"><i class="flaticon-phone70"></i></button>
+        <button class="btn btn-small" id="buttonDrop" title="Disconnect"><i class="flaticon-cancel8"></i></button>
+        add note: {{addNote}}
+        record: {{recordCall}}
        </div>
-      </div>
-      <div>
-       <textarea ng-model="calllogtext" ng-change="onCallLogTextUpdate()"></textarea>
+       <div class="well" ng-show="addNote">
+        <small class="text-info">Add your note. <a href="/wiki/Markdown" title="Markdown formatting help">Markdown</a> formattiong available.</small>
+        <edit-note class="span12" callid="{{current.activecallid}}" msgid="{{current.msgid}}"></edit-note>
+       </div>
+       <div class="well" ng-repeat="x in calllog">
+        <div style="font-size: small; margin:0; padding:0;">#{{x.id}} {{x.ts}} <em>{{x.tag}}</em><button class="btn btn-mini pull-right" ng-click="editMsg($index)" title="Edit"><i class="icon-edit"></i></button></div>
+       <div style="padding:6px 12px;" markdown="{{x.value}}"></div>
+       </div>
       </div>
      </tab>
      <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize}}" select="setSection(t)">
