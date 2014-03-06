@@ -269,7 +269,6 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			data: $.param({ event: 'testevent' }),
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function(data) {
-			console.log('Posted testevent');
 		});
 	};
 	$scope.testEventTimeout = $timeout(function() {
@@ -374,12 +373,10 @@ ctrlrModule.directive('editNote', function() {
 			$scope.text = '';
 			$scope.callid = null;
 			$scope.onCallIdChanged = function(val) {
-				console.log('editNote: onCallIdChanged: ' + $scope.callid + ' -> ' + val);
 				$scope.flush(true);
 				$scope.callid = val;
 			};
 			$scope.onMsgIdChanged = function(val) {
-				console.log('editNote: onMsgIdChanged: ' + $scope.id + ' -> ' + val);
 				$scope.flush(true);
 				$scope.id = val;
 				if($scope.id) {
@@ -392,13 +389,11 @@ ctrlrModule.directive('editNote', function() {
 				}
 			};
 			$scope.textUpdate = function() {
-				console.log('editNote: textUpdate');
 				if($scope.to)
 					$timeout.cancel($scope.to);
 				$scope.to = $timeout(function() { $scope.save(); }, 1000);
 			};
 			$scope.flush = function(clear) {
-				console.log('editNote: flush');
 				if($scope.to)
 					$timeout.cancel($scope.to);
 				if($scope.to && $scope.text)
@@ -409,7 +404,6 @@ ctrlrModule.directive('editNote', function() {
 				}
 			};
 			$scope.save = function() {
-				console.log('editNote: save(' + $scope.id + ', ' + $scope.text + ')');
 				$http({
 					method: 'POST',
 					url: '/u/calllog/call/' + $scope.callid + '/record/' + $scope.id,
