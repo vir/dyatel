@@ -227,12 +227,15 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 		$http.get('/u/linetracker').success(function (data) {
 			$scope.linetracker = data.rows;
 			$scope.current.incomingcall = false;
+			var lines = { };
 			$scope.linetracker.forEach(function(e) {
+				lines[e.billid] = e;
 				if(e.status === 'ringing' && e.direction === 'outgoing') {
 					$scope.current.activecallid = e.billid;
 					$scope.current.incomingcall = true;
 				}
 			});
+			$scope.lines = lines;
 			if(! $scope.current.activecallid) {
 				if($scope.linetracker.length)
 					$scope.current.activecallid = $scope.linetracker[0].billid;
@@ -317,12 +320,20 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			$scope.calllog = data.rows;
 		});
 	};
-	$scope.$watch('current.activecallid', $scope.updateCallLog);
 	$scope.editMsg = function(index) {
 		$scope.current.msgid = $scope.calllog[index].id;
 		$scope.addNote = true;
 	};
+	$scope.delMsg = function(index) {
+		$http({
+			method: 'POST',
+			url: '/u/calllog/call/' + $scope.current.activecallid + '/record/' + $scope.calllog[index].id,
+			data: $.param({ text: '' }), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		});
+	};
 	$scope.addNote = false;
+	$scope.$watch('current.activecallid', $scope.updateCallLog);
 	$scope.$on('calllog', $scope.updateCallLog);
 });
 ctrlrModule.directive('callTime', function() {
