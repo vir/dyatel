@@ -68,11 +68,11 @@
         <small class="text-info">Add your note. <a href="/wiki/Markdown" title="Markdown formatting help">Markdown</a> formattiong available.</small>
         <edit-note class="span12" callid="{{current.activecallid}}" msgid="{{current.msgid}}"></edit-note>
        </div>
-       <div class="well calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
+       <div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
+	<!-- <button class="btn btn-mini" ng-click="delMsg($index)" title="Delete"><i class="icon-remove"></i></button> -->
+	<button class="btn btn-mini" ng-click="editMsg($index)" title="Edit"><i class="icon-edit"></i></button>
         <h4>
 	 #{{x.id}} {{x.ts}} <em>{{x.tag}}</em>
-	 <!-- <button class="btn btn-mini pull-right" ng-click="delMsg($index)" title="Delete"><i class="icon-remove"></i></button> -->
-	 <button class="btn btn-mini pull-right" ng-click="editMsg($index)" title="Edit"><i class="icon-edit"></i></button>
 	</h4>
         <div markdown="{{x.value}}"></div>
        </div>
