@@ -1,3 +1,9 @@
+dyatel (0.0.69) UNRELEASED; urgency=low
+
+  * UI: Call log user interface added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 11 Mar 2014 22:38:57 +0400
+
 dyatel (0.0.68) UNRELEASED; urgency=low
 
   * Fix fatabase upgrade script
