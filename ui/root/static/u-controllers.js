@@ -54,9 +54,16 @@ angular.module('dyatelServices', [], function($provide) {
 						console.log('Got testevent');
 						return;
 					}
-					$rootScope.$apply(function() {
-						handlerFunc(JSON.parse(e.data));
-					});
+//					console.log('Got notification from server: ' + e.data);
+					var d = JSON.parse(e.data);
+					if(handlerFunc) {
+						$rootScope.$apply(function() {
+							handlerFunc(d);
+						});
+					}
+					if(d.event) {
+						$rootScope.$broadcast(d.event, d);
+					}
 				});
 				if(stateFunc) {
 					es.onopen = function() {
@@ -181,7 +188,11 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
 	$scope.connected = false;
-	$scope.incomingcall = false;
+	$scope.current = {
+		incomingcall: false,
+		activecallid: '',
+		msgid: null,
+	};
 
 	$scope.selectionDone = function (item) {
 		$scope.phone = item.num;
@@ -215,11 +226,22 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.updateLinetracker = function() {
 		$http.get('/u/linetracker').success(function (data) {
 			$scope.linetracker = data.rows;
-			$scope.incomingcall = false;
+			$scope.current.incomingcall = false;
+			var lines = { };
 			$scope.linetracker.forEach(function(e) {
-				if(e.status === 'ringing' && e.direction === 'outgoing')
-					$scope.incomingcall = true;
+				lines[e.billid] = e;
+				if(e.status === 'ringing' && e.direction === 'outgoing') {
+					$scope.current.activecallid = e.billid;
+					$scope.current.incomingcall = true;
+				}
 			});
+			$scope.lines = lines;
+			if(! $scope.current.activecallid) {
+				if($scope.linetracker.length)
+					$scope.current.activecallid = $scope.linetracker[0].billid;
+				else
+					$scope.current.activecallid = '';
+			}
 		});
 	};
 	$scope.updateBLFs = function() {
@@ -236,8 +258,6 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			$scope.updateLinetracker();
 		else if(msg.event === 'blf_state')
 			$scope.updateBLFs();
-		else
-			console.log('Unknown event received: ' + JSON.stringify(msg));
 	}, function(state) {
 		$scope.connected = state;
 		if(state)
@@ -252,7 +272,6 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			data: $.param({ event: 'testevent' }),
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).success(function(data) {
-			console.log('Posted testevent');
 		});
 	};
 	$scope.testEventTimeout = $timeout(function() {
@@ -293,6 +312,122 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 		$scope.doCall({num: ('outgoing' === row.direction ? row.caller : row.called), op: 'clst'});
 	};
 	$scope.updateCallList();
+
+	// Call log
+	$scope.updateCallLog = function() {
+		$http.get('/u/calllog/call/' + $scope.current.activecallid + '/list').success(function(data) {
+			data.rows.reverse();
+			$scope.calllog = data.rows;
+		});
+	};
+	$scope.editMsg = function(index) {
+		$scope.current.msgid = $scope.calllog[index].id;
+		$scope.addNote = true;
+	};
+	$scope.delMsg = function(index) {
+		$http({
+			method: 'POST',
+			url: '/u/calllog/call/' + $scope.current.activecallid + '/record/' + $scope.calllog[index].id,
+			data: $.param({ text: '' }), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		});
+	};
+	$scope.addNote = false;
+	$scope.$watch('current.activecallid', $scope.updateCallLog);
+	$scope.$on('calllog', $scope.updateCallLog);
+});
+ctrlrModule.directive('callTime', function() {
+	return {
+		restrict: 'E',
+		replace: true,
+		scope: {
+		},
+		link: function ($scope, element, attrs, model) {
+			attrs.$observe('time', function(secs) {
+				$scope.secs = parseInt(secs);
+				$scope.ts = new Date();
+			});
+		},
+		template: '<div style="display:inline-block; width:6em; border:2px solid #CCC; background-color:#EEE; text-align:center; font-family:monospace; font-weight:bold;">{{time}}</div>',
+		controller: function($scope, $timeout) {
+			$scope.dots = true;
+			$scope.updateTime = function() {
+				var now = new Date();
+				var s = $scope.secs + Math.floor((now - $scope.ts) / 1000);
+				var min = Math.floor(s / 60);
+				var sec = s - min * 60;
+				if(sec < 10)
+					sec = '0' + sec;
+				$scope.time = min + ($scope.dots ? ':' : ' ') + sec;
+				$scope.dots = !$scope.dots;
+				$timeout($scope.updateTime, 500);
+			};
+			$scope.updateTime();
+		},
+	};
+});
+
+ctrlrModule.directive('editNote', function() {
+	return {
+		restrict: 'E',
+		replace: true,
+		scope: {
+			cls: '@class',
+		},
+		link: function (scope, element, attrs, model) {
+			attrs.$observe('callid', scope.onCallIdChanged);
+			attrs.$observe('msgid', scope.onMsgIdChanged);
+		},
+		template: '<textarea class="{{cls}}" ng-class="{changed:to}" ng-model="text" ng-change="textUpdate()" placeholder="Add note"></textarea>',
+		controller: function($scope, $http, $timeout) {
+			$scope.id = null;
+			$scope.text = '';
+			$scope.callid = null;
+			$scope.onCallIdChanged = function(val) {
+				$scope.flush(true);
+				$scope.callid = val;
+			};
+			$scope.onMsgIdChanged = function(val) {
+				$scope.flush(true);
+				$scope.id = val;
+				if($scope.id) {
+					$http({
+						method: 'GET',
+						url: '/u/calllog/call/' + $scope.callid + '/record/' + $scope.id,
+					}).success(function(data) {
+						$scope.text = data.row.value
+					});
+				}
+			};
+			$scope.textUpdate = function() {
+				if($scope.to)
+					$timeout.cancel($scope.to);
+				$scope.to = $timeout(function() { $scope.save(); }, 1000);
+			};
+			$scope.flush = function(clear) {
+				if($scope.to)
+					$timeout.cancel($scope.to);
+				if($scope.to && $scope.text)
+					$scope.save();
+				if(clear) {
+					$scope.text = '';
+					$scope.id = null;
+				}
+			};
+			$scope.save = function() {
+				$http({
+					method: 'POST',
+					url: '/u/calllog/call/' + $scope.callid + '/record/' + $scope.id,
+					data: $.param({ text: $scope.text }), // XXX depends on jQuery
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+				}).success(function(data) {
+					if(! $scope.id)
+						$scope.id = data.row.id;
+					delete $scope.to;
+				});
+			};
+		},
+	};
 });
 
 ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
