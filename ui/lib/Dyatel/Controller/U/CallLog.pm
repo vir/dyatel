@@ -34,7 +34,7 @@ sub call :Chained(index) :CaptureArgs(1)
 sub list :Chained(call) :Args(0)
 {
 	my($self, $c) = @_;
-	$c->stash(rows => [$c->stash->{m}->search({ }, {columns => [qw/ id ts tag value /], order_by => [qw/ts/]})->all]);
+	$c->stash(rows => [$c->stash->{m}->search({ }, {columns => [qw/ id ts uid tag value /], order_by => [qw/ts/]})->all]);
 }
 
 sub record :Chained(call) :Args(1)
@@ -42,8 +42,13 @@ sub record :Chained(call) :Args(1)
 	my($self, $c, $id) = @_;
 	my $o = ($id =~ /^\d+$/) ? $c->stash->{m}->find($id) : undef;
 	if($c->request->method eq 'POST') {
+		if($o && $o->uid != $c->stash->{uid}) {
+			$c->response->status(403);
+			$c->response->body('Not yours');
+			return $c->detach;
+		}
 		my $value = $c->request->params->{text};
-		if($o && ! length $value) {
+		if($o && ! length($value)) {
 			$o->delete;
 			$c->response->status(204);
 			$c->response->body('removed');
