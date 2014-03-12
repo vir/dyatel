@@ -8,4 +8,16 @@
 , "English": "English"
 , "Russian": "Russian"
 , "Help": "Help"
+
+, "CallEmAll": "Dialer"
+, "ConnectionCheck": "Check connection"
+, "FullScreenExit": "Exit full screen mode"
+, "FullScreenEnter": "Full screen mode"
+, "All": "All"
+, "Missed": "Missed"
+, "Answered": "Answered"
+, "Outgoing": "Outgoing"
+, "Edit": "Edit"
+, "Refresh": "Refresh"
+, "AddNote": "Add note"
 }

@@ -122,15 +122,15 @@ ctrlrModule.directive('fullscreen', function() {
 				};
 			}
 		},
-		template: '<i ng-click="toggle()" title="{{title}}" ng-class="{\'flaticon-fullscreen2\':state, \'flaticon-fullscreen3\':!state}"></i>',
+		template: '<i ng-click="toggle()" title="{{title | translate}}" ng-class="{\'flaticon-fullscreen2\':state, \'flaticon-fullscreen3\':!state}"></i>',
 		controller: function($scope) {
 			$scope.state = false;
-			$scope.title = 'Full screen';
+			$scope.title = 'FullScreenEnter';
 			$scope.toggle = function() {
 				$scope.state = !$scope.state;
 				if($scope.fs)
 					$scope.fs($scope.state);
-				$scope.title = $scope.state ? 'Exit full screen' : 'Full screen';
+				$scope.title = $scope.state ? 'FullScreenExit' : 'FullScreenEnter';
 			};
 		},
 	};

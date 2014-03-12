@@ -4,7 +4,7 @@
  <div id="mytoolbar">
   <div id="fullscreen-button" class="pull-right"><fullscreen></fullscreen></div>
   <div id="connection-state" class="pull-right">
-   <a href="javascript:void(0)" title="Check connection" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
+   <a href="javascript:void(0)" title="{{'ConnectionCheck' | translate}}" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
   </div>
  </div>
 
@@ -13,7 +13,7 @@
    <div class="fillpage span4 noscroll" style="padding:12px;"><!-- left column -->
 
     <div class="well controls">
-     <h2>Call 'em all!</h2>
+     <h2 translate>CallEmAll</h2>
      <div class="input-append">
       <input type="text" ng-model="phone" typeahead="x as x.label for x in dataSource($viewValue) | limitTo:25" typeahead-on-select="selectionDone($item)" focus-me />
       <button class="btn" ng-click="doCall({num: phone, op: 'button'})"><i class="icon-fire"></i></button>
@@ -21,8 +21,8 @@
     </div>
 
     <div ng-hide="blfs.length">No BLFs <a href="#/blfs">define</a>d</div>
-    <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
-    <a title="Edit" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
+    <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
+    <a title="{{'Edit' | translate}}" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
     <table class="table table-condensed table-hover">
      <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
       <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
@@ -41,7 +41,7 @@
         <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> Alert!</span>
        </calls-tab-heading>
       </tab-heading>
-      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
+      <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
       <em ng-show="linetracker.length === 0">None</em>
       <div  ng-hide="linetracker.length === 0">
        <table class="table table-condensed">
@@ -54,7 +54,7 @@
         </tr>
        </table>
        <div class="callpanel">
-        <button class="btn btn-small" btn-checkbox ng-model="addNote" id="buttonNote" title="Add note"><i class="flaticon-pen31"></i></button>
+        <button class="btn btn-small" btn-checkbox ng-model="addNote" id="buttonNote" title="{{'AddNote' | translate}}"><i class="flaticon-pen31"></i></button>
 	<!--
         <button class="btn btn-small" btn-checkbox ng-model="recordCall" id="buttonRec" title="Record converstion"><i class="flaticon-record1"></i></button>
         <button class="btn btn-small" btn-checkbox ng-model="holdCall" id="buttonHold" title="Hold call"><i class="flaticon-phone70"></i></button>
@@ -70,7 +70,7 @@
        </div>
        <div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
 	<!-- <button class="btn btn-mini" ng-click="delMsg($index)" title="Delete"><i class="icon-remove"></i></button> -->
-	<button class="btn btn-mini" ng-click="editMsg($index)" title="Edit"><i class="icon-edit"></i></button>
+	<button class="btn btn-mini" ng-click="editMsg($index)" title="{{'Edit' | translate}}"><i class="icon-edit"></i></button>
         <h4>
 	 #{{x.id}} {{x.ts}} <em>{{x.tag}}</em>
 	</h4>
@@ -78,8 +78,8 @@
        </div>
       </div>
      </tab>
-     <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize}}" select="setSection(t)">
-      <a title="Refresh" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
+     <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize | translate}}" select="setSection(t)">
+      <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
       <div>
        <table class="table table-condensed table-hover">
         <tr><th>Time</th><th>BillId</th><th>Peer</th><th>Bill Time</th><th>Ring Time</th><th>Status + Reason</th></tr>
