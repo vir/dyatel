@@ -44,6 +44,25 @@ sub spa :Local {
 	$c->stash(template => 'spa.tt', no_wrapper => 1, prefix => 'u-');
 }
 
+use Data::Dumper;
+sub conf :Local :Args(1)
+{
+	my($self, $c, $section) = @_;
+	my $p = $c->model('DB::Config')->find({section => $section});
+	$p = $p ? $p->params : { };
+	my $d = $c->model('ConfDefs')->section($section);
+	my %r;
+	foreach my $x(@{$d->{params}}) {
+		my $name = $x->{name};
+		if(defined $p->{$name}) {
+			$r{$name} = $p->{$name};
+		} else {
+			$r{$name} = $x->{defval};
+		}
+	}
+	$c->stash(section => $section, params => \%r);
+}
+
 =encoding utf8
 
 =head1 AUTHOR
