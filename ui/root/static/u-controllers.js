@@ -601,33 +601,28 @@ ctrlrModule.controller('MyPhoneCtrl', function($scope, $http) {
 ctrlrModule.controller('MyAbbrsCtrl', function($scope, $http) {
 });
 
-ctrlrModule.controller('MyBLFsCtrl', function($scope, $http) {
+ctrlrModule.controller('MyBLFsCtrl', function($scope, $translate, $http) {
 	var urlBase = '/u/blfs/';
 	$scope.selection = [ ];
 	$http.get(urlBase + 'list').success(function(data) {
 		$scope.myData = data.rows;
 	});
+	$scope.columnDefs = [
+		{field:'key', displayName:'Key', width:'15%'},
+		{field:'num', displayName:'Number', width:'15%'},
+		{field:'label', displayName:'Label'},
+	];
+	$scope.columnDefs.forEach(function(colDef) {
+		$translate(colDef.displayName).then(function(tr) {
+			colDef.displayName = tr;
+		});
+	});
+
 	$scope.gridOptions = {
 		data: 'myData',
-		columnDefs: [
-			{field:'key', displayName:'Key', width:'15%'},
-			{field:'num', displayName:'Number', width:'15%'},
-			{field:'label', displayName:'Label'},
-		],
+		columnDefs: 'columnDefs',
 		multiSelect: false,
 		selectedItems: $scope.selection,
-		/*
-		rowTemplate:
-			'<div style="height: 100%" ng-class="{changed: !!row.getProperty(\'changed\')}">' +
-				'<div ng-repeat="col in renderedColumns" ng-class="col.colIndex()" class="ngCell">' +
-					'<div ng-cell></div>' +
-				'</div>' +
-			'</div>',
-		beforeSelectionChange: function() {
-			$scope.editForm.$pristine = true;
-			return true;
-		},
-		*/
 	};
 	$scope.onNew = function() {
 		var newRow = { id: 'create', key:1, num:'', label:'', changed: true };

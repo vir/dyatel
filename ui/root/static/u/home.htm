@@ -37,19 +37,21 @@
      <tab>
       <tab-heading>
        <ng-switch on="current.incomingcall">
-        <span ng-switch-default>Active</span>
-        <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> Alert!</span>
+        <span ng-switch-default>CurrentCalls</span>
+        <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> <span translate>Ringing</span>!</span>
        </calls-tab-heading>
       </tab-heading>
       <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
-      <em ng-show="linetracker.length === 0">None</em>
-      <div  ng-hide="linetracker.length === 0">
+      <em ng-show="linetracker.length === 0" translate>None</em>
+      <div ng-hide="linetracker.length === 0">
        <table class="table table-condensed">
         <tr ng-repeat="r in linetracker" ui-on-drop="onDrop($data, 'chan', r.chan)">
          <td><input type="radio" name="activecallid" ng-model="current.activecallid" ng-value="r.billid" />
          <td><div ui-draggable="true" drag="r">{{ (r.direction === 'incoming') && r.called || r.caller }}</td></div>
-         <td><abbr title="{{ r.direction }}"><i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i></abbr></td>
-         <td>{{ r.status }}</td>
+         <td><abbr title="{{ { incoming:'Outgoing', outgoing:'Incoming' }[r.direction] | translate }}">
+	  <i ng-class="{ incoming:'flaticon-outgoing2', outgoing:'flaticon-incoming2' }[r.direction]"></i>
+         </abbr></td>
+         <td>{{ r.status | capitalize | translate }}</td>
          <td>{{ r.billid }}</td>
         </tr>
        </table>
@@ -65,7 +67,7 @@
 	-->
        </div>
        <div class="well" ng-show="addNote">
-        <small class="text-info">Add your note. <a href="/wiki/Markdown" title="Markdown formatting help">Markdown</a> formattiong available.</small>
+        <small class="text-info" translate>AddYourNote</small>
         <edit-note class="span12" callid="{{current.activecallid}}" msgid="{{current.msgid}}"></edit-note>
        </div>
        <div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
@@ -78,18 +80,18 @@
        </div>
       </div>
      </tab>
-     <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t | capitalize | translate}}" select="setSection(t)">
+     <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t+'Calls' | capitalize | translate}}" select="setSection(t)">
       <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
       <div>
        <table class="table table-condensed table-hover">
-        <tr><th>Time</th><th>BillId</th><th>Peer</th><th>Bill Time</th><th>Ring Time</th><th>Status + Reason</th></tr>
+        <tr><th translate>Time</th><th translate>BillId</th><th translate>Peer</th><th translate>BillTime</th><th translate>RingTime</th><th translate>StatusAndReason</th></tr>
         <tr ng-repeat="r in calls[section]">
          <td><abbr title="{{r.ts}}">{{r.ts.substr(8,11)}}</abbr></td> <td>{{r.billid}}</td>
          <td>
 	  <abbr title="{{{outgoing: 'Incoming', incoming: 'Outgoing'}[r.direction]}}"><i ng-class="{outgoing: 'flaticon-arrow219', incoming: 'flaticon-arrow217'}[r.direction]"></i></abbr>
           <a href="javascript:void(0)" ng-click="reCall(r)">{{ 'outgoing' === r.direction && r.caller || r.called }}</a>
 	 </td>
-         <td>{{r.billtime}}</td><td>{{r.ringtime}}</td> <td>{{r.status}} {{r.reason}}</td>
+         <td>{{r.billtime}}</td><td>{{r.ringtime}}</td><td>{{r.status | capitalize | translate}}/{{r.reason}}</td>
         </tr>
        </table>
       </div>

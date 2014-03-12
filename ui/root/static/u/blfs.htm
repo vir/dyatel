@@ -3,13 +3,19 @@
  <div class="row-fluid">
   <div class="gridStyle span6" ng-grid="gridOptions"></div>
   <div class="span6">
-   <label>Key <input type="text" ng-model="selection[0].key" ng-change="selection[0].changed=true" /></label>
-   <label>Number <input type="text" ng-model="selection[0].num" ng-change="selection[0].changed=true" typeahead="x.num as x.label for x in dataSource($viewValue) | limitTo:25"/></label>
-   <label>Label <input type="text" ng-model="selection[0].label" ng-change="selection[0].changed=true" /></label>
-   <button class="btn" ng-click="onNew()">New</button>
-   <button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed">Save</button>
-   <button class="btn" ng-click="onDelete()" ng-disabled="!selection[0].id">Delete</button>
-   <p class="warning" ng-show="selection[0].changed">Current row is not saved</p>
+   <label for="inpKey" translate>Key</label>
+   <input id="inpKey" type="text" ng-model="selection[0].key"   ng-readonly="!selection.length" ng-change="selection[0].changed=true" />
+   <label for="inpNum" translate>Number</label>
+   <input id="inpNum" type="text" ng-model="selection[0].num"   ng-readonly="!selection.length" ng-change="selection[0].changed=true"
+          typeahead="x.num as x.label for x in dataSource($viewValue) | limitTo:25"/>
+   <label for="inpLab" translate>Label</label>
+   <input id="inpLab" type="text" ng-model="selection[0].label" ng-readonly="!selection.length" ng-change="selection[0].changed=true" />
+   <div class="controls">
+    <button class="btn" ng-click="onNew()" translate>New</button>
+    <button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed" translate>Save</button>
+    <button class="btn" ng-click="onDelete()" ng-disabled="!selection[0].id" translate>Delete</button>
+    <p class="text-warning" ng-show="selection[0].changed" translate>CurrentRowNotSaved</p>
+   </div>
   </div>
  </div>
 </div>
