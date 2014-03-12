@@ -85,13 +85,23 @@ angular.module('dyatelServices', [], function($provide) {
 	}]);
 });
 
-var ctrlrModule = angular.module('userControllers', [ 'ngGrid', 'dyatelServices', 'dyatelCommon' ]);
+var ctrlrModule = angular.module('userControllers', [ 'ngGrid', 'dyatelServices', 'dyatelCommon',
+	'pascalprecht.translate',
+]);
 
-ctrlrModule.controller('NavbarCtrl', function($scope, $http) {
+ctrlrModule.controller('NavbarCtrl', [ '$scope', '$rootScope', '$http', '$translate', function($scope, $rootScope, $http, $translate) {
 	$http.get('/id').success(function(data) {
 		$scope.user = data;
 	});
-});
+	$http.get('/u/conf/ui').success(function(data) {
+		$rootScope.conf = data.params;
+		if(! $translate.use())
+			$translate.use($rootScope.conf.language);
+	});
+	$scope.setLanguage = function(lang) {
+		$translate.use(lang);
+	};
+}]);
 
 ctrlrModule.directive('fullscreen', function() {
 	return {

@@ -13,6 +13,9 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
 	, 'draganddrop.js'
 	, 'eventsource.js'
 	, 'showdown.js'
+	, 'angular-translate.min.js'
+	, 'angular-translate-storage-cookie.min.js'
+	, 'angular-translate-loader-static-files.min.js'
 	, 'common.js'
 	, "${prefix}app.js", "${prefix}controllers.js"
 ];

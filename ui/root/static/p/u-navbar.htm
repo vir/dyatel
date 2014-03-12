@@ -5,26 +5,32 @@
    <span class="icon-bar"></span>
    <span class="icon-bar"></span>
   </button>
-  <a class="brand" href="#/home">Dyatel</a>
+  <a class="brand" href="#/home" translate>Dyatel</a>
   <div class="nav-collapse" collapse="isCollapsed">
    <ul class="nav">
 
-    <li class="dropdown"><a href="#/phonebook">Телефонная книга</a></li>
+    <li class="dropdown"><a href="#/phonebook" translate>Phonebook</a></li>
 
-    <li class="dropdown"><a href="#/calllist">История вызовов</a></li>
+    <li class="dropdown"><a href="#/calllist" translate>CallsHistory</a></li>
 
     <li class="dropdown">
-     <a href="#" class="dropdown-toggle">Настройки <b class="caret"></b></a>
+     <a href="#" class="dropdown-toggle"><span translate>Settings</span><b class="caret"></b></a>
      <ul class="dropdown-menu">
-      <li><a href="#/myphone">Мой телефон</a></li>
-      <li><a href="#/myabbrs">Сокращенные номера</a></li>
-      <li><a href="#/blfs">BLF</a></li>
+      <li><a href="#/myphone" translate>MyPhone</a></li>
+      <li><a href="#/myabbrs" translate>AbbrNums</a></li>
+      <li><a href="#/blfs" translate>BLF</a></li>
+      <li class="dropdown-submenu"><a href="#" translate>Language</a>
+       <ul class="dropdown-menu">
+        <li><a href="#" ng-click="setLanguage('en')" translate>English</a></li>
+        <li><a href="#" ng-click="setLanguage('ru')" translate>Russian</a></li>
+       </ul>
+      </li>
      </ul>
     </li>
 
    </ul>
    <ul class="nav pull-right">
-    <li><a href="/wiki/Help">Help</a></li>
+    <li><a href="/wiki/Help" translate>Help</a></li>
     <li ng-repeat="b in user.badges"><p class="navbar-text"><a class="mybadge" href="/{{ b.substr(0, 1) }}/">{{ b }}</a></p></li>
     <li><p class="navbar-text"><abbr title="{{ user.name }}">{{ user.login }}</abbr></p></li>
    </ul>

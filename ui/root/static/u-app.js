@@ -3,6 +3,8 @@ var dyatelApp = angular.module('dyatelApp', [
 	'ngRoute',
 	'ngDragDrop',
 	'userControllers',
+	'ngCookies',
+	'pascalprecht.translate',
 ]);
 
 dyatelApp.config(['$routeProvider', function($routeProvider) {
@@ -15,6 +17,15 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/blfs',            { templateUrl: '/static/u/blfs.htm',       controller: 'MyBLFsCtrl',             title: 'BLF' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
+}]);
+
+dyatelApp.config(['$translateProvider', function($translateProvider) {
+	$translateProvider.useStaticFilesLoader({
+		prefix: '/static/locale-',
+		suffix: '.json'
+	});
+	$translateProvider.useCookieStorage();
+//	$translateProvider.preferredLanguage('en');
 }]);
 
 dyatelApp.factory('Title', function() {

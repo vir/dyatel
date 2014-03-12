@@ -12,5 +12,11 @@
       type: string
       defval: null
       descr: Override calculated (day/night) routing mode.
+- section: ui
+  params:
+    - name: language
+      type: string
+      defval: en
+      descr: User interface language
 
 
