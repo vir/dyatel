@@ -20,6 +20,7 @@
 , "Edit": "Edit"
 , "Refresh": "Refresh"
 , "AddNote": "Add note"
+, "NoBLFsDefined": "No BLFs <a href=\"#/blfs\">define</a>d"
 
 , "CurrentCalls": "Current calls"
 , "Ringing": "Ringing"
@@ -42,4 +43,10 @@
 , "Save": "Save"
 , "Delete": "Delete"
 , "CurrentRowNotSaved": "Current row is not saved"
+
+, "Search": "Search"
+, "LocalPhones": "Local"
+, "MoreLocalPhones": "More local"
+, "PrivateAddressBook": "Private address book"
+, "CommonAddressBook": "Common address book"
 }

@@ -20,6 +20,7 @@
 , "Edit": "Редактировать"
 , "Refresh": "Обновить"
 , "AddNote": "Добавить заметку"
+, "NoBLFsDefined": "BLFы не настроены. <a href=\"#/blfs\">Настроить</a>."
 
 , "CurrentCalls": "Текущие звонки"
 , "Ringing": "Звонок"
@@ -42,4 +43,10 @@
 , "Save": "Сохранить"
 , "Delete": "Удалить"
 , "CurrentRowNotSaved": "Текущая запись не сохранена"
+
+, "Search": "Поиск"
+, "LocalPhones": "Местные"
+, "MoreLocalPhones": "Телефонный список"
+, "PrivateAddressBook": "Личная адресная книга"
+, "CommonAddressBook": "Общая адресная книга"
 }
