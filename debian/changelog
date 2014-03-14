@@ -1,3 +1,9 @@
+dyatel (0.0.71) UNRELEASED; urgency=low
+
+  * Fix upgrade (broken in prev. release)
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 14 Mar 2014 18:03:00 +0400
+
 dyatel (0.0.70) UNRELEASED; urgency=low
 
   * User UI: russian/english language switch added
