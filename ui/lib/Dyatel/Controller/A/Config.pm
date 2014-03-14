@@ -61,6 +61,12 @@ sub defs :Local :Args(0)
 {
 	my($self, $c) = @_;
 	my $defs = $c->model('ConfDefs')->get;
+	foreach my $s(@$defs) {
+		foreach my $p(@{$s->{params}}) {
+			next unless $p->{options} && $p->{options} =~ /^(DB::\w+)\.(\w+)$/;
+			$p->{options} = [ $c->model($1)->search({ }, { columns => [$2], order_by => [$2], distinct => 1 })->get_column($2)->all ];
+		}
+	}
 	$c->stash(defs => $defs);
 }
 

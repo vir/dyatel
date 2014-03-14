@@ -24,6 +24,9 @@
 						<label><input type="radio" ng-model="conf[d.section].params[p.name]" value="false" /> False</label>
 						<label><input type="radio" ng-model="conf[d.section].params[p.name]" value="true" /> True</label>
 					</div>
+					<div ng-switch-when="select">
+						<select ng-model="conf[d.section].params[p.name]" ng-options="v for v in p.options"></select>
+					</div>
 					<div ng-switch-default><input type="text" ng-model="conf[d.section].params[p.name]" /></div>
 				</ng-switch></td>
 				<td>{{p.descr}}</td>
