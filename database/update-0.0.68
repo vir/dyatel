@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION normalize_num(n TEXT) RETURNS PHONE AS $$
 	SELECT NULLIF(regexp_replace($1, '[^0-9\*\#\+]', '', 'g'), '')::PHONE;
 $$ LANGUAGE SQL IMMUTABLE;
 
+DROP INDEX morenums_val_index;
 CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
 
 CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)

@@ -10,6 +10,7 @@ BEGIN
 	RETURN NEW;
 END $$ LANGUAGE PlPgSQL;
 
+DROP TRIGGER IF EXISTS calllog_change_trigger ON calllog;
 CREATE TRIGGER calllog_change_trigger AFTER INSERT OR UPDATE OR DELETE
 	ON calllog FOR EACH ROW EXECUTE PROCEDURE calllog_change_trigger();
 
