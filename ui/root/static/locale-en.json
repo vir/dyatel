@@ -13,6 +13,7 @@
 , "ConnectionCheck": "Check connection"
 , "FullScreenExit": "Exit full screen mode"
 , "FullScreenEnter": "Full screen mode"
+, "CurrentCalls": "Current calls"
 , "AllCalls": "All"
 , "MissedCalls": "Missed"
 , "AnsweredCalls": "Answered"
