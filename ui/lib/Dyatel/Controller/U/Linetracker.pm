@@ -11,6 +11,17 @@ sub list :Path
 	$c->stash(rows => [$m->all]);
 }
 
+sub devices :Local
+{
+	my($self, $c) = @_;
+	my $opts = { order_by => 'ts DESC', columns => [qw( ts location expires device driver ip_transport ip_host ip_port audio )]};
+	my $where = { userid => $c->stash->{uid} };
+	$c->stash(rows => [$c->model('DB::Regs')->search($where, $opts)]);
+}
+
+
+
+
 __PACKAGE__->meta->make_immutable;
 
 1;

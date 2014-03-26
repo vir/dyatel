@@ -6,6 +6,9 @@
   <div id="connection-state" class="pull-right">
    <a href="javascript:void(0)" title="{{'ConnectionCheck' | translate}}" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
   </div>
+  <div ng-repeat="ph in devices" class="pull-right">
+   <i class="flaticon-phone25" style="cursor:help;" title="{{ [ph.device, ph.ip_host, ph.driver, ph.ip_transport].join(' ')}}"></i>
+  </div>
  </div>
 
  <form class="fillpage form-inline" novalidate="1">

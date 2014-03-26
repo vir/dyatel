@@ -259,15 +259,23 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 			$scope.blfs = data.rows;
 		});
 	};
+	$scope.updateRegs = function() {
+		$http.get('/u/linetracker/devices').success(function(data) {
+			$scope.devices = data.rows;
+		});
+	};
 
 	$scope.updateLinetracker();
 	$scope.updateBLFs();
+	$scope.updateRegs();
 
 	$scope.es = CTI.eventHandler('home', function(msg) {
 		if(msg.event === 'linetracker')
 			$scope.updateLinetracker();
 		else if(msg.event === 'blf_state')
 			$scope.updateBLFs();
+		else if(msg.event === 'regs')
+			$scope.updateRegs();
 	}, function(state) {
 		$scope.connected = state;
 		if(state)
