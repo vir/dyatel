@@ -5,7 +5,7 @@
 <div class="modal-body">
 	<div ng-switch on="infstatus">
 		<div ng-switch-when="here">
-			<dl>
+			<dl class="dl-horizontal">
 				<dt ng-repeat-start="(k, v) in info">{{k}}</dt>
 				<dd ng-repeat-end="">{{v}}</dd>
 			</dl>
