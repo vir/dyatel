@@ -431,6 +431,7 @@ BEGIN
 			FOR kvp IN SELECT * FROM EACH(t.route_params) LOOP
 				res := res || hstore('callto.' || cntr || '.' || kvp.key, kvp.value);
 			END LOOP;
+			res := res || hstore('callto.' || cntr || '.secure', CASE WHEN (cld.secure = 'ssl' AND t.ip_transport = 'TLS') OR cld.secure = 'on' THEN 'yes' ELSE 'no' END);
 		END LOOP;
 	END IF;
 
