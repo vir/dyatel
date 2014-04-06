@@ -28,6 +28,13 @@
 			<label>Alias: <input type="text" placeHolder="Alias" ng-model="user.alias" /></label>@<input type="text" placeHolder="Domain" ng-model="user.domain" />
 			<label>Domain login: <input type="text" placeHolder="Domain login" ng-model="user.login" /></label>
 		</div>
+		<div class="span12 controls form-horizontal">
+			<label>Voice traffic encryption mode: <select ng-model="user.secure">
+				<option value="off">Disabled</option>
+				<option value="ssl">When TLS</option>
+				<option value="on">Enable always</option>
+			</select></label>
+		</div>
 		<div class="span12 controls">
 			<span class="span3">Last registered: {{ user.lastreg }}</span>
 			<span class="span3">Last IP: {{ user.lastip }}</span>

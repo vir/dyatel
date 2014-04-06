@@ -91,6 +91,13 @@ __PACKAGE__->add_columns(
   },
   "fingrp",
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  "secure",
+  {
+    data_type => "enum",
+    default_value => "ssl",
+    extra => { custom_type_name => "encription_mode", list => ["off", "on", "ssl"] },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("users_num_index", ["num"]);
