@@ -124,6 +124,8 @@ sub get_user_params
 		dispname => $c->request->params->{dispname} || undef,
 		login => $c->request->params->{login} || undef,
 		badges => $badges || [ ],
+#		fingrp => $c->request->params->{fingrp} || undef,
+		secure => $c->request->params->{secure} || 'ssl',
 	};
 }
 
