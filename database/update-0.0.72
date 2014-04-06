@@ -1,0 +1,10 @@
+BEGIN;
+
+CREATE TYPE encription_mode AS ENUM('off', 'on', 'ssl');
+
+ALTER TABLE users ADD secure encription_mode NOT NULL DEFAULT 'ssl';
+
+COMMIT;
+
+-- vim: ft=sql
+
