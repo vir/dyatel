@@ -6,8 +6,10 @@
   <div id="connection-state" class="pull-right">
    <a href="javascript:void(0)" title="{{'ConnectionCheck' | translate}}" ng-class="{badge:true, 'badge-success':connected, 'badge-warning':!connected }" ng-click="testEvent()"><i ng-class="{'flaticon-signal37':connected, 'flaticon-signal36':!connected}"></i></a>
   </div>
-  <div ng-repeat="ph in devices" class="pull-right">
-   <i class="flaticon-phone25" style="cursor:help; color:#0C0;" title="{{ [ph.device, ph.ip_host, ph.driver, ph.ip_transport].join(' ')}}"></i>
+  <div id="mydevices" class="pull-right">
+   <div ng-repeat="ph in devices" ng-class="['pull-left', ph.driver.toLowerCase(), ph.ip_transport.toLowerCase()].join(' ')">
+    <i class="flaticon-phone25" title="{{ [ph.device, ph.ip_host, ph.driver, ph.ip_transport].join(' ')}}"></i>
+   </div>
   </div>
  </div>
 
@@ -40,7 +42,7 @@
      <tab>
       <tab-heading>
        <ng-switch on="current.incomingcall">
-        <span ng-switch-default>CurrentCalls</span>
+        <span ng-switch-default translate>CurrentCalls</span>
         <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> <span translate>Ringing</span>!</span>
        </calls-tab-heading>
       </tab-heading>
