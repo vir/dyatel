@@ -278,3 +278,8 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 .calllog-msg button { float:right; margin: 4px; position:relative; }
 
 
+/* my devices - small phones in upper right corner */
+#mydevices div { cursor:help; color:#0C0; }
+#mydevices div.tls { color:#04C; }
+#mydevices div.jabber { color:#CC0; }
+
