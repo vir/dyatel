@@ -207,7 +207,7 @@ sub on_chan_hangup
 	my $call = $byid{$id} || return undef;
 	$msg->dumpmsg('Got hangup') if $debug;
 
-	my $peerid = $call->{ ($id eq $call->{callerid})?'calledid':'callerid' };
+	my $peerid = $call->{ ($id eq $call->{callerid})?'dumb2':'dumb1' };
 	$msg->message('call.drop', undef, undef,
 		id => $peerid,
 		reason => 'Peer hangup',
@@ -215,6 +215,7 @@ sub on_chan_hangup
 
 	my $reason = $msg->param('reason') || 'hangup';
 	purge_call($call, $reason);
+	return undef;
 }
 
 # Forward destination channel "ringing" to originator channel (inband only)
