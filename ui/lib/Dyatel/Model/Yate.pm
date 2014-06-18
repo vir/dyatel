@@ -147,6 +147,10 @@ sub sconnect
 {
 	my $self = shift;
 	my($caller, $called, $linehint) = @_;
+	unless($called =~ /[[:alpha:]]/) { # cleanup number
+		$called =~ s/[^\+0-9]//sg;
+		$called =~ s/(?<=.)\+//sg;
+	}
 	my %params = (
 		from => $caller,
 		to => $called,
