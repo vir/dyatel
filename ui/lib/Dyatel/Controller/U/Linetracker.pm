@@ -19,6 +19,12 @@ sub devices :Local
 	$c->stash(rows => [$c->model('DB::Regs')->search($where, $opts)]);
 }
 
+sub status :Local :Args(1)
+{
+	my($self, $c, $num) = @_;
+	my $data = $c->model('DB')->num_status($num);
+	$c->stash(data => $data);
+}
 
 
 

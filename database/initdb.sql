@@ -956,5 +956,69 @@ CREATE TABLE sessions (
 CREATE TRIGGER sessions_change_trigger AFTER INSERT OR UPDATE OR DELETE
 	ON sessions FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
 
+
+-- user/group/... status
+CREATE OR REPLACE FUNCTION status_user(num PHONE) RETURNS TEXT AS $$
+	SELECT CASE
+			WHEN EXISTS(SELECT * FROM linetracker l WHERE l.uid = u.id AND l.direction = 'outgoing' AND l.status = 'ringing')
+			THEN 'ringing'
+			WHEN EXISTS(SELECT * FROM linetracker l WHERE l.uid = u.id)
+			THEN 'busy'
+			WHEN EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > CURRENT_TIMESTAMP)
+			THEN 'online'
+			ELSE 'offline'
+	END FROM users u WHERE u.num = $1;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION status_grp(num PHONE) RETURNS TEXT AS $$
+DECLARE
+	cnt BIGINT;
+	online BIGINT;
+	avail BIGINT;
+BEGIN
+	SELECT COUNT(*), COUNT(NULLIF(reg, false)), COUNT(NULLIF(reg AND NOT busy, false))
+			INTO cnt, online, avail
+		FROM ( SELECT u.num, COUNT(r.location) > 0 AS reg, COUNT(l.chan) > 0 AS busy
+			FROM callgroups g
+			 INNER JOIN callgrpmembers m ON m.grp = g.id
+			 INNER JOIN users u ON u.num = m.num
+			 LEFT JOIN regs r ON r.userid = u.id
+			 LEFT JOIN linetracker l on l.uid = u.id
+			WHERE g.num = $1
+			GROUP BY u.num
+		) ss;
+	RETURN CASE
+		WHEN online = 0 THEN 'offline'
+		WHEN avail = 0 THEN 'busy'
+		ELSE 'online'
+	END;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION status_num2(num PHONE)
+	RETURNS TABLE(nt VARCHAR, status TEXT) AS $$
+BEGIN
+	SELECT d.numtype INTO nt FROM directory d WHERE d.num = $1;
+	IF NOT FOUND THEN
+		nt := 'invalid';
+	ELSIF nt = 'user' THEN
+		status := status_user($1);
+	ELSIF nt = 'callgrp' THEN
+		status := status_grp($1);
+	ELSIF nt = 'abbr' THEN
+		SELECT status_num(target) INTO status FROM abbrs a WHERE a.num = $1;
+	ELSIF nt = 'ivr' THEN
+		status := 'online';
+	ELSE
+		status := 'unknown';
+	END IF;
+	RETURN NEXT;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION status_num(num PHONE) RETURNS TEXT AS $$
+	SELECT status FROM status_num2($1);
+$$ LANGUAGE SQL;
+
 -- vim: ft=sql
 

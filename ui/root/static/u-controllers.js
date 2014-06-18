@@ -191,6 +191,20 @@ ctrlrModule.controller('CallDlgCtrl', function($http, $scope, $modalInstance, $t
 		 *  Geographical info
 		 */
 	});
+
+	$scope.updateStatus = function() {
+		$http.get('/u/linetracker/status/' + $scope.num).success(function (data) {
+			$scope.status = data.data;
+		});
+	};
+
+	$scope.es = CTI.eventHandler('num%20' + $scope.num, function(msg) {
+		$scope.updateStatus();
+	}, function(state) {
+		// XXX repport event stream status somehow
+	});
+	$scope.updateStatus();
+
 });
 
 ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout, CTI) {

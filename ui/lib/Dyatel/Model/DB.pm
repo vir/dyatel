@@ -77,10 +77,7 @@ sub user_blfs
 	my $self = shift;
 	my($uid) = @_;
 	my $sql = << '***';
-SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirdype, d.descr AS dirdescr,
-		EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > CURRENT_TIMESTAMP) AS online,
-		EXISTS(SELECT * FROM linetracker WHERE uid = u.id) AS busy,
-		EXISTS(SELECT * FROM linetracker WHERE uid = u.id AND direction = 'outgoing' AND status = 'ringing') AS ring
+SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirdype, d.descr AS dirdescr, COALESCE(status_user(b.num), 'unknown') AS status
 	FROM blfs b
 		LEFT JOIN users u ON u.num = b.num
 		LEFT JOIN directory d ON d.num = b.num
@@ -91,6 +88,17 @@ SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirdype, d.descr AS dird
 		my $dbh = shift;
 		my $r = $dbh->selectall_arrayref($sql, { Slice => {} }, $uid);
 		return $r;
+	});
+}
+
+sub num_status
+{
+	my $self = shift;
+	my($num) = @_;
+	return $self->storage->dbh_do(sub {
+		my $self = shift;
+		my $dbh = shift;
+		return $dbh->selectrow_hashref("SELECT * FROM status_num2(?);", undef, $num);
 	});
 }
 

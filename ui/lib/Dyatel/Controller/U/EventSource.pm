@@ -42,7 +42,7 @@ sub Go :Private # :Path :GET :Args(1)
 {
 	my($self, $c, $arg) = @_;
 	eval {
-		my $s = $c->model('DB::Sessions')->create({uid => $c->stash->{uid}, events => [ 'linetracker' ]});
+		my $s = $c->model('DB::Sessions')->create({uid => $c->stash->{uid}, events => [ $arg ]});
 # TODO: store lastEventId & r parameters
 		my $u = $c->uri_for("/".$s->token);
 		$u->scheme($c->config->{EventSource}{scheme}) if $c->config->{EventSource}{scheme};

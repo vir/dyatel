@@ -30,7 +30,7 @@
     <a title="{{'Edit' | translate}}" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
     <table class="table table-condensed table-hover">
      <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
-      <td><div ng-class="{'blf-led':true, 'blf-online': r.online && !r.busy && !r.ring, 'blf-offline': !r.online, 'blf-busy': r.busy && !r.ring, 'blf-ring': r.ring }"></div></td>
+      <td><div ng-class="'blf-led blf-' + r.status"></div></td>
       <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
       <td>{{ r.label || r.dirdescr }}</td>
      </tr>

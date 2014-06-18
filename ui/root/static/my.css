@@ -103,6 +103,7 @@ span.member {
 }
 
 .blf-led {
+	display: inline-block;
 	width: 12px;
 	height: 12px;
 	-webkit-border-radius: 7px;
@@ -120,7 +121,7 @@ span.member {
 .blf-busy {
 	background-color: #E00;
 }
-.blf-ring {
+.blf-ringing {
 	-webkit-animation: blink 0.2s linear infinite;
 	animation: blink 0.2s linear infinite;
 }

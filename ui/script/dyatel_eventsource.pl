@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-03-06 16:30:21 +0400
+# Last modified: 2014-06-18 13:54:31 +0400
 #
 
 use strict;
@@ -100,7 +100,7 @@ my $dbh = Dyatel::ExtConfig::dbh();
 			$self->{blfusers}->reload() if $dbev eq 'blfs';
 			return { event => $dbev };
 		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && $self->{blfusers}->find($payload)) {
-			$self->{calls}->reload() if $dbev eq 'linetracker';
+			$self->{calls}->reload() if $dbev eq 'linetracker' && $self->{calls};
 			return { event => 'blf_state', uid => $payload };
 		} elsif($dbev eq 'calllog' && $self->{calls}->find($payload)) {
 			return { event => 'calllog', billid => $payload };
@@ -176,15 +176,29 @@ sub check_request
 	print "Got ".$req->method." request for ".$req->uri."\n";
 	return undef unless $req->method eq 'GET' && $req->uri =~ /\/(\w+)/;
 	my($info) = $dbh->selectrow_hashref("SELECT * FROM sessions WHERE token = ?", undef, $1) or return undef;
-	my $blfusers = sub { $dbh->selectcol_arrayref("SELECT users.id FROM blfs INNER JOIN users ON users.num = blfs.num WHERE blfs.uid = ?", undef, $info->{uid}); };
-	my $cl = new EventSourceClient($fh, %$info,
-		req => $req,
-		blfusers => new CachedList($blfusers),
-		calls => new CachedList(sub { $dbh->selectcol_arrayref("SELECT billid FROM linetracker WHERE uid = ?", undef, $info->{uid}); }),
-		keepalive => $conf->{keepalive},
-		verbose => $opts{v},
-	);
-	return $cl;
+	my($eventpack) = @{ $info->{events} };
+	if($eventpack eq 'home') {
+		my $blfusers = sub { $dbh->selectcol_arrayref("SELECT users.id FROM blfs INNER JOIN users ON users.num = blfs.num WHERE blfs.uid = ?", undef, $info->{uid}); };
+		my $cl = new EventSourceClient($fh, %$info,
+			req => $req,
+			blfusers => new CachedList($blfusers),
+			calls => new CachedList(sub { $dbh->selectcol_arrayref("SELECT billid FROM linetracker WHERE uid = ?", undef, $info->{uid}); }),
+			keepalive => $conf->{keepalive},
+			verbose => $opts{v},
+		);
+		return $cl;
+	} elsif($eventpack =~ /^num (\S+)$/) {
+		my $blfusers = sub { $dbh->selectcol_arrayref("SELECT id FROM users WHERE num = ?", undef, $1); };
+		my $cl = new EventSourceClient($fh, %$info,
+			req => $req,
+			blfusers => new CachedList($blfusers),
+			keepalive => $conf->{keepalive},
+			verbose => $opts{v},
+		);
+		return $cl;
+	}
+	warn "Unknown event pack $eventpack requested";
+	return undef;
 }
 
 sub broadcast_keepalive
