@@ -1,0 +1,42 @@
+<VirtualHost *:80>
+# ...
+	<Location /foswiki/>
+		AuthType Kerberos
+		AuthName "Kerberos Login"
+		KrbMethodNegotiate On
+		KrbMethodK5Passwd On
+		KrbAuthRealms EXAMPLE.COM
+		Krb5KeyTab /etc/krb5.keytab
+		KrbSaveCredentials On
+		KrbServiceName HTTP
+		require valid-user
+	</Location>
+
+# Start FastCGI server with
+#   /usr/bin/dyatel_fastcgi.pl -n 5 -l /tmp/dyatel.socket
+# Directory /usr/share/dyatel/fcgi must exist!
+	<Directory /usr/share/dyatel/fcgi>
+		AuthType Kerberos
+		AuthName "Kerberos Login"
+		KrbMethodNegotiate On
+		KrbMethodK5Passwd On
+		KrbAuthRealms EXAMPLE.COM
+		Krb5KeyTab /etc/krb5.keytab
+		KrbSaveCredentials On
+		KrbServiceName HTTP
+		require valid-user
+	</Directory>
+	<Directory "/usr/share/perl/5.14/Dyatel/root">
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+	Alias /static/ "/usr/share/perl/5.14/Dyatel/root/static/"
+	Alias /favicon.ico "/usr/share/perl/5.14/Dyatel/root/static/favicon.ico"
+
+	RewriteEngine on
+	RewriteRule ^(/[auf]/.*|/id)$ /usr/share/dyatel/fcgi/xxxxx/$1 [L]
+	RewriteRule ^/wiki/(.*)$ /foswiki/bin/view/Main/$1 [R]
+	FastCgiExternalServer /usr/share/dyatel/fcgi -socket /tmp/dyatel.socket -pass-header Authorization
+
+</VirtualHost>
