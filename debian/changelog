@@ -1,3 +1,10 @@
+dyatel (0.0.74) UNRELEASED; urgency=low
+
+  * Peer status in call dialog.
+  * Accept numbers with hyphens in dialer.
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 18 Jun 2014 14:13:01 +0400
+
 dyatel (0.0.73) UNRELEASED; urgency=low
 
   * Small UI updates
