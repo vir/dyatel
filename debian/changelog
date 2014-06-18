@@ -1,3 +1,9 @@
+dyatel (0.0.75) UNRELEASED; urgency=low
+
+  * BLFs for groups support
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 18 Jun 2014 14:21:04 +0400
+
 dyatel (0.0.74) UNRELEASED; urgency=low
 
   * Peer status in call dialog.

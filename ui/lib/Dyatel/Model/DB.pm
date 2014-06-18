@@ -77,7 +77,7 @@ sub user_blfs
 	my $self = shift;
 	my($uid) = @_;
 	my $sql = << '***';
-SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirdype, d.descr AS dirdescr, COALESCE(status_user(b.num), 'unknown') AS status
+SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirdype, d.descr AS dirdescr, COALESCE(status_num(b.num), 'unknown') AS status
 	FROM blfs b
 		LEFT JOIN users u ON u.num = b.num
 		LEFT JOIN directory d ON d.num = b.num
