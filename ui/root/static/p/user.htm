@@ -3,6 +3,19 @@
 <div class="container-fluid">
 <div class="row-fluid">
 	<div id="mainuserinfo" class="span7">
+		<div id="userswitcher" class="container-fluid" ng-show="existingUser">
+			<div class="row-fluid form-inline">
+				<div class="span2"><a class="btn btn-small" ng-href="#/users/{{navigation.prev}}">&#9664;&#9664; Prev. User</a></div>
+				<div class="span2"><a class="btn btn-small" ng-href="#/users">Back to list</a></div>
+				<div class="span6">
+					<input type="text" ng-model="finduser" placeholder="Search..."
+						typeahead="x as x.label for x in usersSource($viewValue)"
+						typeahead-on-select="userSelectionDone($item)" />
+				</div>
+				<div class="span2"><a class="btn btn-small" ng-href="#/users/{{navigation.next}}">Next User &#9654;&#9654;</a></div>
+			</div>
+		</div>
+
 		<h2>{{ existingUser ? (user.num.num + ': ' + user.num.descr) : 'New user' }}</h2>
 		<div class="span12 well">
 			<dirnum dir-num="user.num" num-type="user" num-readonly="existingUser" />
@@ -48,6 +61,7 @@
 		<div class="span12 form-horizontal">
 			<button class="btn" ng-click="saveUser()">Save</button>
 			<button class="btn" ng-show="existingUser" ng-click="deleteUser()">Delete</button>
+			<a ng-href="#/users" class="btn">Cancel</a>
 		</div>
 	</div>
 	<div id="moreuserinfo" class="span5 container-fluid" ng-show="existingUser">

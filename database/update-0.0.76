@@ -1,0 +1,5 @@
+
+CREATE OR REPLACE VIEW nextprevusers AS
+	SELECT id, num, LEAD(id) OVER (ORDER BY num) AS next, LAG(id) OVER (ORDER BY num) AS prev FROM users;
+
+

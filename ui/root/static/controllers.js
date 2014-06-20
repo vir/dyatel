@@ -73,7 +73,7 @@ dyatelControllers.directive('dirnum', function ($http) {
 	}
 });
 
-dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal) {
+dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal, $filter) {
 	$scope.possibleBadges = [ 'admin', 'finance' ];
 	$scope.badges = { };
 	if($routeParams.userId == 'new') {
@@ -86,6 +86,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 			$scope.user.badges.forEach(function(b) {
 				$scope.badges[b] = true;
 			});
+			$scope.navigation = data.navigation;
 			$scope.Title.set(data.user.num.num + ': ' + data.user.num.descr);
 		});
 		$http.get('/a/provisions/list?uid=' + $routeParams.userId).success(function(data) {
@@ -206,6 +207,22 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 				}
 			}
 		});
+	};
+
+	$scope.usersSource = function(a) {
+		var url = '/a/users/list?' + $.param({ q: a }, true); // use jQuery to url-encode object
+		return $http.get(url).then(function (response) {
+//		console.log('response: ' + angular.toJson(response));
+			var users = $filter('filter')(response.data.users, a);
+			return $filter('limitTo')(users, 15).map(function(a) { return {
+				id: a.id,
+				label: a.num.num + ' ' + a.num.descr,
+			}});
+		});
+	};
+	$scope.userSelectionDone = function(item) {
+//	console.log('selected: ' + angular.toJson(item));
+		$location.path('/users/' + item.id).replace();
 	};
 });
 

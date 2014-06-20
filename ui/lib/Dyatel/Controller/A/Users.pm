@@ -103,7 +103,8 @@ sub show :Path Args(1)
 			$c->response->redirect('/'.$c->request->path);
 		}
 	}
-	$c->stash(user => $o, provision => $o->provisions->all(), template => 'users/user.tt');
+	my $nav = $c->model('DB::Nextprevusers')->search({id => $id}, { })->first;
+	$c->stash(user => $o, provision => scalar $o->provisions->all(), navigation => $nav, template => 'users/user.tt');
 #	$c->stash(regs => $o->regs->all); # something wrong with regs XXX TODO sort that out
 }
 
