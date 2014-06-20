@@ -1,6 +1,19 @@
 <h1>Call detail records</h1>
 <div class="container-fluid">
 <div class="row-fluid">
+	<form novalidate>
+		<div class="well controls form-inline">
+			Timestamp:
+			<label>from:   <input type="text" size="20" placeHolder="Date From" ng-model="filter.datefrom" /></label>
+			<label>to:     <input type="text" size="20" placeHolder="Date To"   ng-model="filter.dateto" /></label>
+			<label>Phone:  <input type="text" size="16" placeHolder="Phone"     ng-model="filter.phone" /></label>
+			<label>BillID: <input type="text" size="20" placeHolder="Bill ID"   ng-model="filter.billid" /></label>
+			<label>Empty:  <input type="checkbox" ng-model="filter.empty" /></label>
+			<button ng-click="getData()">Apply</button>
+		</div>
+	</form>
+</div>
+<div class="row-fluid">
 	<div class="table-responsive">
 		<div id="cdrs" class="gridStyle span12" ng-grid="gridOptions"></div>
 		<!-- TODO:
@@ -10,7 +23,18 @@
 	</div>
 </div>
 <div class="row-fluid">
-	<pre>{{ selection }}</pre>
+	<pre class="span6">{{ selection }}</pre>
+	<div class="span6">
+<div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
+<!-- <button class="btn btn-mini" ng-click="delMsg($index)" title="Delete"><i class="icon-remove"></i></button> -->
+<!-- <button class="btn btn-mini" ng-click="editMsg($index)" title="{{'Edit' | translate}}"><i class="icon-edit"></i></button> -->
+<h4>
+#{{x.id}} {{x.ts}} <em>{{x.tag}}</em>
+</h4>
+<!-- <div markdown="{{x.value}}"></div> -->
+{{x.value}}
+</div>
+	</div>
 </div>
 </div>
 

@@ -39,6 +39,26 @@ sub list :Local
 	my $where = {
 		ts => { '>', '2013-11-18' },
 	};
+	unless(($c->request->params->{empty}||'') ne 'false') {
+		$where->{billtime} = { '>', '1 s' };
+	}
+	if(($c->request->params->{phone}||'') =~ /^\s*(\S.*?)\s*$/) {
+		my @p;
+		foreach my $k(qw(caller called calledfull)) {
+			push @p, { $k => { 'like', "%$1%" } };
+		}
+		$where->{'-or'} = \@p;
+	}
+	my($df, $dt) = ($c->request->params->{datefrom}, $c->request->params->{dateto});
+	if($df || $dt) {
+		my %p;
+		$p{'>='} = $df if $df;
+		$p{'<'} = $dt if $dt;
+		$where->{ts} = \%p;
+	}
+	if($c->request->params->{billid}) {
+		$where->{billid} = $c->request->params->{billid};
+	}
 
 	my $row = $c->model('DB::Cdr')->search($where, {
 		columns => [qw/ /],
@@ -51,6 +71,12 @@ sub list :Local
 	$c->stash(rows => [$c->model('DB::Cdr')->search($where, $opts)], totalrows => $total, template => 'cdrs/list.tt');
 }
 
+sub calllog :Local :Args(1)
+{
+	my($self, $c, $billid) = @_;
+	my $s = $c->model('DB::CallLog')->search({billid => $billid}, {columns => [qw/ id ts uid tag value /], order_by => [qw/ts/]});
+	$c->stash(rows => [$s->all]);
+}
 
 =encoding utf8
 

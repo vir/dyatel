@@ -374,15 +374,18 @@ dyatelControllers.controller('IvrMDsCtrl', function($scope, $http) {
 /* CDR */
 
 dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
+	$scope.filter = { empty: true };
 	$scope.selection = [ ];
+	$scope.calllog = [ ];
 	$scope.totalServerItems = 0;
 	$scope.pagingOptions = {
 		pageSizes: [100, 200, 500, 1000, 2000],
 		pageSize: 500,
 		currentPage: 1
 	};
-	$scope.getData = function(pageSize, page) {
-		$http.get('/a/cdrs/list?page=' + page + '&perpage=' + pageSize).success(function(data) {
+	$scope.getData = function() {
+		var query = $.param($scope.filter, true); // use jQuery to url-encode object
+		$http.get('/a/cdrs/list?page=' + $scope.pagingOptions.currentPage + '&perpage=' + $scope.pagingOptions.pageSize + '&' + query).success(function(data) {
 			$scope.myData = data.rows;
 			$scope.totalServerItems = data.totalrows;
 			if (!$scope.$$phase) {
@@ -392,7 +395,21 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 	};
 	$scope.$watch('pagingOptions', function (newVal, oldVal) {
 		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
-			$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+			$scope.getData();
+		}
+	}, true);
+	$scope.$watch('selection', function (newVal, oldVal) {
+		console.log('selection changed');
+		if (newVal[0] && newVal[0].billid) {
+			console.log('selection.billid = ' + newVal[0].billid);
+			$http.get('/a/cdrs/calllog/' + newVal[0].billid).success(function(data) {
+				$scope.calllog = data.rows;
+/*				if (!$scope.$$phase) {
+					$scope.$apply();
+				}*/
+			});
+		} else {
+			$scope.calllog = [ ];
 		}
 	}, true);
 	$scope.formatCalled = function(row) {
@@ -433,7 +450,7 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 		totalServerItems: 'totalServerItems',
 		pagingOptions: $scope.pagingOptions,
 	};
-	$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+	$scope.getData();
 });
 
 /* Status */
