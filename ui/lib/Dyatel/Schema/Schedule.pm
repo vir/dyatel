@@ -1,61 +1,130 @@
+use utf8;
 package Dyatel::Schema::Schedule;
+
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
+=head1 NAME
+
+Dyatel::Schema::Schedule
+
+=cut
 
 use strict;
 use warnings;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components("InflateColumn::Serializer", "Core");
+=head1 COMPONENTS LOADED
+
+=over 4
+
+=item * L<DBIx::Class::InflateColumn::Serializer>
+
+=back
+
+=cut
+
+__PACKAGE__->load_components("InflateColumn::Serializer");
+
+=head1 TABLE: C<schedule>
+
+=cut
+
 __PACKAGE__->table("schedule");
+
+=head1 ACCESSORS
+
+=head2 id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+  sequence: 'schedule_id_seq'
+
+=head2 prio
+
+  data_type: 'integer'
+  default_value: 100
+  is_nullable: 0
+
+=head2 mday
+
+  data_type: 'date'
+  is_nullable: 1
+
+=head2 days
+
+  data_type: 'integer'
+  default_value: 1
+  is_nullable: 0
+
+=head2 dow
+
+  data_type: 'smallint[]'
+  default_value: '{0,1,2,3,4,5,6}'::smallint[]
+  is_nullable: 0
+
+=head2 tstart
+
+  data_type: 'time'
+  is_nullable: 0
+
+=head2 tend
+
+  data_type: 'time'
+  is_nullable: 0
+
+=head2 mode
+
+  data_type: 'text'
+  is_nullable: 0
+
+=cut
+
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    default_value => "nextval('schedule_id_seq'::regclass)",
-    is_nullable => 0,
-    size => 4,
+    data_type         => "integer",
+    is_auto_increment => 1,
+    is_nullable       => 0,
+    sequence          => "schedule_id_seq",
   },
   "prio",
-  { data_type => "integer", default_value => 100, is_nullable => 0, size => 4 },
+  { data_type => "integer", default_value => 100, is_nullable => 0 },
   "mday",
-  { data_type => "date", default_value => undef, is_nullable => 1, size => 4 },
+  { data_type => "date", is_nullable => 1 },
   "days",
-  { data_type => "integer", default_value => 1, is_nullable => 0, size => 4 },
+  { data_type => "integer", default_value => 1, is_nullable => 0 },
   "dow",
   {
-    data_type => "smallint[]",
-    default_value => "'{0,1,2,3,4,5,6}'::smallint[]",
-    is_nullable => 0,
-    size => undef,
+    data_type     => "smallint[]",
+    default_value => \"'{0,1,2,3,4,5,6}'::smallint[]",
+    is_nullable   => 0,
   },
   "tstart",
-  {
-    data_type => "time without time zone",
-    default_value => undef,
-    is_nullable => 0,
-    size => 8,
-  },
+  { data_type => "time", is_nullable => 0 },
   "tend",
-  {
-    data_type => "time without time zone",
-    default_value => undef,
-    is_nullable => 0,
-    size => 8,
-  },
+  { data_type => "time", is_nullable => 0 },
   "mode",
-  {
-    data_type => "text",
-    default_value => undef,
-    is_nullable => 0,
-    size => undef,
-  },
+  { data_type => "text", is_nullable => 0 },
 );
+
+=head1 PRIMARY KEY
+
+=over 4
+
+=item * L</id>
+
+=back
+
+=cut
+
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("schedule_pkey", ["id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.04006 @ 2013-11-05 11:30:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k/PcGW+CaVNzqrfJrvkzGA
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QxpaZGQZD6b1EE3NUjnHRA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
