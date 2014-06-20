@@ -540,9 +540,19 @@ ctrlrModule.controller('PhoneBookCtrl', function($scope, $http, $timeout, CTI) {
 	};
 });
 
+function TodayMidnightISODateString(d){
+	function pad(n){return n<10 ? '0'+n : n}
+	return d.getUTCFullYear()+'-'
+		+ pad(d.getUTCMonth()+1)+'-'
+		+ pad(d.getUTCDate())
+		+' 00:00:00';
+}
+
 ctrlrModule.controller('CallListCtrl', function($scope, $http) {
+	$scope.filter = { datefrom:TodayMidnightISODateString(new Date), empty: true };
 	$scope.section = 'all';
 	$scope.selection = [ ];
+	$scope.calllog = [ ];
 	$scope.totalServerItems = 0;
 	$scope.pagingOptions = {
 		pageSizes: [50, 100, 200, 500],
@@ -550,7 +560,8 @@ ctrlrModule.controller('CallListCtrl', function($scope, $http) {
 		currentPage: 1
 	};
 	$scope.getData = function(pageSize, page) {
-		$http.get('/u/cdr/list/' + $scope.section + '?page=' + page + '&perpage=' + pageSize).success(function(data) {
+		var query = $.param($scope.filter, true); // use jQuery to url-encode object
+		$http.get('/u/cdr/list/' + $scope.section + '?page=' + $scope.pagingOptions.currentPage + '&perpage=' + $scope.pagingOptions.pageSize + '&' + query).success(function(data) {
 			$scope.myData = data.rows;
 			$scope.totalServerItems = data.totalrows;
 			if (!$scope.$$phase) {
@@ -560,12 +571,21 @@ ctrlrModule.controller('CallListCtrl', function($scope, $http) {
 	};
 	$scope.$watch('pagingOptions', function (newVal, oldVal) {
 		if (newVal !== oldVal && newVal.currentPage !== oldVal.currentPage) {
-			$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+			$scope.getData();
+		}
+	}, true);
+	$scope.$watch('selection', function (newVal, oldVal) {
+		if (newVal[0] && newVal[0].billid) {
+			$http.get('/u/calllog/call/' + newVal[0].billid + '/list').success(function(data) {
+				$scope.calllog = data.rows;
+			});
+		} else {
+			$scope.calllog = [ ];
 		}
 	}, true);
 	$scope.setSection = function(s) {
 		$scope.section = s;
-		$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+		$scope.getData();
 	};
 	$scope.formatPeer = function(row) {
 		var inc = 'outgoing' === row.getProperty('direction');
@@ -614,7 +634,7 @@ ctrlrModule.controller('CallListCtrl', function($scope, $http) {
 		totalServerItems: 'totalServerItems',
 		pagingOptions: $scope.pagingOptions,
 	};
-	$scope.getData($scope.pagingOptions.pageSize, $scope.pagingOptions.currentPage);
+	$scope.getData();
 });
 
 ctrlrModule.controller('MyPhoneCtrl', function($scope, $http) {

@@ -4,12 +4,37 @@
 <h1>Call list</h1>
 <div class="container-fluid">
 <div class="row-fluid">
+	<form novalidate>
+		<div class="well controls form-inline">
+			<select ng-model="section">
+				<option ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" value="{{t}}">{{t+'Calls' | capitalize | translate}}</option>
+			</select>
+			<label for="filter-df" translate>TimeFrom</label>
+			<input id="filter-df" type="text" size="20" ng-model="filter.datefrom" />
+			<label for="filter-dt" translate>TimeTo</label>
+			<input id="filter-dt" type="text" size="20" ng-model="filter.dateto" />
+			<!--<label>Phone:  <input type="text" size="16" ng-model="filter.phone" /></label>-->
+			<label for="filter-bi" translate>BillID</label>
+			<input id="filter-bi" type="text" size="20" ng-model="filter.billid" />
+			<!--<label for="filter-zt" translate>ZeroTime</label>
+			<input id="filter-zt" type="checkbox" ng-model="filter.empty" />-->
+			<button ng-click="getData()" translate>Apply</button>
+		</div>
+	</form>
+</div>
+<div class="row-fluid">
 	<div class="table-responsive">
 		<div id="cdrs" class="gridStyle span12" ng-grid="gridOptions"></div>
 	</div>
 </div>
 <div class="row-fluid">
-	<pre>{{ selection }}</pre>
+	<pre class="span6">{{ selection[0] }}</pre>
+	<div class="span6">
+		<div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
+			<h4>#{{x.id}} {{x.ts}} <em>{{x.tag}}</em></h4>
+			<div markdown="{{x.value}}"></div>
+		</div>
+	</div>
 </div>
 </div>
 

@@ -50,4 +50,10 @@
 , "MoreLocalPhones": "More local"
 , "PrivateAddressBook": "Private address book"
 , "CommonAddressBook": "Common address book"
+
+, "TimeFrom": "Time from"
+, "TimeTo": "to"
+, "BillID": "Bill ID"
+, "ZeroTime": "Zero time"
+, "Apply": "Apply"
 }

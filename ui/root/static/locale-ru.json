@@ -50,4 +50,10 @@
 , "MoreLocalPhones": "Телефонный список"
 , "PrivateAddressBook": "Личная адресная книга"
 , "CommonAddressBook": "Общая адресная книга"
+
+, "TimeFrom": "Время с"
+, "TimeTo": "по"
+, "BillID": "Идентификатор"
+, "ZeroTime": "Нулевое время"
+, "Apply": "Применить"
 }

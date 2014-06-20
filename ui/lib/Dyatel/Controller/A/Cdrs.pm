@@ -37,7 +37,6 @@ sub list :Local
 		order_by => 'ts DESC'
 	};
 	my $where = {
-		ts => { '>', '2013-11-18' },
 	};
 	unless(($c->request->params->{empty}||'') ne 'false') {
 		$where->{billtime} = { '>', '1 s' };

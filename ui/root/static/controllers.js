@@ -399,14 +399,9 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 		}
 	}, true);
 	$scope.$watch('selection', function (newVal, oldVal) {
-		console.log('selection changed');
 		if (newVal[0] && newVal[0].billid) {
-			console.log('selection.billid = ' + newVal[0].billid);
 			$http.get('/a/cdrs/calllog/' + newVal[0].billid).success(function(data) {
 				$scope.calllog = data.rows;
-/*				if (!$scope.$$phase) {
-					$scope.$apply();
-				}*/
 			});
 		} else {
 			$scope.calllog = [ ];

@@ -26,6 +26,8 @@ sub index :Path :Args(0) {
 		$c->response->redirect($c->uri_for($self->action_for('list')));
 }
 
+use Data::Dumper;
+
 sub list :Local Args(1)
 {
 	my($self, $c, $filter) = @_;
@@ -78,6 +80,31 @@ sub list :Local Args(1)
 		},
 	);
 	my $where = $filters{$filter} || $filters{all};
+
+	warn "whene now: ".Dumper($where);
+# apply more filters
+#	unless(($c->request->params->{empty}||'') ne 'false') {
+#		$where->{billtime} = { '>', '1 s' };
+#	}
+#	if(($c->request->params->{phone}||'') =~ /^\s*(\S.*?)\s*$/) {
+#		my @p;
+#		foreach my $k(qw(caller called calledfull)) {
+#			push @p, { $k => { 'like', "%$1%" } };
+#		}
+#		$where->{'-or'} = \@p;
+#	}
+	my($df, $dt) = ($c->request->params->{datefrom}, $c->request->params->{dateto});
+	if($df || $dt) {
+		my %p;
+		$p{'>='} = $df if $df;
+		$p{'<'} = $dt if $dt;
+		$where->{ts} = \%p;
+	}
+	if($c->request->params->{billid}) {
+		$where->{billid} = $c->request->params->{billid};
+	}
+
+	warn "whene final: ".Dumper($where);
 
 	if($c->request->params->{page}) {
 		$opts->{page} = $c->request->params->{page};
