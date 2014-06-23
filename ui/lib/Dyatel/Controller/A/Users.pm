@@ -42,7 +42,11 @@ it under the same terms as Perl itself.
 sub list :Local Args(0)
 {
 	my($self, $c) = @_;
-	$c->stash(users => [$c->model('DB::Users')->search({}, { prefetch => ['num', {num=>'numtype'}, 'fingrp'], order_by => 'num.num' })], template => 'users/list.tt');
+	$c->stash(users => [$c->model('DB::Users')->search({}, {
+			prefetch => ['num', {num=>'numtype'}, 'fingrp'],
+			order_by => 'num.num',
+			columns => [qw/id num alias domain dispname login lastreg badges/],
+		})], template => 'users/list.tt');
 }
 
 sub create :Local :Args(0)

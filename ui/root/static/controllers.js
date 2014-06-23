@@ -226,10 +226,33 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 	};
 });
 
-dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
-	$http.get('/a/users/list').success(function(data) {
-		$scope.myData = data.users;
-	});
+dyatelControllers.controller('UsersListCtrl', function($scope, $http, $timeout, $filter) {
+	$scope.filterOptions = {
+		filterText: "",
+		useExternalFilter: true,
+	};
+	$scope.$watch('filterOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal) {
+			$scope.updateResults();
+		}
+	}, true);
+	$scope.updateResults = function() {
+		if($scope.getDataTimeout)
+			$timeout.cancel($scope.getDataTimeout);
+		$scope.getDataTimeout = $timeout(function() {
+			$scope.getData();
+		}, 500);
+		$scope.$on('$destroy', function() {
+			$timeout.cancel($scope.getDataTimeout);
+		});
+	};
+	$scope.getData = function() {
+		var q = $scope.filterOptions.filterText ? '?' + $.param({ q: $scope.filterOptions.filterText }, true) : '';
+		$http.get('/a/users/list' + q).success(function(data) {
+			//$scope.myData = data.users;
+			$scope.myData = $filter('filter')(data.users, $scope.filterOptions.filterText);
+		});
+	};
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
@@ -238,8 +261,10 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http) {
 			{field:'login', displayName:'Login', width:'15%'},
 			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="mybadge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>', width:'15%'},
 		],
-		showFilter: true,
+		filterOptions: $scope.filterOptions,
+//		showFilter: true,
 	};
+	$scope.getData();
 });
 
 

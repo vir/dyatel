@@ -268,6 +268,14 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 	opacity:0;
 }
 
+#userslist input.input-large {
+	width: 50%;
+	height: 36px;
+	font-size: 32px;
+	line-height: 32px;
+}
+#userslist div.controls { text-align:center; }
+
 /* user switcher */
 #userswitcher { font-size:10pt; vertical-align:baseline; border-bottom:2px solid grey; }
 #userswitcher input { font-size:10pt; line-height:12pt; height:12pt; }
