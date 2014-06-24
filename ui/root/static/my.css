@@ -276,6 +276,10 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 }
 #userslist div.controls { text-align:center; }
 
+/* User editor - avatar */
+#userdetail #avatar { float:right; clear:none; height:200px; width:200px; border:1px dotted grey; padding:1px; }
+#userdetail #avatar .missing { width:100%; height:100%; font-size:20pt; text-align:center; line-height:200px; }
+
 /* user switcher */
 #userswitcher { font-size:10pt; vertical-align:baseline; border-bottom:2px solid grey; }
 #userswitcher input { font-size:10pt; line-height:12pt; height:12pt; }

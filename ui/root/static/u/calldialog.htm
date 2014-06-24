@@ -5,6 +5,9 @@
 <div class="modal-body">
 	<div ng-switch on="infstatus">
 		<div ng-switch-when="here">
+			<div id="avatar" ng-show="info.avatar" class="pull-right">
+				<img ng-src="{{ info.avatar }}" width="200" height="200" alt="avatar" />
+			</div>
 			<div ng-show="status.status">
 				<div ng-class="'blf-led blf-' + status.status"></div>
 				{{ status.status | translate }}

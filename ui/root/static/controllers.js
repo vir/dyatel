@@ -87,6 +87,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 				$scope.badges[b] = true;
 			});
 			$scope.navigation = data.navigation;
+			$scope.avatar = data.avatar;
 			$scope.Title.set(data.user.num.num + ': ' + data.user.num.descr);
 		});
 		$http.get('/a/provisions/list?uid=' + $routeParams.userId).success(function(data) {
@@ -198,6 +199,26 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 					$modalInstance.close($scope.selected.item);
 				};
 				$scope.cancel = function () {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+			resolve: {
+				items: function () {
+					return $scope.items;
+				}
+			}
+		});
+	};
+
+	$scope.editAvatar = function() {
+		var modalInstance = $modal.open({
+			templateUrl: '/static/u/avatar_dialog.htm',
+			controller: function($scope, $modalInstance, items) {
+				$scope.items = items;
+				$scope.ok = function () {
+					$modalInstance.close($scope.selected.item);
+				};
+				$scope.btnCancel = function () {
 					$modalInstance.dismiss('cancel');
 				};
 			},

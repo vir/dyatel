@@ -49,6 +49,10 @@ sub info :Local Args(1)
 		$c->response->body('Unknown number');
 		$c->detach;
 	}
+	if($res->[0]->{uid}) {
+		my $a = $c->model('FS::Avatars')->get($res->[0]->{uid});
+		$res->[0]->{avatar} = $a if $a;
+	}
 	$c->stash(result => $res);
 }
 

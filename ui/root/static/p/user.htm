@@ -1,6 +1,6 @@
 
 <form novalidate>
-<div class="container-fluid">
+<div id="userdetail" class="container-fluid">
 <div class="row-fluid">
 	<div id="mainuserinfo" class="span7">
 		<div id="userswitcher" class="container-fluid" ng-show="existingUser">
@@ -20,39 +20,37 @@
 		<div class="span12 well">
 			<dirnum dir-num="user.num" num-type="user" num-readonly="existingUser" />
 		</div>
-		<!--
-		<div class="span12 controls form-horizontal well">
-			<input type="text" class="span2" placeHolder="Number" ng-model="user.num.num" ng-readonly="existingUser" ng-change="numCahnge()"/>
-			<input type="text" class="span8" placeHolder="Description" ng-model="user.num.descr" />
-			<div class="small" ng-show="user.num.num">
-				<div class="text-warning" ng-show="warns" ng-bind="warns" />
-				<div class="text-success" ng-hide="warns">Ok</div>
-			</div>
+		<div id="avatar">
+			<a ng-click="editAvatar()">
+				<div ng-hide="avatar" class="missing" translate>No avatar</div>
+				<img ng-show="avatar" ng-src="{{ avatar }}" width="200" height="200" alt="avatar" />
+			</a>
 		</div>
-		-->
-		<div class="span12 controls form-horizontal">
-			<label>Display name: <input type="text" class="span9" placeHolder="Display Name" ng-model="user.dispname" /></label>
+		<div class="span8 controls form-horizontal">
+			<label>Display name: <input type="text" class="span7" placeHolder="Display Name" ng-model="user.dispname" /></label>
 		</div>
-		<div class="span12 controls form-inline">
+		<div class="span8 controls form-inline">
 			<label>Password: <input type="text" placeHolder="Password" ng-model="user.password" /></label>
 			<button class="btn" ng-click="user.password = randomPassword(12)">Random</button>
 		</div>
-		<div class="span12 controls form-inline">
-			<label>Alias: <input type="text" placeHolder="Alias" ng-model="user.alias" /></label>@<input type="text" placeHolder="Domain" ng-model="user.domain" />
+		<div class="span8 controls form-inline">
+			<label>Alias: <input type="text" placeHolder="Alias" ng-model="user.alias" class="input-small"/></label>@<input type="text" placeHolder="Domain" ng-model="user.domain" />
+		</div>
+		<div class="span8 controls form-inline">
 			<label>Domain login: <input type="text" placeHolder="Domain login" ng-model="user.login" /></label>
 		</div>
-		<div class="span12 controls form-horizontal">
+		<div class="span8 controls form-horizontal">
 			<label>Voice traffic encryption mode: <select ng-model="user.secure">
 				<option value="off">Disabled</option>
 				<option value="ssl">When TLS</option>
 				<option value="on">Enable always</option>
 			</select></label>
 		</div>
-		<div class="span12 controls">
+		<div class="span8 controls">
 			<span class="span3">Last registered: {{ user.lastreg }}</span>
 			<span class="span3">Last IP: {{ user.lastip }}</span>
 		</div>
-		<div class="span12 controls form-horizontal">
+		<div class="span8 controls form-horizontal">
 			<label class="span4"><input type="checkbox" ng-model="user.nat_support" /> NAT support</label>
 			<label class="span4"><input type="checkbox" ng-model="user.nat_port_support" /> NAT port support</label>
 			<label class="span4"><input type="checkbox" ng-model="user.media_bypass" /> Media bypass</label>

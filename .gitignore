@@ -16,6 +16,7 @@ ui/Makefile.old
 ui/inc/
 ui/pm_to_blib
 ui/dyatel_local.conf
+ui/root/avatars/*.png
 provision/output/
 tools/bu_root/
 
