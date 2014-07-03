@@ -4,15 +4,27 @@ use strict;
 use base 'Catalyst::Model::DBIC::Schema';
 use Log::Any qw($log);
 
-__PACKAGE__->config(
-    schema_class => 'Dyatel::Schema',
-    
-    connect_info => {
-        dsn => 'dbi:Pg:dbname=dyatel',
-        user => 'dyatel',
-        password => '',
-    }
-);
+# Support configuration loading even when used from external script
+my $cfg;
+eval { $cfg = Dyatel->config->{'Model::DB'}; }; # this succeeds if running inside Catalyst
+if ($@) # otherwise if called from outside Catalyst try manual load of model configuration
+{
+	if(eval "require Dyatel::ExtConfig") {
+		$cfg = Dyatel::ExtConfig::load()->{Model}{DB};
+	} else { # fallback
+		$cfg = {
+			schema_class => 'Dyatel::Schema',
+			connect_info => {
+				dsn => 'dbi:Pg:dbname=dyatel',
+				user => 'dyatel',
+				password => '',
+			},
+		};
+	}
+}
+$cfg->{schema_class} ||= 'Dyatel::Schema';
+__PACKAGE__->config( $cfg ); # put model parameters into main configuration
+
 
 sub xsearch
 {
