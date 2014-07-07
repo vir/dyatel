@@ -43,11 +43,61 @@ it under the same terms as Perl itself.
 sub get
 {
 	my $self = shift;
-	my($uid) = @_;
+	my($uid, $extended) = @_;
 	my $fn = "/user_$uid.png";
 	my $path = $self->fsdir.$fn;
+	if($extended) {
+		my $fn2 = "/user_$uid-new.png";
+		my $path2 = $self->fsdir.$fn2;
+		my $tail = '?'.time;
+		return {
+			old => -f($path) ? $self->webdir.$fn.$tail : undef,
+			new => -f($path2) ? $self->webdir.$fn2.$tail : undef,
+		};
+	}
 	return undef unless -f $path;
 	return $self->webdir.$fn;
+}
+
+sub savepath
+{
+	my $self = shift;
+	my($uid) = @_;
+	my $fn = "/user_$uid-new.png";
+	return $self->fsdir.$fn;
+}
+
+# http://stackoverflow.com/questions/890925/how-can-i-resize-an-image-to-fit-area-with-imagemagick
+sub set
+{
+	my $self = shift;
+	my($uid, $path) = @_;
+	if(eval "require Image::Magick") {
+		my $image = Image::Magick->new;
+		$image->read($path);
+
+		$image->Set( Gravity => 'Center' );
+		$image->Resize( geometry => '200x200^' );
+		$image->Extent( geometry => '200x200' );
+#		$image->Crop( geometry => '200x200+0+0' );
+#		$image->Set( page=>'0x0+0+0' ); # equivalent to the +repage command-line option
+		$image->Write( $self->savepath($uid) );
+	} else {
+		warn "No Image::Magick module - can not resize avatar!\n";
+		eval "require File::Copy" or die;
+		File::Copy::copy($path, $self->savepath($uid));
+	}
+	return 1;
+}
+
+sub replace
+{
+	my $self = shift;
+	my($uid) = @_;
+	my $path1 = $self->savepath($uid);
+	my $path2 = $path1;
+	$path2 =~ s/-new\././s;
+	return rename $path1, $path2;
 }
 
 __PACKAGE__->meta->make_immutable;

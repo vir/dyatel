@@ -73,13 +73,10 @@ dyatelControllers.directive('dirnum', function ($http) {
 	}
 });
 
-dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal, $filter) {
+dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $http, $location, $modal, $filter, fileUpload, $timeout) {
 	$scope.possibleBadges = [ 'admin', 'finance' ];
 	$scope.badges = { };
-	if($routeParams.userId == 'new') {
-		$scope.existingUser = false;
-		$scope.title += 'New user';
-	} else {
+	$scope.loadUser = function() {
 		$http.get('/a/users/' + $routeParams.userId).success(function(data) {
 			$scope.user = data.user;
 			$scope.existingUser = true;
@@ -99,7 +96,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 		$http.get('/a/regs/list?uid=' + $routeParams.userId).success(function(data) {
 			$scope.regs = data.rows;
 		});
-	}
+	};
 	$scope.saveUser = function() {
 		$scope.user.badges = [ ];
 		$scope.possibleBadges.forEach(function(b) {
@@ -212,28 +209,57 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 
 	$scope.editAvatar = function() {
 		var modalInstance = $modal.open({
-			templateUrl: '/static/u/avatar_dialog.htm',
-			controller: function($scope, $modalInstance, items) {
-				$scope.items = items;
+			templateUrl: '/static/p/avatar_dialog.htm',
+			controller: function($scope, $modalInstance) {
+				var url = '/a/users/' + $routeParams.userId + '/avatar';
+				$scope.form = { };
+				$scope.load = function() {
+					$http.get(url).success(function(data) {
+						$scope.avatar = data.avatar;
+					});
+				};
+				$scope.uploadNewimage = function() {
+					console.log("Uploading: " + $scope.form.imageFile.name);
+					fileUpload.uploadFileToUrl($scope.form.imageFile, url, { a: 'b' }).success(function() {
+						console.log("Image uploaded");
+					}).error(function(x) {
+						console.log("Error: " + x);
+					});
+				};
+				$scope.$watch('form.imageFile', function(n, o) {
+					if(n) {
+						$scope.uploadNewimage();
+						$scope.load();
+					}
+				});
 				$scope.ok = function () {
-					$modalInstance.close($scope.selected.item);
+					$http({
+						url: url,
+						method: "POST",
+						data: "replace=1",
+						headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+					}).success(function (data, status, headers, config) {
+						$modalInstance.close(1);
+					}).error(function (data, status, headers, config) {
+						alert('Error: ' + status);
+					});
 				};
 				$scope.btnCancel = function () {
 					$modalInstance.dismiss('cancel');
 				};
+				$scope.load();
 			},
-			resolve: {
-				items: function () {
-					return $scope.items;
-				}
-			}
+		});
+
+		modalInstance.result.then(function (selectedItem) {
+			$scope.avatar += '?' + new Date().getTime(); // force avatar refresh
+		}, function () {
 		});
 	};
 
 	$scope.usersSource = function(a) {
 		var url = '/a/users/list?' + $.param({ q: a }, true); // use jQuery to url-encode object
 		return $http.get(url).then(function (response) {
-//		console.log('response: ' + angular.toJson(response));
 			var users = $filter('filter')(response.data.users, a);
 			return $filter('limitTo')(users, 15).map(function(a) { return {
 				id: a.id,
@@ -245,6 +271,13 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 //	console.log('selected: ' + angular.toJson(item));
 		$location.path('/users/' + item.id).replace();
 	};
+
+	if($routeParams.userId == 'new') {
+		$scope.existingUser = false;
+		$scope.title += 'New user';
+	} else {
+		$scope.loadUser();
+	}
 });
 
 dyatelControllers.controller('UsersListCtrl', function($scope, $http, $timeout, $filter) {

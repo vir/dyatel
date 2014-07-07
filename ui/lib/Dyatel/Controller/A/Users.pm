@@ -22,9 +22,23 @@ Catalyst Controller.
 =cut
 
  
-sub index :Path :Args(0) {
+sub index :Path :Args(0)
+{
     my ( $self, $c ) = @_;
 		$c->response->redirect($c->uri_for($self->action_for('list')));
+}
+
+sub user :PathPrefix :Chained(/) :CaptureArgs(1)
+{
+	my($self, $c, $id) = @_;
+	my $o = $c->model('DB::Users')->find($id);
+	unless($o) {
+		$c->response->body('User not found');
+		$c->response->status(404);
+		$c->detach;
+		return;
+	}
+	$c->stash(user => $o);
 }
 
 
@@ -83,16 +97,10 @@ sub delete :Local :Args(0)
 	$c->stash(user => $user, template => 'users/delete.tt');
 }
 
-sub show :Path Args(1)
+sub show :Chained(user) :PathPart('') :Args(0)
 {
-	my($self, $c, $id) = @_;
-	my $o = $c->model('DB::Users')->find($id);
-	unless($o) {
-		$c->response->body('User not found');
-		$c->response->status(404);
-		$c->detach;
-		return;
-	}
+	my($self, $c) = @_;
+	my $o = $c->stash->{user};
 	if($c->request->method eq 'POST') {
 		if($c->request->params->{delete}) {
 			warn "del";
@@ -108,7 +116,7 @@ sub show :Path Args(1)
 		}
 	}
 	my $avatar = $c->model('FS::Avatars')->get($o->id);
-	my $nav = $c->model('DB::Nextprevusers')->search({id => $id}, { })->first;
+	my $nav = $c->model('DB::Nextprevusers')->search({id => $o->id}, { })->first;
 	$c->stash(user => $o, provision => scalar $o->provisions->all(), navigation => $nav, avatar => $avatar, template => 'users/user.tt');
 #	$c->stash(regs => $o->regs->all); # something wrong with regs XXX TODO sort that out
 }
@@ -135,6 +143,22 @@ sub get_user_params
 	};
 }
 
+sub avatar :Chained(user) :Args(0)
+{
+	my($self, $c) = @_;
+	my $o = delete $c->stash->{user};
+	if($c->request->method eq 'POST') {
+		if($c->request->params->{replace}) {
+			$c->model('FS::Avatars')->replace($o->id);
+		} else {
+			my $u = $c->request->upload('file');
+			warn "Got upload ".$u->basename;
+			$c->model('FS::Avatars')->set($o->id, $u->tempname) or die;
+		}
+	}
+	my $avatar = $c->model('FS::Avatars')->get($o->id, 'extended, please');
+	$c->stash(avatar => $avatar);
+}
 
 __PACKAGE__->meta->make_immutable;
 

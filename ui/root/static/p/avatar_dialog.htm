@@ -1,0 +1,28 @@
+<div class="modal-header">
+	<h1>avatar editor</h1>
+</div>
+
+<div class="modal-body row-fluid">
+	<!-- <span class="btn btn-default btn-file">Select file<input type="file" file-model="imageFile" onchange="angular.element(this).scope().uploadNewimage(this)" /></span> -->
+	<div class="span6">
+		<h2>Current</h2>
+		<div class="avatar">
+			<div ng-hide="avatar.old" class="missing" translate>No avatar</div>
+			<img ng-show="avatar.old" ng-src="{{ avatar.old }}" width="200" height="200" alt="old avatar" />
+		</div>
+	</div>
+	<div class="span6">
+		<h2>New</h2>
+		<div class="avatar">
+			<div ng-hide="avatar.new" class="missing" translate>No avatar</div>
+			<img ng-show="avatar.new" ng-src="{{ avatar.new }}" width="200" height="200" alt="new avatar" />
+		</div>
+		<span class="btn btn-default btn-file">Select file<input type="file" file-model="form.imageFile" /></span>
+	</div>
+</div>
+
+<div class="modal-footer">
+	<button class="btn btn-large" ng-click="ok()">Ok</button>
+	<button class="btn btn-large" ng-click="btnCancel()">Cancel</button>
+</div>
+

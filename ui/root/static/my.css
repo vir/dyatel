@@ -277,8 +277,8 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 #userslist div.controls { text-align:center; }
 
 /* User editor - avatar */
-#userdetail #avatar { float:right; clear:none; height:200px; width:200px; border:1px dotted grey; padding:1px; }
-#userdetail #avatar .missing { width:100%; height:100%; font-size:20pt; text-align:center; line-height:200px; }
+.avatar { height:200px; width:200px; border:1px dotted grey; padding:1px; }
+.avatar .missing { width:100%; height:100%; font-size:20pt; text-align:center; line-height:200px; }
 
 /* user switcher */
 #userswitcher { font-size:10pt; vertical-align:baseline; border-bottom:2px solid grey; }
@@ -292,10 +292,34 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 .calllog-msg h4 { font-size: x-small; margin:0; padding:0; font-weight:normal; color:grey; }
 .calllog-msg div { margin:0 12px 4px 12px; }
 .calllog-msg button { float:right; margin: 4px; position:relative; }
+.calllog-caller { background-color:#F6FFF6; }
+.calllog-caller img { margin:1px 10px; box-shadow: 5px 3px 10px rgba(0,0,0,0.5); border-radius:4px; }
 
 
 /* my devices - small phones in upper right corner */
 #mydevices div { cursor:help; color:#0C0; }
 #mydevices div.tls { color:#04C; }
 #mydevices div.jabber { color:#CC0; }
+
+/* file button styling: http://stackoverflow.com/questions/11235206/twitter-bootstrap-form-file-element-upload-button */
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 999px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
 

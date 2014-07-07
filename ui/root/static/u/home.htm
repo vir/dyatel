@@ -75,7 +75,7 @@
         <small class="text-info" translate>AddYourNote</small>
         <edit-note class="span12" callid="{{current.activecallid}}" msgid="{{current.msgid}}"></edit-note>
        </div>
-       <div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag">
+       <div class="calllog-msg" ng-repeat="x in calllog" ng-class="'calllog-' + x.tag.toLowerCase()">
 	<!-- <button class="btn btn-mini" ng-click="delMsg($index)" title="Delete"><i class="icon-remove"></i></button> -->
 	<button class="btn btn-mini" ng-click="editMsg($index)" title="{{'Edit' | translate}}"><i class="icon-edit"></i></button>
         <h4>

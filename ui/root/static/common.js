@@ -38,3 +38,39 @@ dyatelCommon.directive('markdown', function($sanitize) {
 	};
 });
 
+// http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
+dyatelCommon.directive('fileModel', ['$parse', function ($parse) {
+	return {
+		restrict: 'A',
+		link: function(scope, element, attrs) {
+			var model = $parse(attrs.fileModel);
+			var modelSetter = model.assign;
+			element.bind('change', function(){
+				scope.$apply(function(){
+					modelSetter(scope, element[0].files[0]);
+				});
+			});
+		}
+	};
+}]);
+
+dyatelCommon.service('fileUpload', ['$http', function ($http) {
+	this.uploadFileToUrl = function(file, uploadUrl, params){
+		var fd = new FormData();
+		console.log('file is ' + JSON.stringify(file));
+		fd.append('file', file);
+		if(params) {
+			for (var k in params){
+				if (params.hasOwnProperty(k)) {
+					fd.append(k, params[k]);
+				}
+			}
+		}
+		return $http.post(uploadUrl, fd, {
+			transformRequest: angular.identity,
+			headers: {'Content-Type': undefined }
+		});
+	}
+}]);
+
+

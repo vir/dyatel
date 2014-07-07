@@ -15,7 +15,7 @@ Depends: dbconfig-common, libpg-hstore-perl,
  libcatalyst-modules-perl, libfcgi-procmanager-perl,
  liblog-any-adapter-perl, liblog-any-adapter-catalyst-perl
 Recommends: yate, yate-pgsql, postgresql-client, postgresql-contrib (>= 9.0),
- atftpd | tftpd
+ atftpd | tftpd, libimage-magick-perl
 Suggests: yate-telhw, timidity, madplay
 Description: My yate-based pbx
 

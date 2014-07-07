@@ -53,6 +53,10 @@ case "$1" in
             mkdir /srv/tftp/ph
             chown ${U}:${G} /srv/tftp/ph
         fi
+
+        mkdir -p /var/lib/dyatel/avatars
+        chown www-data /var/lib/dyatel/avatars
+
         ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
