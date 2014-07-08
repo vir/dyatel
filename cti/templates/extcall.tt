@@ -1,0 +1,10 @@
+
+## [% event.caller|html %]
+
+Found [% info.callcount %] calls in last [% info.minage %].
+
+Most recent call: [% info.maxts %] ([% info.maxage %] ago).
+
+<span class="clearfix" />
+
+

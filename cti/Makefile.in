@@ -7,6 +7,8 @@ sharedstatedir = @sharedstatedir@
 all:
 
 install:
+	install -d ${DESTDIR}@datarootdir@/dyatel/daw-templates
+	install -m 644 templates/* ${DESTDIR}@datarootdir@/dyatel/daw-templates/
 	install -d ${DESTDIR}@bindir@
 	install -m 755 dyatel-sconnect ${DESTDIR}@bindir@/
 
