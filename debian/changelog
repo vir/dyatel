@@ -1,3 +1,11 @@
+dyatel (0.0.76) UNRELEASED; urgency=low
+
+  * CDR view filter and other Admin UI improvements
+  * User's avatar support
+  * dyatel-daw script added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 08 Jul 2014 13:46:53 +0400
+
 dyatel (0.0.75) UNRELEASED; urgency=low
 
   * BLFs for groups support
