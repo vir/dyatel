@@ -7,8 +7,8 @@ sharedstatedir = @sharedstatedir@
 all:
 
 install:
-	install -d ${DESTDIR}@datarootdir@/dyatel/templates
-	install -m 644 templates/* ${DESTDIR}@datarootdir@/dyatel/templates/
+	install -d ${DESTDIR}@datarootdir@/dyatel/provision-templates
+	install -m 644 templates/* ${DESTDIR}@datarootdir@/dyatel/provision-templates/
 	install -d ${DESTDIR}@bindir@
 	install -m 755 dyatel-provision ${DESTDIR}@bindir@/
 
