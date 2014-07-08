@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2014-06-18 13:54:31 +0400
+# Last modified: 2014-07-08 06:25:33 +0400
 #
 
 use strict;
@@ -102,7 +102,7 @@ my $dbh = Dyatel::ExtConfig::dbh();
 		} elsif(($dbev eq 'linetracker' || $dbev eq 'regs') && $self->{blfusers}->find($payload)) {
 			$self->{calls}->reload() if $dbev eq 'linetracker' && $self->{calls};
 			return { event => 'blf_state', uid => $payload };
-		} elsif($dbev eq 'calllog' && $self->{calls}->find($payload)) {
+		} elsif($dbev eq 'calllog' && $self->{calls} && $self->{calls}->find($payload)) {
 			return { event => 'calllog', billid => $payload };
 		} else {
 			return { event => $dbev, payload => $payload };
