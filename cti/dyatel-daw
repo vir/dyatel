@@ -315,6 +315,42 @@ our %msg1 = (
 	'callto' => 'sig/100'
 );
 
+# Regexp for yate log reformatting:
+#   s/^[ \t]*param\[\(.*\)\] = \(.*\)/\t\1 => \2,/
+our %msg2 = (
+	'id' => 'sig/262',
+#	'billid' => '1405053902-1215',
+	'billid' => '1390584592-666',
+	'caller' => '177',
+	'callername' => 'Vladimir Shishko',
+#	'called' => '216',
+	'called' => '100',
+	'calledname' => '',
+	'diverter' => '212',
+	'divertername' => 'Elena Elistratova',
+	'reason' => 'transfer',
+#	'sip_referred-by' => '"Elena Elistratova" <sip:212@192.168.1.53>',
+#	'sip_contact' => '"Elena Elistratova" <sip:212@192.168.50.53:5060>',
+#	'sip_refer-to' => '<sip:216@192.168.1.53>',
+#	'sip_user-agent' => 'Cisco/SPA504G-7.5.5',
+	'handlers' => 'javascript:15,cdrbuild:50,regexroute:50,register:90',
+#	'dtmfpass' => 'false',
+	'callto.1.secure' => 'no',
+	'callto.2' => '|',
+	'callto.1.rtp_forward' => 'no',
+	'callto.3' => 'lateroute/5015',
+	'callto.1.maxcall' => '17000',
+	'callto.1.oconnection_id' => 'general',
+	'callto.1' => 'sip/sip:216@192.168.50.54:5060',
+	'callto' => 'fork',
+
+);
+
+our @msgs = (
+	\%msg1,
+	\%msg2,
+);
+
 sub new
 {
 	my $class = shift;
@@ -326,9 +362,10 @@ sub run
 {
 	my $self = shift;
 	while(1) {
-		my $sleep = 1 + rand(5);
+		my $sleep = 2 + rand(5);
 		sleep $sleep;
-		$self->enqueue_data(\%msg1);
+		my $msg = $msgs[rand(@msgs)];
+		$self->enqueue_data($msg);
 	}
 	$self->{ctrlqueue}->enqueue('finish');
 }
@@ -373,7 +410,7 @@ sub run
 	my $self = shift;
 	while (my $e = $self->{dataqueue}->dequeue()) {
 		my $ts = Time::HiRes::time();
-#		$self->print("Popped $e off the queue: ".Dumper($e)) if $self->{verbose};
+		$self->print("Popped off the queue: ".Dumper($e)) if $self->{verbose};
 		next unless ref($e) eq 'HASH';
 		next unless $self->is_our_call($e);
 		if($e->{TS}) {
@@ -405,37 +442,44 @@ sub process
 	my $self = shift;
 	my($e) = @_;
 	my $row = $self->db->resultset('Users')->find({num => $e->{called}});
+	return unless $row;
 	my $uid = $row->get_column('id');
-	return unless $uid;
 	print "Found user id $uid\n" if $self->{verbose};
 	my $inf = $self->db->xinfo($e->{caller}, { uid => $uid });
 	($inf) = @$inf;
 
-	my $template;
-	if($inf and %$inf) {
-		if($inf->{uid}) {
-			my $a = $self->{avatars}->get($inf->{uid});
-			$inf->{avatar} = $a if $a;
-		}
-		$template = 'intcall.tt';
+	my($template, $tag);
+	if($e->{reason} && $e->{reason} eq 'transfer') {
+		($inf) = @{ $self->db->xinfo($e->{diverter}, { uid => $uid }) };
+		$template = 'transfer.tt';
+		$tag = 'DIVERTION';
 	} else {
-		my $rs = $self->db->resultset('Cdr')->search({
-			direction => 'incoming',
-			billid => { '<>', $e->{billid} },
-			caller => $e->{caller},
-		}, {
-			'+select' => [
-				{ count => '*' },
-				{ date_trunc => [ "'day'", { age => { min => 'ts' } } ] },
-				{ age => { max => 'ts' } },
-				{ max => 'ts' },
-			],
-			'+as' => [qw/ callcount minage maxage maxts /],
-			columns => [ ],
-		});
-		$rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-		$inf = $rs->single;
-		$template = 'extcall.tt';
+		$tag = 'CALLER';
+		if($inf and %$inf) {
+			if($inf->{uid}) {
+				my $a = $self->{avatars}->get($inf->{uid});
+				$inf->{avatar} = $a if $a;
+			}
+			$template = 'intcall.tt';
+		} else {
+			my $rs = $self->db->resultset('Cdr')->search({
+				direction => 'incoming',
+				billid => { '<>', $e->{billid} },
+				caller => $e->{caller},
+			}, {
+				'+select' => [
+					{ count => '*' },
+					{ date_trunc => [ "'day'", { age => { min => 'ts' } } ] },
+					{ age => { max => 'ts' } },
+					{ max => 'ts' },
+				],
+				'+as' => [qw/ callcount minage maxage maxts /],
+				columns => [ ],
+			});
+			$rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+			$inf = $rs->single;
+			$template = 'extcall.tt';
+		}
 	}
 
 	my $output = '';
@@ -451,12 +495,10 @@ sub process
 
 	$self->db->resultset('Calllog')->create({
 		billid => $e->{billid},
-		tag => 'CALLER',
+		tag => $tag,
 		value => $output,
 		params => $inf,
 	});
-
-	sleep(3 + rand(20));
 }
 
 package main;

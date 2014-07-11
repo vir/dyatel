@@ -1,0 +1,10 @@
+[% IF info.avatar %]
+<img align="left" width="200" height="200" src="[% info.avatar %]" />
+[% END %]
+## Diverted by [% event.diverter|html %]
+[% IF info.descr %]
+### [% info.descr|html %]
+[% END %]
+<span class="clearfix" />
+
+
