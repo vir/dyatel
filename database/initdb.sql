@@ -73,6 +73,9 @@ ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(n
 CREATE UNIQUE INDEX users_num_index ON users(num);
 CREATE INDEX users_login_index ON users(login);
 
+CREATE OR REPLACE VIEW nextprevusers AS
+	SELECT id, num, LEAD(id) OVER (ORDER BY num) AS next, LAG(id) OVER (ORDER BY num) AS prev FROM users;
+
 CREATE TABLE regs (
 	userid INTEGER NOT NULL REFERENCES users(id),
 	ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
