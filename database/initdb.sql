@@ -1023,5 +1023,34 @@ CREATE OR REPLACE FUNCTION status_num(num PHONE) RETURNS TEXT AS $$
 	SELECT status FROM status_num2($1);
 $$ LANGUAGE SQL;
 
+
+
+
+-- FIRST and LAST aggregates
+-- https://wiki.postgresql.org/wiki/First/last_%28aggregate%29
+CREATE OR REPLACE FUNCTION public.first_agg ( anyelement, anyelement )
+RETURNS anyelement LANGUAGE sql IMMUTABLE STRICT AS $$
+        SELECT $1;
+$$;
+CREATE AGGREGATE public.first (
+        sfunc    = public.first_agg,
+        basetype = anyelement,
+        stype    = anyelement
+);
+CREATE OR REPLACE FUNCTION public.last_agg ( anyelement, anyelement )
+RETURNS anyelement LANGUAGE sql IMMUTABLE STRICT AS $$
+        SELECT $2;
+$$;
+CREATE AGGREGATE public.last (
+        sfunc    = public.last_agg,
+        basetype = anyelement,
+        stype    = anyelement
+);
+
+
+COMMIT;
+-- vim: ft=sql
+
+
 -- vim: ft=sql
 

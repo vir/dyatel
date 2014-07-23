@@ -1,3 +1,9 @@
+dyatel (0.0.78) UNRELEASED; urgency=low
+
+  * Minidisa fixed to dial any users' or callgroup's numbers
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 23 Jul 2014 18:05:55 +0400
+
 dyatel (0.0.77) UNRELEASED; urgency=low
 
   * Fix clean install

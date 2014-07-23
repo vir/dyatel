@@ -47,7 +47,17 @@ sub event
 		$self->set_state($next_state);
 		$self->event('enter');
 	}
+	if(my $next_event = shift @{ $self->{fsm_eventqueue} }) {
+		return $self->event($next_event);
+	}
 	return $r;
+}
+
+sub enqueue_event
+{
+	my $self = shift;
+	my($ev) = @_;
+	push @{ $self->{fsm_eventqueue} }, $ev;
 }
 
 sub action
@@ -80,11 +90,12 @@ use constant COPYPARAMS => qw/ id caller called billid format formats answered /
 sub new
 {
 	my $class = shift;
-	my($msg, $name, $table) = @_;
+	my($msg, $name, $ivr) = @_;
 	my $id = $msg->param('id');
-	my $self = $class->Yate::IVR::FSM::new($table);
+	my $self = $class->Yate::IVR::FSM::new($ivr->table);
 	$self->{yate} = $msg;
 	$self->{name} = $name;
+	$self->{IVR} = $ivr;
 	foreach my $k(COPYPARAMS) {
 		$self->{$k} = $msg->param($k);
 	}
@@ -448,6 +459,14 @@ sub action_connect
 	);
 }
 
+sub action_checknum
+{
+	my $self = shift;
+	warn "'checknum' action is called, but 'numvalidator' helper is not defined" unless $self->{numvalidator};
+	my $ev = $self->{numvalidator} ? $self->{numvalidator}->($self->{collected}) : undef;
+	$self->enqueue_event($ev) if $ev;
+}
+
 sub action_drop
 {
 	my $self = shift;
@@ -495,10 +514,20 @@ sub shutdown_all
 package Yate::IVR;
 use strict;
 use warnings;
+use Carp;
 
 our %ivrs;
 our @callbacks;
 our $count_all = 0;
+
+sub new
+{
+	my $class = shift;
+	my $table = shift;
+	return bless { table => $table, @_ }, $class;
+}
+
+sub table { return shift->{table} }
 
 sub init
 {
@@ -521,8 +550,10 @@ sub init
 
 sub add
 {
-	my %toadd = @_;
-	%ivrs = (%ivrs, %toadd);
+	my($num, $ivr) = @_;
+	croak 'Usage: Yate::IVR::add($num => Yate::IVR->new(params) or Yate::IVR::add($num => $table)' if(@_ != 2 or !$num or ref($num) or !ref($ivr));
+	$ivr = __PACKAGE__->new($ivr) unless UNIVERSAL::can($ivr, 'isa') && $ivr->isa(__PACKAGE__);
+	%ivrs = (%ivrs, $num => $ivr);
 }
 
 sub flush
@@ -630,6 +661,7 @@ use warnings;
 use lib '.';
 use Yate;
 use Dyatel::ExtConfig;
+use Data::Dumper;
 
 
 $|=1;
@@ -774,14 +806,13 @@ sub load_md
 # Append mini auto-attendants (internal number switch)
 	my $sth = $dbh->prepare("SELECT * FROM ivr_minidisa");
 	$sth->execute();
-	my $pos = 1;
 	while(my $h = $sth->fetchrow_hashref) {
 		print "Loading minidisa $h->{num}\n";
 		my $table = [
 			[ undef, 'finished', undef, undef ], # ignore plyback finish just to skip 'default' in every state
 			[ undef, 'timeout', undef, 'error' ],
 			[ 'start', 'enter', ['flush', 'answer', 'timer '.$h->{timeout}], 'prompt' ],
-			[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit'.$pos ],
+			[ 'prompt', 'enter', 'playfile '.$h->{prompt}, 'digit' ],
 			[ 'finish', 'enter', 'suicide', undef ],
 		];
 		if($h->{etimeout}) {
@@ -790,23 +821,24 @@ sub load_md
 			push @$table, [ 'error', 'enter', undef, 'finish' ];
 		}
 
-		if($pos == 1 && $h->{numlen} > 1 && defined($h->{firstdigit}) && length($h->{firstdigit})) {
-			push @$table, [ 'digit'.$pos, 'default', undef, 'error' ];
-			foreach my $d(split(//, $h->{firstdigit})) {
-				push @$table, [ 'digit'.$pos, 'dtmf_'.$d, 'collect '.$d, 'digit'.($pos + 1) ],
-			}
-			++$pos;
-		}
+		push @$table, [ 'digit', 'dtmf', ['collect', 'checknum'], 'digit' ];
+		push @$table, [ 'digit', 'invalid', 'flush', 'start' ];
+		push @$table, [ 'digit', 'complete', 'switch2', 'finish' ];
 
-		while($pos <= $h->{numlen}) {
-			if($pos + 1 <= $h->{numlen}) {
-				push @$table, [ 'digit'.$pos, 'dtmf', 'collect', 'digit'.($pos + 1) ]
-			} else {
-				push @$table, [ 'digit'.$pos, 'dtmf', ['collect', 'switch2'], 'finish' ],
-			}
-			++$pos;
+		my $firstdigitre;
+		if(defined($h->{firstdigit}) && length($h->{firstdigit})) {
+			$firstdigitre = "[$h->{firstdigit}]";
 		}
-		Yate::IVR::add($h->{num} => $table);
+		Yate::IVR::add($h->{num} => Yate::IVR->new($table, numvalidator => sub {
+			my($num) = @_;
+			return 'invalid' if length($num) && $firstdigitre && $num !~ /$firstdigitre/;
+			return 'invalid' if length($num) > $h->{numlen};
+			my($count, $type) = $dbh->selectrow_array("SELECT COUNT(*), FIRST(numtype) FROM directory WHERE num LIKE ?", undef, $num.'%');
+			return 'invalid' if $count == 0;
+			return undef if $count > 1;
+			return 'invalid' unless grep { $_ eq $type } qw( user callgrp );
+			return 'complete';
+		}));
 	}
 }
 
