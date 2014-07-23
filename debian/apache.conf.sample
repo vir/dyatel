@@ -31,7 +31,13 @@
 		Order allow,deny
 		allow from all
 	</Directory>
+	<Directory "/var/lib/dyatel/avatars">
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
 	Alias /static/ "/usr/share/perl/5.14/Dyatel/root/static/"
+	Alias /avatars/ "/var/lib/dyatel/avatars/"
 	Alias /favicon.ico "/usr/share/perl/5.14/Dyatel/root/static/favicon.ico"
 
 	RewriteEngine on
