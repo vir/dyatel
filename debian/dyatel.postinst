@@ -55,7 +55,7 @@ case "$1" in
         fi
 
         mkdir -p /var/lib/dyatel/avatars
-        chown www-data /var/lib/dyatel/avatars
+        chown ${U}:${G} /var/lib/dyatel/avatars
 
         ;;
 
