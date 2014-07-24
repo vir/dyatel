@@ -457,6 +457,9 @@ function dyatelIvrCommonController($scope, $http, urlBase) {
 			}).success(delRow);
 		}
 	};
+	$scope.onDirnumChanged = function(field) {
+		$scope.selection[0].changed = true;
+	};
 }
 
 dyatelControllers.controller('IvrAAsCtrl', function($scope, $http) {

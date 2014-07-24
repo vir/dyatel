@@ -41,7 +41,7 @@ sub list :Local
 sub create :Local :Args(0)
 {
 	my($self, $c) = @_;
-	if($c->request->params->{save}) {
+	if($c->request->method eq 'POST') {
 		my $scope_guard = $c->model('DB')->txn_scope_guard;
 		return unless $c->forward('/a/directory/create', ['ivr']);
 		my $o = $c->model(MODELCLASS)->create(get_item_params($c));
@@ -54,13 +54,14 @@ sub create :Local :Args(0)
 sub delete :Local :Args(0)
 {
 	my($self, $c) = @_;
-	my $id = $c->request->params->{uid};
+	my $id = $c->request->params->{id};
 	my $o = $c->model(MODELCLASS)->find({id => $id});
-	if($c->request->params->{delete}) {
+	if($c->request->method eq 'POST' && $id) {
+		if($c->request->params->{cancel}) {
+			return $c->response->redirect($id);
+		}
 		$o->delete;
 		$c->response->redirect($c->uri_for($self->action_for('list'), { status_msg => "Deleted" }));
-	} elsif($c->request->params->{cancel}) {
-		$c->response->redirect($id);
 	}
 	$c->stash(obj => $o);
 }
@@ -74,10 +75,14 @@ sub item :Path Args(1)
 		$c->response->status(404);
 		return;
 	}
-	if($c->request->params->{save}) {
+	my $a = $c->request->params->{action} || '';
+	if($a eq 'save') {
+		my $scope_guard = $c->model('DB')->txn_scope_guard;
+		return unless $c->forward('/a/directory/update', [$o->num->num, 'ivr']);
 		$o->update(get_item_params($c));
+		$scope_guard->commit;
 		$c->response->redirect('/'.$c->request->path);
-	} elsif($c->request->params->{delete}) {
+	} elsif($a eq 'delete') {
 		$c->response->redirect($c->uri_for($self->action_for('delete'), { id => $o->id }));
 	} else {
 		$c->stash(obj => $o);
@@ -89,12 +94,12 @@ sub get_item_params
 	my($c) = @_;
 	return {
 		num => $c->request->params->{num},
-		descr => $c->request->params->{descr},
-		alias => $c->request->params->{alias} || undef,
-		domain => $c->request->params->{domain} // '',
-		password => $c->request->params->{password},
-		nat_support => $c->request->params->{nat_support} || '0',
-		nat_port_support => $c->request->params->{nat_port_support} || '0',
+#		descr => $c->request->params->{descr},
+		firstdigit => $c->request->params->{firstdigit},
+		numlen => $c->request->params->{numlen},
+		prompt => $c->request->params->{prompt},
+		timeout => $c->request->params->{timeout},
+		etimeout => $c->request->params->{etimeout},
 	};
 }
 

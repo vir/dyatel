@@ -4,7 +4,7 @@
 <div class="span6">
 	<div class="gridStyle" ng-grid="gridOptions" style="width:100%"></div>
 	<div class="well">
-		<dirnum dir-num="selection[0].num" num-type="ivr" any-change="alert('hi')" />
+		<dirnum dir-num="selection[0].num" num-type="ivr" any-change="onDirnumChanged(field)" />
 	</div>
 	<button class="btn" ng-click="onNew()">New</button>
 	<button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed">Save</button>

@@ -76,10 +76,14 @@ sub item :Path Args(1)
 		return;
 	}
 	if($c->request->method eq 'POST') {
-		if($c->request->params->{delete}) {
+		my $a = $c->request->params->{action} || '';
+		if($a eq 'delete') {
 			return $c->response->redirect($c->uri_for($self->action_for('delete'), { id => $o->id }));
 		} else { # save
+			my $scope_guard = $c->model('DB')->txn_scope_guard;
+			return unless $c->forward('/a/directory/update', [$o->num->num, 'ivr']);
 			$o->update(get_item_params($c));
+			$scope_guard->commit;
 			$c->response->redirect('/'.$c->request->path);
 		}
 	} else { # GET ?
@@ -90,28 +94,10 @@ sub item :Path Args(1)
 sub get_item_params
 {
 	my($c) = @_;
-	my $x = {
-		descr => $c->request->params->{descr},
-		e0 => $c->request->params->{e0},
-		e1 => $c->request->params->{e1},
-		e2 => $c->request->params->{e2},
-		e3 => $c->request->params->{e3},
-		e4 => $c->request->params->{e4},
-		e5 => $c->request->params->{e5},
-		e6 => $c->request->params->{e6},
-		e7 => $c->request->params->{e7},
-		e8 => $c->request->params->{e8},
-		e9 => $c->request->params->{e9},
-		ehash => $c->request->params->{ehash},
-		estar => $c->request->params->{estar},
-		etimeout => $c->request->params->{etimeout},
-#		id => $c->request->params->{id},
-		num => $c->request->params->{num},
-		prompt => $c->request->params->{prompt},
-		timeout => $c->request->params->{timeout},
-	};
-	foreach my $k(keys %$x) {
-		$x->{$k} = undef if $x->{$k} eq '';
+	my $x = { };
+	foreach my $k(qw( e0  e2 e3 e4 e5 e6 e7 e8 e9 ehash estar etimeout num prompt timeout )) { # no 'id' and 'descr'
+		my $v = $c->request->params->{$k};
+		$x->{$k} = (defined($v) && length($v)) ? $v : undef;
 	}
 	return $x;
 }
