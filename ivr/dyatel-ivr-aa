@@ -96,6 +96,7 @@ sub new
 	$self->{yate} = $msg;
 	$self->{name} = $name;
 	$self->{IVR} = $ivr;
+	$self->{numvalidator} = $ivr->{numvalidator};
 	foreach my $k(COPYPARAMS) {
 		$self->{$k} = $msg->param($k);
 	}
