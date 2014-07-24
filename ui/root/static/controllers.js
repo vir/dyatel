@@ -51,6 +51,7 @@ dyatelControllers.directive('dirnum', function ($http) {
 			numType: '@',
 			ro: '=numReadonly',
 			anyChange: '&',
+			isDisabled: '=',
 		},
 		link: function ($scope, element, attrs) {
 			$scope.warns = '';
