@@ -1,3 +1,9 @@
+dyatel (0.0.81) UNRELEASED; urgency=low
+
+  * Eanble pbx assistant for all incoming calls (calls to local uses).
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 29 Jul 2014 14:01:40 +0400
+
 dyatel (0.0.80) UNRELEASED; urgency=low
 
   * Admin UI and IVR fixes

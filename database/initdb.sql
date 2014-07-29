@@ -491,7 +491,7 @@ BEGIN
 			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
 			WHERE uid = userid(called_arg) AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
 		IF res::TEXT <> '' THEN
-			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- appand to previous group
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- append to previous group
 			cntr := cntr + 1;
 			res := res || hstore('callto.' || cntr, '|');
 		END IF;
@@ -509,6 +509,7 @@ BEGIN
 		RETURN;
 	ELSE
 		res := res || 'location => fork';
+		res := res || hstore(ARRAY['copyparams', 'pbxassist,dtmfpass', 'tonedetect_out', 'true', 'pbxassist', 'true', 'dtmfpass', 'false']);
 		RETURN QUERY SELECT * FROM each(res);
 	END IF;
 END;
