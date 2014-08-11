@@ -1,4 +1,4 @@
-CREATE DOMAIN phone AS TEXT CHECK( VALUE ~ E'^\+?[0-9\8\#]+$' );
+CREATE DOMAIN phone AS TEXT CHECK( VALUE ~ E'^\\+?[0-9\\*\\#]+$' );
 
 
 CREATE TABLE numtypes (
