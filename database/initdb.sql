@@ -561,7 +561,7 @@ BEGIN
 	END IF;
 
 	cntr2 := cntr;
-	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
 		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
 	END LOOP;
 
