@@ -1,3 +1,10 @@
+dyatel (0.0.82) UNRELEASED; urgency=low
+
+  * Callgroup calls will not ring on busy extensions anymore
+  * Small fixes
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 11 Aug 2014 23:08:08 +0400
+
 dyatel (0.0.81) UNRELEASED; urgency=low
 
   * Eanble pbx assistant for all incoming calls (calls to local uses).
