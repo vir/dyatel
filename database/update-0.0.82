@@ -1,0 +1,148 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION regs_route_part(called_arg TEXT, res HSTORE, cntr INTEGER)
+	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
+DECLARE
+	cld RECORD;
+	t RECORD;
+	kvp RECORD;
+	rtpfw BOOLEAN;
+BEGIN
+	cld := userrec(called_arg);
+	IF cld.id IS NOT NULL THEN
+		FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.location);
+			FOR kvp IN SELECT * FROM EACH(t.route_params) LOOP
+				res := res || hstore('callto.' || cntr || '.' || kvp.key, kvp.value);
+			END LOOP;
+			res := res || hstore('callto.' || cntr || '.secure', CASE WHEN (cld.secure = 'ssl' AND t.ip_transport = 'TLS') OR cld.secure = 'on' THEN 'yes' ELSE 'no' END);
+		END LOOP;
+	END IF;
+
+	RETURN QUERY SELECT res, cntr;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION regs_route(called_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+	uoffline BOOLEAN;
+BEGIN
+	res := '';
+	SELECT * INTO res, cntr FROM regs_route_part(called_arg, res, 0);
+
+	uoffline := res::TEXT = '';
+
+	-- Add 'offline' and 'No answer' divertions
+	FOR t IN SELECT normalize_num(n.val) AS val, n.timeout, k.*
+			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
+			WHERE uid = userid(called_arg) AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
+		IF res::TEXT <> '' THEN
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- append to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, 'lateroute/' || t.ins_prefix || t.val);
+		IF t.set_local_caller THEN
+			res := res || hstore('callto.' || cntr || '.caller', called_arg);
+		END IF;
+		IF t.set_context IS NOT NULL THEN
+			res := res || hstore('callto.' || cntr || '.context', t.set_context);
+		END IF;
+	END LOOP;
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		res := res || hstore(ARRAY['copyparams', 'pbxassist,dtmfpass', 'tonedetect_out', 'true', 'pbxassist', 'true', 'dtmfpass', 'false']);
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE num = called_arg;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
+	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
+		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
+	END LOOP;
+
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
+	END IF;
+
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	cf HSTORE;
+BEGIN
+	cf := config('route');
+	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
+		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
+	END IF;
+
+	RETURN QUERY
+		SELECT * FROM regs_route(msg->'called')
+	UNION
+		SELECT * FROM callgroups_route(msg->'called')
+	UNION
+		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
+	UNION
+		SELECT * FROM abbrs_route(msg->'caller', msg->'called')
+	UNION
+		SELECT * FROM incoming_route(msg);
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
+

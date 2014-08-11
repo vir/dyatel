@@ -413,10 +413,9 @@ $$ LANGUAGE SQL;
 -- routing functions requires the following upstream yate modifications:
 --  988c55b7c9e19815956f73a9ad3c641f7ae96879 - transposedb
 --  51cdc1ec7322aa09930c6a473e456adf95949daf - hstore
-CREATE OR REPLACE FUNCTION regs_route_part(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT, res HSTORE, cntr INTEGER)
+CREATE OR REPLACE FUNCTION regs_route_part(called_arg TEXT, res HSTORE, cntr INTEGER)
 	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
 DECLARE
-	clr RECORD;
 	cld RECORD;
 	t RECORD;
 	kvp RECORD;
@@ -424,13 +423,9 @@ DECLARE
 BEGIN
 	cld := userrec(called_arg);
 	IF cld.id IS NOT NULL THEN
-		clr := userrec(caller_arg);
-		rtpfw := COALESCE(clr.media_bypass, FALSE) AND cld.media_bypass AND rtp_forward_arg = 'possible';
-
 		FOR t IN SELECT * FROM regs WHERE userid = cld.id AND expires > 'now' AND audio LOOP
 			cntr := cntr + 1;
 			res := res || hstore('callto.' || cntr, t.location);
-			res := res || hstore('callto.' || cntr || '.rtp_forward', CASE WHEN rtpfw AND ipnetwork(ip_host_arg) = ipnetwork(t.ip_host) THEN 'yes' ELSE 'no' END);
 			FOR kvp IN SELECT * FROM EACH(t.route_params) LOOP
 				res := res || hstore('callto.' || cntr || '.' || kvp.key, kvp.value);
 			END LOOP;
@@ -473,7 +468,7 @@ $$ LANGUAGE SQL IMMUTABLE;
 
 CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
 
-CREATE OR REPLACE FUNCTION regs_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+CREATE OR REPLACE FUNCTION regs_route(called_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	res HSTORE;
@@ -482,7 +477,7 @@ DECLARE
 	uoffline BOOLEAN;
 BEGIN
 	res := '';
-	SELECT * INTO res, cntr FROM regs_route_part(caller_arg, called_arg, ip_host_arg, formats_arg, rtp_forward_arg, res, 0);
+	SELECT * INTO res, cntr FROM regs_route_part(called_arg, res, 0);
 
 	uoffline := res::TEXT = '';
 
@@ -540,7 +535,7 @@ CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
 
 
-CREATE OR REPLACE FUNCTION callgroups_route(caller_arg TEXT, called_arg TEXT, ip_host_arg INET, formats_arg TEXT, rtp_forward_arg TEXT)
+CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	g RECORD;
@@ -567,7 +562,7 @@ BEGIN
 
 	cntr2 := cntr;
 	FOR t IN SELECT num FROM callgrpmembers WHERE grp = g.id ORDER BY ord LOOP
-		SELECT * INTO res, cntr2 FROM regs_route_part(caller_arg, t.num, ip_host_arg, formats_arg, rtp_forward_arg, res, cntr2);
+		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
 	END LOOP;
 
 	IF cntr2 <> cntr THEN -- Members found
@@ -901,9 +896,9 @@ BEGIN
 	END IF;
 
 	RETURN QUERY
-		SELECT * FROM regs_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+		SELECT * FROM regs_route(msg->'called')
 	UNION
-		SELECT * FROM callgroups_route(msg->'caller', msg->'called', (msg->'ip_host')::INET, msg->'formats', msg->'rtp_forward')
+		SELECT * FROM callgroups_route(msg->'called')
 	UNION
 		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
 	UNION
