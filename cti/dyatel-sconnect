@@ -137,7 +137,8 @@ sub on_call_sconnect
 		caller => $called,
 		callto => 'dumb/',
 		target => $caller,
-		format => 'alaw',
+		context => 'internal',
+		copyparams => 'context',
 	);
 	++$count_all;
 	return('true');
