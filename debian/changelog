@@ -1,3 +1,10 @@
+dyatel (0.0.83) UNRELEASED; urgency=low
+
+  * Better handling of forked calls in linetracker.
+  * Fixed routing context while calling from web ui.
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 12 Nov 2014 16:48:59 +0300
+
 dyatel (0.0.82) UNRELEASED; urgency=low
 
   * Callgroup calls will not ring on busy extensions anymore
