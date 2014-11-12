@@ -1,0 +1,13 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+	-- make hangup of channel fork/30 clean up entries for fork/30/*
+        DELETE FROM linetracker WHERE chan = msg->'chan' OR chan LIKE msg->'chan' || '/%';
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
+

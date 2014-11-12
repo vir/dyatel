@@ -511,8 +511,55 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 
+-- Line tracker
+CREATE TABLE linetracker(
+	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	direction TEXT,
+	status TEXT,
+	chan TEXT,
+	caller TEXT,
+	called TEXT,
+	billid TEXT
+);
+
+CREATE TRIGGER linetracker_change_trigger AFTER INSERT OR UPDATE OR DELETE
+	ON linetracker FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
+
+CREATE OR REPLACE FUNCTION linetracker_flush() RETURNS VOID AS $$
+BEGIN
+	DELETE FROM linetracker;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'external');
+	IF u IS NULL AND msg->'direction' = 'outgoing' AND (msg->'calledfull') IS NOT NULL THEN
+		u := userid(msg->'calledfull');
+	END IF;
+	IF u IS NOT NULL THEN
+		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+	UPDATE linetracker SET direction = msg->'direction', status = msg->'status', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE chan = msg->'chan';
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
+BEGIN
+	-- make hangup of channel fork/30 clean up entries for fork/30/*
+        DELETE FROM linetracker WHERE chan = msg->'chan' OR chan LIKE msg->'chan' || '/%';
+END;
+$$ LANGUAGE PlPgSQL;
 
 
+-- call groups
 CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
 
 CREATE TABLE callgroups(
@@ -694,52 +741,6 @@ BEGIN
 	END IF;
 	RETURN NEW;
 END $$ LANGUAGE PlPgSQL;
-
--- Line tracker
-CREATE TABLE linetracker(
-	uid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	direction TEXT,
-	status TEXT,
-	chan TEXT,
-	caller TEXT,
-	called TEXT,
-	billid TEXT
-);
-
-CREATE TRIGGER linetracker_change_trigger AFTER INSERT OR UPDATE OR DELETE
-	ON linetracker FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
-
-CREATE OR REPLACE FUNCTION linetracker_flush() RETURNS VOID AS $$
-BEGIN
-	DELETE FROM linetracker;
-END;
-$$ LANGUAGE PlPgSQL;
-
-CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
-DECLARE
-	u INTEGER;
-BEGIN
-	u := userid(msg->'external');
-	IF u IS NULL AND msg->'direction' = 'outgoing' AND (msg->'calledfull') IS NOT NULL THEN
-		u := userid(msg->'calledfull');
-	END IF;
-	IF u IS NOT NULL THEN
-		INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
-	END IF;
-END;
-$$ LANGUAGE PlPgSQL;
-
-CREATE OR REPLACE FUNCTION linetracker_upd(msg HSTORE) RETURNS VOID AS $$
-BEGIN
-	UPDATE linetracker SET direction = msg->'direction', status = msg->'status', caller = msg->'caller', called = msg->'called', billid = msg->'billid' WHERE chan = msg->'chan';
-END;
-$$ LANGUAGE PlPgSQL;
-
-CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
-BEGIN
-	DELETE FROM linetracker WHERE chan = msg->'chan';
-END;
-$$ LANGUAGE PlPgSQL;
 
 
 
