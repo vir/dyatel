@@ -137,8 +137,6 @@ sub on_call_sconnect
 		caller => $called,
 		callto => 'dumb/',
 		target => $caller,
-		context => 'internal',
-		copyparams => 'context',
 	);
 	++$count_all;
 	return('true');
@@ -184,7 +182,8 @@ sub on_call_answered
 			caller => $call->{caller},
 			callto => 'dumb/',
 			target => $call->{called},
-			format => 'alaw',
+			context => 'internal',
+			copyparams => 'context',
 		);
 	} else {
 		$msg->dumpmsg('Destination answered, interconnecting channels') if $debug;
