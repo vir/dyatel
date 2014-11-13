@@ -1,3 +1,10 @@
+dyatel (0.0.84) UNRELEASED; urgency=low
+
+  * Time zone updated in provision templates
+  * Fixed routing context while calling from web ui (once again)
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 13 Nov 2014 22:05:29 +0300
+
 dyatel (0.0.83) UNRELEASED; urgency=low
 
   * Better handling of forked calls in linetracker.
