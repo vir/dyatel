@@ -1,3 +1,10 @@
+dyatel (0.0.85) UNRELEASED; urgency=low
+
+  * Fix for 'hanging' lines in linetracker
+    (requires modified cdrbuild module!)
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 19 Nov 2014 09:39:59 +0300
+
 dyatel (0.0.84) UNRELEASED; urgency=low
 
   * Time zone updated in provision templates

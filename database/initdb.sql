@@ -535,6 +535,9 @@ CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
 DECLARE
 	u INTEGER;
 BEGIN
+	IF msg->'chan' LIKE 'fork/%' THEN
+		RETURN;
+	END IF;
 	u := userid(msg->'external');
 	IF u IS NULL AND msg->'direction' = 'outgoing' AND (msg->'calledfull') IS NOT NULL THEN
 		u := userid(msg->'calledfull');

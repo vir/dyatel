@@ -30,7 +30,7 @@ dbc_go dyatel $@
 
 case "$1" in
     configure)
-        for f in extmodule.conf pgsqldb.conf register.conf subscription.conf jbfeatures.conf pbxassist.conf
+        for f in cdrbuild.conf extmodule.conf pgsqldb.conf register.conf subscription.conf jbfeatures.conf pbxassist.conf
         do
             dpkg-divert --divert /etc/yate/$f.orig --rename /etc/yate/$f
             ln -sf ../dyatel/yate/$f /etc/yate/$f
