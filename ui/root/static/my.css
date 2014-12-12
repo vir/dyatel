@@ -323,3 +323,6 @@ html, body, #wholescreen, #view { height:100%; margin:0; padding:0; }
 }
 
 
+div.sqr100 { width:100px; height:100px; text-align:center; }
+div.sqr100 i { font-size:64px; line-height:76px; }
+
