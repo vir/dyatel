@@ -562,6 +562,66 @@ END;
 $$ LANGUAGE PlPgSQL;
 
 
+
+-- queues
+CREATE TABLE queues(
+	id SERIAL PRIMARY KEY,
+	mintime INTEGER DEFAULT 500,
+	length INTEGER DEFAULT 0,
+	maxout INTEGER DEFAULT -1,
+	greeting TEXT,
+	onhold TEXT,
+	maxcall INTEGER,
+	prompt TEXT,
+	notify TEXT,
+	detail BOOLEAN DEFAULT TRUE,
+	single BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE queuestats(
+	q INTEGER NOT NULL REFERENCES queues(id) ON DELETE CASCADE,
+	ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	required INTEGER,
+	cur INTEGER,
+	waiting INTEGER,
+	found INTEGER
+);
+CREATE OR REPLACE FUNCTION queues_avail(q TEXT, required INTEGER, cur INTEGER, waiting INTEGER)
+	RETURNS TABLE(location TEXT, username TEXT, maxcall INTEGER, prompt TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	rowcount INTEGER DEFAULT 0;
+	k TEXT;
+	v TEXT;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE queue = q::INTEGER;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY random() LIMIT required LOOP
+		cntr := 1;
+		SELECT * INTO res, cntr FROM regs_route_part(t.num, res, cntr);
+		-- convert hstore to json
+		location := '{"location": "fork"';
+		FOR k, v IN SELECT * FROM each(res) LOOP
+			location := location || ', "' || k || '": "' || regexp_replace(v, E'([\\"])', E'\\\\\\1', 'g') || '"';
+		END LOOP;
+		location := location || '}';
+		username := t.num;
+		IF cntr > 1 THEN
+			RETURN NEXT;
+			rowcount := rowcount + 1;
+		END IF;
+	END LOOP;
+	INSERT INTO queuestats(q, required, cur, waiting, found) VALUES (g.queue, required, cur, waiting, rowcount);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
 -- call groups
 CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
 
@@ -572,14 +632,16 @@ CREATE TABLE callgroups(
 	rotary_last INTEGER NOT NULL DEFAULT 0,
 	ringback TEXT NULL,
 	maxcall INTEGER NOT NULL DEFAULT 0,
-	exitpos PHONE NULL
+	exitpos PHONE NULL,
+	queue INTEGER NULL REFERENCES queues(id) ON DELETE SET NULL
 );
 ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
 CREATE TABLE callgrpmembers(
 	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	ord INTEGER,
-	num PHONE NOT NULL
+	num PHONE NOT NULL,
+	enabled BOOLEAN NOT NULL DEFAULT TRUE
 );
 CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
@@ -598,6 +660,12 @@ BEGIN
 	IF NOT FOUND THEN
 		RETURN;
 	END IF;
+	IF g.queue IS NOT NULL THEN
+		key := 'location';
+		value := 'queue/' || g.queue::TEXT;
+		RETURN NEXT;
+		RETURN;
+	END IF;
 
 	res := 'location => fork';
 	cntr := 0;
@@ -611,7 +679,8 @@ BEGIN
 	END IF;
 
 	cntr2 := cntr;
-	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
 		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
 	END LOOP;
 

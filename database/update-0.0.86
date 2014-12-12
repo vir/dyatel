@@ -1,0 +1,147 @@
+BEGIN;
+
+-- missed from previous version, adding here
+CREATE OR REPLACE FUNCTION linetracker_ini(msg HSTORE) RETURNS VOID AS $$
+DECLARE
+        u INTEGER;
+BEGIN
+        IF msg->'chan' LIKE 'fork/%' THEN
+                RETURN;
+        END IF;
+        u := userid(msg->'external');
+        IF u IS NULL AND msg->'direction' = 'outgoing' AND (msg->'calledfull') IS NOT NULL THEN
+                u := userid(msg->'calledfull');
+        END IF;
+        IF u IS NOT NULL THEN
+                INSERT INTO linetracker(uid, direction, status, chan, caller, called, billid) VALUES (u, msg->'direction', msg->'status', msg->'chan', msg->'caller', msg->'called', msg->'billid');
+        END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+-- queues
+CREATE TABLE queues(
+	id SERIAL PRIMARY KEY,
+	mintime INTEGER DEFAULT 500,
+	length INTEGER DEFAULT 0,
+	maxout INTEGER DEFAULT -1,
+	greeting TEXT,
+	onhold TEXT,
+	maxcall INTEGER,
+	prompt TEXT,
+	notify TEXT,
+	detail BOOLEAN DEFAULT TRUE,
+	single BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE queuestats(
+	q INTEGER NOT NULL REFERENCES queues(id) ON DELETE CASCADE,
+	ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	required INTEGER,
+	cur INTEGER,
+	waiting INTEGER,
+	found INTEGER
+);
+CREATE OR REPLACE FUNCTION queues_avail(q TEXT, required INTEGER, cur INTEGER, waiting INTEGER)
+	RETURNS TABLE(location TEXT, username TEXT, maxcall INTEGER, prompt TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	rowcount INTEGER DEFAULT 0;
+	k TEXT;
+	v TEXT;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE queue = q::INTEGER;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY random() LIMIT required LOOP
+		cntr := 1;
+		SELECT * INTO res, cntr FROM regs_route_part(t.num, res, cntr);
+		-- convert hstore to json
+		location := '{"location": "fork"';
+		FOR k, v IN SELECT * FROM each(res) LOOP
+			location := location || ', "' || k || '": "' || regexp_replace(v, E'([\\"])', E'\\\\\\1', 'g') || '"';
+		END LOOP;
+		location := location || '}';
+		username := t.num;
+		IF cntr > 1 THEN
+			RETURN NEXT;
+			rowcount := rowcount + 1;
+		END IF;
+	END LOOP;
+	INSERT INTO queuestats(q, required, cur, waiting, found) VALUES (g.queue, required, cur, waiting, rowcount);
+END;
+$$ LANGUAGE PlPgSQL;
+
+ALTER TABLE callgroups ADD queue INTEGER NULL REFERENCES queues(id) ON DELETE SET NULL;
+ALTER TABLE callgrpmembers ADD enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g RECORD;
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
+BEGIN
+	SELECT * INTO g FROM callgroups WHERE num = called_arg;
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+	IF g.queue IS NOT NULL THEN
+		key := 'location';
+		value := 'queue/' || g.queue::TEXT;
+		RETURN NEXT;
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
+	END LOOP;
+
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
+	END IF;
+
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+COMMIT;
+
+-- vim: ft=sql
+
