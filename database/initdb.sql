@@ -443,8 +443,11 @@ CREATE TABLE numkinds(
 	tag TEXT,
 	set_local_caller BOOLEAN NOT NULL DEFAULT FALSE,
 	set_context TEXT NULL,
-	ins_prefix TEXT NOT NULL DEFAULT ''
+	ins_prefix TEXT NOT NULL DEFAULT '',
+	callabale BOOLEAN NOT NULL DEFAULT TRUE,
+	announce TEXT NULL
 );
+
 
 INSERT INTO numkinds (descr) VALUES ('Celluar'), ('Home');
 
@@ -484,9 +487,19 @@ BEGIN
 	-- Add 'offline' and 'No answer' divertions
 	FOR t IN SELECT normalize_num(n.val) AS val, n.timeout, k.*
 			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
-			WHERE uid = userid(called_arg) AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
+			WHERE uid = userid(called_arg) AND k.callabale AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
 		IF res::TEXT <> '' THEN
 			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- append to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		IF t.announce IS NOT NULL THEN
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.announce);
+			res := res || hstore('callto.' || cntr || '.single', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.ringer', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.autoring', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
 			cntr := cntr + 1;
 			res := res || hstore('callto.' || cntr, '|');
 		END IF;
