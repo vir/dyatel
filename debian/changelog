@@ -1,3 +1,9 @@
+dyatel (0.0.88) UNRELEASED; urgency=low
+
+  * Fix control file
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 15 Dec 2014 16:18:51 +0300
+
 dyatel (0.0.87) UNRELEASED; urgency=low
 
   * Divertion announcements added

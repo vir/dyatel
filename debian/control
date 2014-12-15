@@ -14,8 +14,8 @@ Depends: dbconfig-common, libpg-hstore-perl,
  supervisor-daemon (>= 1.0.2), libyate-perl (>= 5.0.1~vir2013121601~a), libconfig-jfdi-perl,
  libcatalyst-modules-perl, libfcgi-procmanager-perl,
  liblog-any-adapter-perl, liblog-any-adapter-catalyst-perl,
- php5-cli
-Recommends: yate (>= yate_5.4.1~vir2014121201~a), yate-pgsql,
+ php5-cli, libmce-perl
+Recommends: yate (>= 5.4.1~vir2014121201~a), yate-pgsql,
  postgresql-client, postgresql-contrib (>= 9.0),
  atftpd | tftpd, libimage-magick-perl
 Suggests: yate-telhw, timidity, madplay
