@@ -33,185 +33,6 @@ sub print
 	print "$pkg: @_\n";
 }
 
-package Dyatel::Daw::Stats;
-use base qw/Dyatel::Daw::Base/;
-
-sub new
-{
-	my $class = shift;
-	my $self = bless { @_ }, $class;
-	return $self;
-}
-
-sub append
-{
-	my $self = shift;
-	my($hr) = @_;
-	foreach my $key(keys %$hr) {
-		push @{$self->{$key}}, $hr->{$key};
-	}
-}
-
-sub dump
-{
-	my $self = shift; local $_;
-	my $str = '(min, avg, max)[cnt];';
-	foreach my $key(sort keys %$self) {
-		next if $key =~ /^_/;
-		$self->limit_data($key);
-		my($min, $max, $sum);
-		my $cnt = @{ $self->{$key} };
-		foreach(@{ $self->{$key} }) {
-			$sum += $_;
-			$min = $_ if !defined($min) || $_ < $min;
-			$max = $_ if !defined($max) || $_ > $max;
-		}
-		$str .= sprintf " %s: (%.2f, %.2f, %.2f)[%d]", $key, $min, $sum / $cnt, $max, $cnt;
-	}
-	$self->print($str);
-}
-
-sub limit_data
-{
-	my $self = shift;
-	my($key) = @_;
-	my $cnt = @{ $self->{$key} };
-	my $lmt = 20;
-	if($cnt > $lmt) {
-		splice @{ $self->{$key} }, 0, $cnt - $lmt;
-	}
-}
-
-package Dyatel::Daw::Control;
-use base qw/Dyatel::Daw::Base/;
-use threads;
-use threads::shared;
-use Thread::Queue;
-
-sub new
-{
-	my $class = shift;
-	my($config, $opts) = @_;
-	my $verbose:shared = delete $opts->{v};
-	my $self = bless { config => shared_clone($config), opts => shared_clone($opts), verbose => $verbose, processors => { } }, $class;
-	$self->{maxprocessors} = 10;
-	$self->{startprocessors} = 3;
-	$self->{stats} = Dyatel::Daw::Stats->new();
-	return $self;
-}
-
-sub run
-{
-	my $self = shift; local $_;
-	my $rc = 0;
-	$self->{$_} = Thread::Queue->new() foreach(qw( dataqueue ctrlqueue statqueue ));
-	$self->spawn_yate_handle();
-	$self->spawn_processor() for(1 .. $self->{startprocessors});
-	for(;;) {
-		my $el = $self->{ctrlqueue}->dequeue_timed(10);
-		if(not defined $el) {
-			$self->periodic_check();
-		} elsif($el eq 'exit' || $el eq 'finish') {
-			last;
-		} elsif($el eq 'spawn') {
-			my $thread_count = keys %{$self->{processors}};
-			if($thread_count < $self->{maxprocessors}) {
-				$self->spawn_processor();
-			} else {
-				$self->print("Can't spawn more processors, aready spawned $thread_count");
-			}
-		} else {
-			$self->print("Got unknown command $el");
-		}
-	}
-	$self->stop_all_processors();
-	$self->stop_yate_handle();
-	return $rc;
-}
-
-sub spawn_yate_handle
-{
-	my $self = shift;
-	my $thread = threads->create(sub {
-#		require Dyatel::Daw::YateHandle;
-		my $pkg = $self->{opts}{t} ? 'Dyatel::Daw::TestHandle' : 'Dyatel::Daw::YateHandle';
-		my $processor = $pkg->new(
-			config => $self->{config},
-			ctrlqueue => $self->{ctrlqueue},
-			dataqueue => $self->{dataqueue},
-			verbose => $self->{verbose},
-		);
-		$processor->run();
-	});
-	$self->print("Spawned yate handle thread ".$thread->tid()) if $self->{verbose};
-	$self->{yatehandle} = $thread;
-}
-
-sub spawn_processor
-{
-	my $self = shift;
-	my $thread = threads->create(sub {
-#		require Dyatel::Daw::Processor;
-		my $processor = Dyatel::Daw::Processor->new(
-			config =>$self->{config}{Daw},
-			dataqueue => $self->{dataqueue},
-			statqueue => $self->{statqueue},
-			verbose => $self->{verbose},
-		);
-		$processor->run();
-	});
-	$self->print("Spawned processor thread ".$thread->tid()) if $self->{verbose};
-	$self->{processors}{$thread->tid()} = $thread;
-}
-
-sub stop_all_processors
-{
-	my $self = shift;
-	my $thread_count = keys %{$self->{processors}};
-	$self->print("Shutting down $thread_count processors") if $self->{verbose};
-	for(my $i = 0; $i < $thread_count; ++$i) {
-		$self->{dataqueue}->enqueue('exit');
-	}
-	foreach my $tid(keys %{ $self->{processors} }) {
-		$self->{processors}{$tid}->join();
-	}
-}
-
-sub stop_yate_handle
-{
-	my $self = shift;
-	warn "XXX unimplemented stop_yate_handle";
-#	$self->{yatehandle}->join();
-}
-
-sub periodic_check
-{
-	my $self = shift;
-	my $thread_count = keys %{$self->{processors}};
-	my $queue_length = $self->{dataqueue}->pending();
-	$self->print("Queue length: $queue_length, $thread_count worker threads") if $self->{verbose};
-	if($queue_length > 1 && $thread_count < $self->{maxprocessors}) {
-		$self->spawn_processor();
-	}
-
-	while(my $e = $self->{statqueue}->dequeue_nb()) {
-		$self->{stats}->append($e) if $self->{stats};
-	}
-	$self->{stats}->dump() if $self->{stats};
-}
-
-our $opts = 'hvt';
-
-sub help
-{
-	print << "***";
-Usage: $0 [opts]
-	-h		- this help
-	-v		- verbose output
-	-t		- Use testing data source instead of real Yate
-***
-}
-
 package Dyatel::Daw::YateHandle;
 use base qw/Dyatel::Daw::Base/;
 use threads::shared;
@@ -220,40 +41,41 @@ use Yate v0.250;
 sub new
 {
 	my $class = shift;
-	my $self = bless { @_ }, $class;
-	$self->{config} = $self->{config}->{Model}{Yate}{extmodule};
+	my($config, $queue) = @_;
+	my $self = bless { config => $config->{Model}{Yate}{extmodule}, dataqueue => $queue }, $class;
 	return $self;
 }
 
 sub install_handlers
 {
 	my $self = shift;
-	my $message = new Yate(Debug=>$self->{debug} // 0);
-	$message->connect($self->{config}->{address}.':'.$self->{config}->{port}, 'global', $0);
-	$message->install('call.execute', sub {
+	my $y = new Yate(Debug=>$self->{debug} // 0);
+	$y ->connect($self->{config}->{address}.':'.$self->{config}->{port}, 'global', $0);
+	$y->setlocal('nonblocking', 'true');
+	$y->install('call.execute', sub {
 		my $msg = shift;
 		$self->print("Got message ".$msg->header('name'));
 		$self->enqueue_data($msg->params);
 		return undef;
 	}, 20);
-#	$message->install("engine.status",\&on_engine_status,200);
-#	$message->install("engine.debug",\&on_engine_debug,200);
-	$message->listen();
-	$self->{yate} = $message;
+	$y->listen();
+	$self->{yate} = $y;
 }
 
 sub enqueue_data
 {
 	my $self = shift;
 	my($hr) = @_;
-	my $ts:shared = Time::HiRes::time();
-	my $msg = shared_clone($hr);
+	my $ts = Time::HiRes::time();
+	my $msg = { %$hr };
+	delete $msg->{handlers};
 	$msg->{TS} = $ts;
 	$self->{dataqueue}->enqueue($msg);
 	if($self->{dataqueue}->pending() > 1) {
 		my $head = $self->{dataqueue}->peek();
 		if($head && $ts - $head->{TS} > 0.5) {
-			$self->{ctrlqueue}->enqueue('spawn');
+#			$self->{ctrlqueue}->enqueue('spawn');
+			warn "TOPMO3uM!";
 		}
 	}
 }
@@ -263,7 +85,7 @@ sub run
 	my $self = shift;
 	$self->install_handlers;
 	$self->listen();
-	$self->{ctrlqueue}->enqueue('finish');
+#	$self->{ctrlqueue}->enqueue('finish');
 }
 
 package Dyatel::Daw::TestHandle;
@@ -351,13 +173,6 @@ our @msgs = (
 	\%msg2,
 );
 
-sub new
-{
-	my $class = shift;
-	my $self = bless { @_ }, $class;
-	return $self;
-}
-
 sub run
 {
 	my $self = shift;
@@ -367,7 +182,7 @@ sub run
 		my $msg = $msgs[rand(@msgs)];
 		$self->enqueue_data($msg);
 	}
-	$self->{ctrlqueue}->enqueue('finish');
+#	$self->{ctrlqueue}->enqueue('finish');
 }
 
 
@@ -381,13 +196,11 @@ our @required_modules = qw( Dyatel::Model::DB Dyatel::Schema Template Dyatel::Mo
 sub new
 {
 	my $class = shift; local $_;
-	my $self = bless { @_ }, $class;
-#	$self->{dbh} = Dyatel::ExtConfig::dbh();
+	my($config, $queue) = @_;
+	my $self = bless { config => $config->{Daw}, dataqueue => $queue }, $class;
 	foreach(@required_modules) {
 		eval "require $_" or die "Can't load $_: $@";
 	}
-#	print "Config: ".Dumper(Dyatel::Model::DB->config);
-#	my $connect_info = Dyatel::Model::DB->config->{connect_info};
 	$self->{db} = Dyatel::Model::DB->new();
 	$self->{tt} = Template->new(
 		INCLUDE_PATH => $self->{config}{templates},  # or list ref
@@ -414,7 +227,7 @@ sub run
 		next unless ref($e) eq 'HASH';
 		next unless $self->is_our_call($e);
 		if($e->{TS}) {
-			$self->{statqueue}->enqueue({qdelay => $ts - $e->{TS}});
+#			$self->{statqueue}->enqueue({qdelay => $ts - $e->{TS}});
 		}
 		eval {
 			$self->process($e);
@@ -423,7 +236,7 @@ sub run
 			warn "Error: $@\n";
 		}
 		my $ts2 = Time::HiRes::time();
-		$self->{statqueue}->enqueue({pdelay => $ts2 - $ts});
+#		$self->{statqueue}->enqueue({pdelay => $ts2 - $ts});
 	}
 }
 
@@ -502,19 +315,75 @@ sub process
 }
 
 package main;
+use strict;
+use warnings FATAL => 'uninitialized';
+use MCE;
+use MCE::Queue;
 use Getopt::Std;
 
 binmode STDOUT, ':utf8';
 binmode STDERR, ':utf8';
 
-my %opts; getopts($Dyatel::Daw::Control::opts, \%opts);
-if(exists $opts{'h'}) { Dyatel::Daw::Control::help(); exit 0; }
+sub help
+{
+	print << "***";
+Usage: $0 [opts]
+	-h		- this help
+	-v		- verbose output
+	-t		- Use testing data source instead of real Yate
+***
+}
+
+my %opts; getopts('hvt', \%opts);
+if(exists $opts{'h'}) { help(); exit 0; }
 
 $|=1;
 
 eval "require Dyatel::ExtConfig;" or die $@;
 my $conf = Dyatel::ExtConfig::load();
-my $process = new Dyatel::Daw::Control($conf, \%opts);
-exit $process->run();
+
+my $q = MCE::Queue->new;
+
+sub task1
+{
+	my($mce) = @_;
+	$0 = 'reader';
+	my $h = $opts{t}
+		? Dyatel::Daw::TestHandle->new($conf, $q)
+		: Dyatel::Daw::YateHandle->new($conf, $q);
+	$h->run();
+}
+
+sub task2
+{
+	my($mce) = @_;
+	my $arg = $mce->user_args();
+	$0 = 'processor';
+	my $p = Dyatel::Daw::Processor->new($conf, $q);
+	$p->run();
+}
+
+my $mce = MCE->new(
+	task_end   => sub {
+		my ($mce, $task_id, $task_name) = @_;
+		print "Task [$task_id -- $task_name] completed processing\n";
+	},
+	user_tasks => [{
+		task_name   => 'reader',
+		max_workers => 1,
+		user_func   => \&task1,
+		use_threads => 0
+	},{
+		task_name   => 'processor',
+		max_workers => 4,
+		user_func   => \&task2,
+		use_threads => 0,
+		user_args => [ qw/ one two three / ]
+	}]
+);
+
+MCE->run();
+
+
 
 
