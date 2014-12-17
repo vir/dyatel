@@ -375,7 +375,7 @@ my $mce = MCE->new(
 		use_threads => 0
 	},{
 		task_name   => 'processor',
-		max_workers => 4,
+		max_workers => $conf->{Daw}{Workers} || 4,
 		user_func   => \&task2,
 		use_threads => 0,
 		user_args => [ qw/ one two three / ]
