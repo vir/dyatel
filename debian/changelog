@@ -1,3 +1,9 @@
+dyatel (0.0.90) UNRELEASED; urgency=low
+
+  * New configuration parameter: number of dyatel-daw workers.
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 17 Dec 2014 17:08:16 +0300
+
 dyatel (0.0.89) UNRELEASED; urgency=low
 
   * Fix prev. incostinsies.
