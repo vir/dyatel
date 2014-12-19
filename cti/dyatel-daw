@@ -28,15 +28,13 @@ sub print
 	my $self = shift;
 	my $pkg = ref $self;
 	$pkg =~ s#.*::##;
-	my $tid = threads->self()->tid();
-	$pkg .= sprintf "[%02d]", $tid if $tid;
 	print "$pkg: @_\n";
 }
 
 package Dyatel::Daw::YateHandle;
 use base qw/Dyatel::Daw::Base/;
-use threads::shared;
 use Yate v0.250;
+use constant SEEN_TIMEOUT => 30;
 
 sub new
 {
@@ -55,7 +53,18 @@ sub install_handlers
 	$y->install('call.execute', sub {
 		my $msg = shift;
 		$self->print("Got message ".$msg->header('name'));
+		# key includes called number as different users can have different phonebooks
+		my $key = ($msg->param('billid')//'x').'-'.($msg->param('caller')//'x').'-'.($msg->param('called')//'x');
+		if($self->{seen_h}{$key} && (time() - $self->{seen_h}{$key} < SEEN_TIMEOUT)) {
+			$self->print("key $key already known for ",  time() - $self->{seen_h}{ $self->{seen_q}[0] }, " seconds");
+			return undef;
+		}
+		$self->{seen_h}{$key} = time();
+		push @{ $self->{seen_q} }, $key;
 		$self->enqueue_data($msg->params);
+		while(time() - $self->{seen_h}{ $self->{seen_q}[0] } >= SEEN_TIMEOUT) {
+			delete $self->{seen_h}{ shift @{$self->{seen_q}} };
+		}
 		return undef;
 	}, 20);
 	$y->listen();
@@ -168,9 +177,34 @@ our %msg2 = (
 
 );
 
+our %msg3 = (
+	'status' => 'incoming',
+	'callerscreening' => 'network-provided',
+	'billid' => '1418793742-4221',
+	'formats' => 'alaw,slin,mulaw,gsm,ilbc20,ilbc30,g729,speex,g723',
+	'direction' => 'incoming',
+	'callednumtype' => 'unknown',
+	'callername' => '',
+	'context' => 'from_outside',
+	'caller' => '+79213131113',
+	'address' => 'trunk1/8',
+	'id' => 'sig/979',
+	'callernumplan' => 'isdn',
+	'module' => 'sig',
+	'called' => '3259747',
+	'callerpres' => 'allowed',
+	'callednumplan' => 'isdn',
+	'callto' => 'lateroute/871',
+	'overlapped' => 'false',
+	'format' => 'alaw',
+	'callernumtype' => 'national',
+	'answered' => 'false'
+);
+
 our @msgs = (
 	\%msg1,
 	\%msg2,
+	\%msg3,
 );
 
 sub run
@@ -254,45 +288,44 @@ sub process
 {
 	my $self = shift;
 	my($e) = @_;
-	my $row = $self->db->resultset('Users')->find({num => $e->{called}});
-	return unless $row;
-	my $uid = $row->get_column('id');
-	print "Found user id $uid\n" if $self->{verbose};
-	my $inf = $self->db->xinfo($e->{caller}, { uid => $uid });
-	($inf) = @$inf;
-
-	my($template, $tag);
-	if($e->{reason} && $e->{reason} eq 'transfer') {
-		($inf) = @{ $self->db->xinfo($e->{diverter}, { uid => $uid }) };
-		$template = 'transfer.tt';
-		$tag = 'DIVERTION';
-	} else {
-		$tag = 'CALLER';
-		if($inf and %$inf) {
-			if($inf->{uid}) {
-				my $a = $self->{avatars}->get($inf->{uid});
-				$inf->{avatar} = $a if $a;
-			}
-			$template = 'intcall.tt';
+	my($template, $tag, $inf);
+	if(my $row = $self->db->resultset('Users')->find({num => $e->{called}})) {
+		my $uid = $row->get_column('id');
+		print "Found user id $uid\n" if $self->{verbose};
+		if($e->{reason} && $e->{reason} eq 'transfer') {
+			($inf) = @{ $self->db->xinfo($e->{diverter}, { uid => $uid }) };
+			$template = 'transfer.tt';
+			$tag = 'DIVERTION';
 		} else {
-			my $rs = $self->db->resultset('Cdr')->search({
-				direction => 'incoming',
-				billid => { '<>', $e->{billid} },
-				caller => $e->{caller},
-			}, {
-				'+select' => [
-					{ count => '*' },
-					{ date_trunc => [ "'day'", { age => { min => 'ts' } } ] },
-					{ age => { max => 'ts' } },
-					{ max => 'ts' },
-				],
-				'+as' => [qw/ callcount minage maxage maxts /],
-				columns => [ ],
-			});
-			$rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-			$inf = $rs->single;
-			$template = 'extcall.tt';
+			($inf) = @{ $self->db->xinfo($e->{caller}, { uid => $uid }) };
 		}
+		if($inf->{uid}) {
+			my $a = $self->{avatars}->get($inf->{uid});
+			$inf->{avatar} = $a if $a;
+		}
+		$template = 'intcall.tt';
+	}
+
+	$tag ||= 'CALLER';
+
+	unless($inf) {
+		my $rs = $self->db->resultset('Cdr')->search({
+			direction => 'incoming',
+			billid => { '<>', $e->{billid} },
+			caller => $e->{caller},
+		}, {
+			'+select' => [
+				{ count => '*' },
+				{ date_trunc => [ "'day'", { age => { min => 'ts' } } ] },
+				{ age => { max => 'ts' } },
+				{ max => 'ts' },
+			],
+			'+as' => [qw/ callcount minage maxage maxts /],
+			columns => [ ],
+		});
+		$rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+		$inf = $rs->single;
+		$template = 'extcall.tt';
 	}
 
 	my $output = '';
@@ -306,6 +339,10 @@ sub process
 
 	print "Rendered template $template: $output\n";
 
+	$self->db->resultset('Calllog')->search({
+		billid => $e->{billid},
+		tag => $tag,
+	})->delete;
 	$self->db->resultset('Calllog')->create({
 		billid => $e->{billid},
 		tag => $tag,
