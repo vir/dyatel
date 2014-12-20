@@ -1,9 +1,13 @@
 
 ## [% event.caller|html %]
 
+[% IF info.callcount %]
 Found [% info.callcount %] calls in last [% info.minage %].
 
 Most recent call: [% info.maxts %] ([% info.maxage %] ago).
+[% ELSE %]
+No previous calls found.
+[% END %]
 
 <span class="clearfix" />
 
