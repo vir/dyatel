@@ -87,7 +87,7 @@ CREATE TABLE regs (
 	ip_host INET,
 	ip_port INTEGER,
 	audio BOOLEAN DEFAULT TRUE,
-	route_params HSTORE;
+	route_params HSTORE
 );
 
 CREATE OR REPLACE FUNCTION regs_change_trigger() RETURNS TRIGGER AS $$
@@ -535,6 +535,16 @@ CREATE TABLE linetracker(
 	billid TEXT
 );
 
+CREATE OR REPLACE FUNCTION any_change_trigger_uid() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.uid::TEXT);
+	ELSE
+		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.uid::TEXT);
+	END IF;
+	RETURN NEW;
+END $$ LANGUAGE PlPgSQL;
+
 CREATE TRIGGER linetracker_change_trigger AFTER INSERT OR UPDATE OR DELETE
 	ON linetracker FOR EACH ROW EXECUTE PROCEDURE any_change_trigger_uid();
 
@@ -817,16 +827,6 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
-CREATE OR REPLACE FUNCTION any_change_trigger_uid() RETURNS TRIGGER AS $$
-BEGIN
-	IF TG_OP = 'DELETE' THEN
-		PERFORM pg_notify(TG_TABLE_NAME::TEXT, OLD.uid::TEXT);
-	ELSE
-		PERFORM pg_notify(TG_TABLE_NAME::TEXT, NEW.uid::TEXT);
-	END IF;
-	RETURN NEW;
-END $$ LANGUAGE PlPgSQL;
-
 
 
 -- Call pickup
@@ -1030,6 +1030,13 @@ CREATE TABLE prices(
 	descr TEXT
 );
 
+
+
+CREATE OR REPLACE FUNCTION random_string(INTEGER) RETURNS TEXT AS $$
+	SELECT array_to_string(ARRAY(SELECT substr('aeioubcdfghjkmnpqrstvwxyz23456789AEIOUBCDFGHJKMNPQRSTVWXYZ'::TEXT, 1+FLOOR(random()*58)::INTEGER, 1) FROM generate_series(1, $1)), '');
+$$ LANGUAGE SQL VOLATILE;
+
+
 -- http events receivers' sessions
 CREATE TABLE sessions (
 	token VARCHAR PRIMARY KEY DEFAULT random_string(16),
@@ -1129,9 +1136,6 @@ CREATE AGGREGATE public.last (
         stype    = anyelement
 );
 
-
-COMMIT;
--- vim: ft=sql
 
 
 -- vim: ft=sql
