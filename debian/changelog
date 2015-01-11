@@ -1,3 +1,9 @@
+dyatel (0.0.93) UNRELEASED; urgency=low
+
+  * Fix clean installation
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 12 Jan 2015 00:26:28 +0300
+
 dyatel (0.0.92) UNRELEASED; urgency=low
 
   * minor daW fixes
