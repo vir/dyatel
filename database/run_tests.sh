@@ -2,7 +2,7 @@
 #
 # (c) vir
 #
-# Last modified: 2015-01-13 12:31:40 +0300
+# Last modified: 2015-01-13 17:23:37 +0300
 #
 
 U=dyatel_test
@@ -27,7 +27,8 @@ done
 psql -U $U $D << ***
 SET search_path TO test, public;
 SELECT run_all_tests();
-SELECT * FROM results;
+SELECT * FROM results ORDER BY ts;
+SELECT COUNT(NULLIF(success, false)) AS success, COUNT(NULLIF(success, true)) AS errors FROM results;
 ***
 
 

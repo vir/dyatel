@@ -96,7 +96,7 @@ INSERT INTO directory (num, numtype, descr) VALUES ('5001', 'callgrp', 'Test Gro
 INSERT INTO directory (num, numtype, descr) VALUES ('5002', 'callgrp', 'Test Group 3');
 INSERT INTO directory (num, numtype, descr) VALUES ('5003', 'callgrp', 'Test Fourth group');
 INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5000', 'parallel', 0, 'tone/ring', 20000, NULL, NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5001', 'parallel', 0, 'tone/ring', 60000, '266', NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5001', 'linear', 0, 'tone/ring', 60000, '266', NULL);
 INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5002', 'parallel', 0, NULL, 0, NULL, 1);
 INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5003', 'parallel', 0, NULL, 0, NULL, NULL);
 
@@ -109,14 +109,14 @@ INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 6, '227', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 7, '228', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 8, '229', true);
 
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 1, '222', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 2, '223', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 3, '224', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 4, '225', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 5, '226', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 6, '227', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 7, '228', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (2, 8, '229', true);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 1, '222', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 2, '223', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 3, '224', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 4, '225', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 5, '226', 5, true, true);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 6, '227', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 7, '228', 5, true, false);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 8, '229', 5, true, false);
 
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (3, 1, '222', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (3, 2, '223', true);
@@ -158,6 +158,9 @@ INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (2, 'now()', '223@voip.ctm.ru/3291b21f0567ec3dde269efd001ef178', 'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, NULL, 'jabber', NULL, '192.168.67.220', 2135, true, NULL);
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (3, 'now()', 'somwhere/far/away',                                'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, NULL, 'hands', NULL, NULL, NULL, true, NULL);
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (4, 'now()', 'smewhere',                                         'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, NULL, 'hands', NULL, NULL, NULL, true, NULL);
+INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (5, 'now()', 'sip/sip:226@192.168.50.26:5060',                   'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'Cisco/SPA502G-7.5.5', 'sip', 'UDP', '192.168.50.26', 5060, true, '"oconnection_id"=>"general"');
+INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (6, 'now()', 'sip/sip:227@192.168.60.152:48422;transport=TLS;ob','now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'CSipSimple_m874-17/r2457', 'sip', 'TLS', '192.168.60.152', 48422, true, '"oconnection_id"=>"tls:192.168.8.53:5061-192.168.60.152:48422"');
+INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (7, 'now()', 'sip/sip:228@118.190.212.112:5060;transport=TCP',  'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'MyPBX', 'sip', 'TCP', '188.130.242.162', 56502, true, '"oconnection_id"=>"tcp:99.229.59.30:5060-188.130.242.162:56502"');
 
 
 INSERT INTO linetracker (uid, direction, status, chan, caller, called, billid) VALUES (1, 'incoming', 'answered', 'sip/951', '165',     '989052693929',   '1390584592-639');
