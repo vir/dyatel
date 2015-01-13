@@ -53,6 +53,8 @@ CREATE TABLE fingroups (
 	sortkey INTEGER NOT NULL DEFAULT 100
 );
 
+CREATE TYPE encription_mode AS ENUM('off', 'on', 'ssl');
+
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	num PHONE NOT NULL,
@@ -67,7 +69,8 @@ CREATE TABLE users (
 	dispname TEXT NULL,
 	login TEXT NULL,
 	badges TEXT[] NOT NULL DEFAULT '{}',
-	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL
+	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL,
+	secure encription_mode NOT NULL DEFAULT 'ssl'
 );
 ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX users_num_index ON users(num);
@@ -646,7 +649,8 @@ $$ LANGUAGE PlPgSQL;
 
 
 -- call groups
-CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary');
+-- http://en.wikipedia.org/wiki/Automatic_call_distributor#Distribution_methods
+CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary', 'uniform', 'queue');
 
 CREATE TABLE callgroups(
 	id SERIAL PRIMARY KEY,
@@ -664,7 +668,9 @@ CREATE TABLE callgrpmembers(
 	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	ord INTEGER,
 	num PHONE NOT NULL,
-	enabled BOOLEAN NOT NULL DEFAULT TRUE
+	enabled BOOLEAN NOT NULL DEFAULT TRUE,
+	maxcall INTEGER NOT NULL DEFAULT 8,
+	keepring BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
@@ -678,12 +684,15 @@ DECLARE
 	res HSTORE;
 	cntr INTEGER;
 	cntr2 INTEGER;
+	cntr3 INTEGER;
+	nextcallto TEXT;
 BEGIN
+	-- NOTE: Supported distribution schemes: parallel, linear, queue --
 	SELECT * INTO g FROM callgroups WHERE num = called_arg;
 	IF NOT FOUND THEN
 		RETURN;
 	END IF;
-	IF g.queue IS NOT NULL THEN
+	IF g.distr = 'queue' AND g.queue IS NOT NULL THEN
 		key := 'location';
 		value := 'queue/' || g.queue::TEXT;
 		RETURN NEXT;
@@ -702,9 +711,23 @@ BEGIN
 	END IF;
 
 	cntr2 := cntr;
-	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+	FOR t IN SELECT m.* FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
 			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
+			cntr2 := cntr2 + 1;
+			res := res || hstore('callto.' || cntr2, nextcallto);
+			nextcallto := NULL;
+		END IF;
+		cntr3 := cntr2;
 		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
+		IF g.distr = 'linear' THEN
+			IF cntr3 = cntr2 THEN
+				res := delete(res, 'callto.' || cntr2);
+				cntr2 := cntr2 - 1;
+			ELSE
+				nextcallto := CASE WHEN t.keepring THEN '|next=' ELSE '|drop=' END || (1000 * t.maxcall)::TEXT;
+			END IF;
+		END IF;
 	END LOOP;
 
 	IF cntr2 <> cntr THEN -- Members found
