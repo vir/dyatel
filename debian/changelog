@@ -1,3 +1,9 @@
+dyatel (0.0.94) UNRELEASED; urgency=low
+
+  * Added linear call distribution for call groups
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 13 Jan 2015 17:32:44 +0300
+
 dyatel (0.0.93) UNRELEASED; urgency=low
 
   * Fix clean installation
