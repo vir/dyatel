@@ -676,16 +676,52 @@ CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
 
 
-CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
-	RETURNS TABLE(key TEXT, value TEXT) AS $$
+CREATE OR REPLACE FUNCTION callgroups_route_part(grprec callgroups, res HSTORE, cntr INTEGER, stack TEXT[] DEFAULT '{}')
+	RETURNS TABLE (vals HSTORE, newcntr INTEGER) AS $$
 DECLARE
-	g RECORD;
-	t RECORD;
-	res HSTORE;
-	cntr INTEGER;
+	t callgrpmembers;
+	sg callgroups;
 	cntr2 INTEGER;
 	cntr3 INTEGER;
 	nextcallto TEXT;
+	x RECORD;
+BEGIN
+	cntr2 := cntr;
+	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
+			WHERE m.grp = grprec.id AND m.enabled AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
+			cntr2 := cntr2 + 1;
+			res := res || hstore('callto.' || cntr2, nextcallto);
+			nextcallto := NULL;
+		END IF;
+		cntr3 := cntr2;
+		IF (x.sg).id IS NOT NULL THEN
+			IF NOT (x.sg).num = ANY(stack) THEN
+				SELECT * INTO res, cntr2 FROM callgroups_route_part(x.sg, res, cntr2, stack || (x.sg).num::TEXT);
+			END IF;
+		ELSE
+			SELECT * INTO res, cntr2 FROM regs_route_part((x.m).num, res, cntr2);
+		END IF;
+		IF grprec.distr = 'linear' THEN
+			IF cntr3 = cntr2 THEN
+				res := delete(res, 'callto.' || cntr2);
+				cntr2 := cntr2 - 1;
+			ELSE
+				nextcallto := CASE WHEN (x.m).keepring THEN '|next=' ELSE '|drop=' END || (1000 * (x.m).maxcall)::TEXT;
+			END IF;
+		END IF;
+	END LOOP;
+	RETURN QUERY SELECT res, cntr2;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g callgroups;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
 BEGIN
 	-- NOTE: Supported distribution schemes: parallel, linear, queue --
 	SELECT * INTO g FROM callgroups WHERE num = called_arg;
@@ -711,24 +747,7 @@ BEGIN
 	END IF;
 
 	cntr2 := cntr;
-	FOR t IN SELECT m.* FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
-			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
-		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
-			cntr2 := cntr2 + 1;
-			res := res || hstore('callto.' || cntr2, nextcallto);
-			nextcallto := NULL;
-		END IF;
-		cntr3 := cntr2;
-		SELECT * INTO res, cntr2 FROM regs_route_part(t.num, res, cntr2);
-		IF g.distr = 'linear' THEN
-			IF cntr3 = cntr2 THEN
-				res := delete(res, 'callto.' || cntr2);
-				cntr2 := cntr2 - 1;
-			ELSE
-				nextcallto := CASE WHEN t.keepring THEN '|next=' ELSE '|drop=' END || (1000 * t.maxcall)::TEXT;
-			END IF;
-		END IF;
-	END LOOP;
+	SELECT * INTO res, cntr2 FROM callgroups_route_part(g, res, cntr2);
 
 	IF cntr2 <> cntr THEN -- Members found
 		cntr := cntr2;

@@ -20,8 +20,8 @@ INSERT INTO directory(num, numtype, descr) VALUES ('222', 'user', 'vir test spa9
 INSERT INTO users (num, alias, domain, password, login, badges, fingrp, secure) VALUES ('222', 'vir', 'voip.ctm.ru', '222', 'vir@ctm.ru', '{admin,finance}', NULL, 'ssl');
 INSERT INTO directory(num, numtype, descr) VALUES ('223', 'user', 'vir test2');
 INSERT INTO users (num, alias, domain, password, login, badges, fingrp, secure) VALUES ('223', 'vir2', 'voip.ctm.ru', '223', NULL, '{}', 2, 'on');
-INSERT INTO directory(num, numtype, descr) SELECT s::TEXT, 'user', 'test user ' || s::TEXT FROM generate_series(224, 229) AS s;
-INSERT INTO users (num, domain, password, fingrp) SELECT s::TEXT, 'voip.ctm.ru', s::TEXT, 1 FROM generate_series(224, 229) AS s;
+INSERT INTO directory(num, numtype, descr) SELECT s::TEXT, 'user', 'test user ' || s::TEXT FROM generate_series(224, 239) AS s;
+INSERT INTO users (num, domain, password, fingrp) SELECT s::TEXT, 'voip.ctm.ru', s::TEXT, 1 FROM generate_series(224, 239) AS s;
 
 
 INSERT INTO directory(num, numtype, descr) VALUES ('822', 'ivr', 'Sample auto-attendant');
@@ -91,15 +91,22 @@ INSERT INTO vcards (uid, vcard) VALUES (2, '<vCard xmlns="vcard-temp">
 INSERT INTO queues (id, mintime, length, maxout, greeting, onhold, maxcall, prompt, notify, detail, single) VALUES (1, 500, 0, -1, NULL, NULL, NULL, NULL, NULL, true, false);
 
 
-INSERT INTO directory (num, numtype, descr) VALUES ('5000', 'callgrp', 'Test BIG group ');
-INSERT INTO directory (num, numtype, descr) VALUES ('5001', 'callgrp', 'Test Group SUPPORT');
-INSERT INTO directory (num, numtype, descr) VALUES ('5002', 'callgrp', 'Test Group 3');
+INSERT INTO directory (num, numtype, descr) VALUES ('5000', 'callgrp', 'Test BIG parallel group');
+INSERT INTO directory (num, numtype, descr) VALUES ('5001', 'callgrp', 'Test Linear Group');
+INSERT INTO directory (num, numtype, descr) VALUES ('5002', 'callgrp', 'Test Group With Queue');
 INSERT INTO directory (num, numtype, descr) VALUES ('5003', 'callgrp', 'Test Fourth group');
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5000', 'parallel', 0, 'tone/ring', 20000, NULL, NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5001', 'linear', 0, 'tone/ring', 60000, '266', NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5002', 'parallel', 0, NULL, 0, NULL, 1);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5003', 'parallel', 0, NULL, 0, NULL, NULL);
+INSERT INTO directory (num, numtype, descr) VALUES ('5004', 'callgrp', 'Group of groups');
+INSERT INTO directory (num, numtype, descr) VALUES ('5005', 'callgrp', 'Simple group');
+INSERT INTO directory (num, numtype, descr) VALUES ('5006', 'callgrp', 'grup with infinite recursion');
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5000', 'parallel', 0, 'tone/ring', 20000, NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5001', 'linear',   0, 'tone/ring', 60000, '266', NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5002', 'parallel', 0, NULL,        0,     NULL,  1);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5003', 'parallel', 0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5004', 'linear',   0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5005', 'parallel', 0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5006', 'linear',   0, NULL,        0,     NULL,  NULL);
 
+-- 5000
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 1, '222', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 2, '223', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 3, '224', true);
@@ -109,6 +116,7 @@ INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 6, '227', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 7, '228', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 8, '229', true);
 
+-- 5001
 INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 1, '222', 5, true, false);
 INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 2, '223', 5, true, false);
 INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 3, '224', 5, true, false);
@@ -118,16 +126,32 @@ INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2
 INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 7, '228', 5, true, false);
 INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (2, 8, '229', 5, true, false);
 
+-- 5002
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (3, 1, '222', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (3, 2, '223', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (3, 3, '224', true);
 
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 1, '222', true);
-INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 2, '223', true);
+-- 5003
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 3, '224', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 4, '225', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 5, '226', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (4, 6, '227', true);
+
+-- 5004
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (5, 1, '5003', 5, true, true);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (5, 2, '5005', 5, true, true);
+INSERT INTO callgrpmembers (grp, ord, num, maxcall, enabled, keepring) VALUES (5, 4, '5006', 5, true, false);
+
+-- 5005
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (6, 1, '229', true);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (6, 2, '230', true);
+
+-- 5006
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 1, '231', true);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 2, '232', true);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 3, '5004', true); -- loop!
+
+
 
 
 INSERT INTO pickupgroups (id, callgrepcopy, descr) VALUES (1, NULL, 'Test PickupGroup 1');
@@ -161,6 +185,8 @@ INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (5, 'now()', 'sip/sip:226@192.168.50.26:5060',                   'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'Cisco/SPA502G-7.5.5', 'sip', 'UDP', '192.168.50.26', 5060, true, '"oconnection_id"=>"general"');
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (6, 'now()', 'sip/sip:227@192.168.60.152:48422;transport=TLS;ob','now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'CSipSimple_m874-17/r2457', 'sip', 'TLS', '192.168.60.152', 48422, true, '"oconnection_id"=>"tls:192.168.8.53:5061-192.168.60.152:48422"');
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (7, 'now()', 'sip/sip:228@118.190.212.112:5060;transport=TCP',  'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'MyPBX', 'sip', 'TCP', '188.130.242.162', 56502, true, '"oconnection_id"=>"tcp:99.229.59.30:5060-188.130.242.162:56502"');
+INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) SELECT s::INTEGER, 'now()', 'sip/sip:'||u.num||'@1.2.3.4:5060', 'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, 'Some PBX', 'sip', 'UDP', '1.2.3.4', 55555, true, '' FROM generate_series(8, 23) AS s INNER JOIN users u ON u.id = s;
+
 
 
 INSERT INTO linetracker (uid, direction, status, chan, caller, called, billid) VALUES (1, 'incoming', 'answered', 'sip/951', '165',     '989052693929',   '1390584592-639');
