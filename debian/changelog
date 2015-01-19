@@ -1,3 +1,9 @@
+dyatel (0.0.96) UNRELEASED; urgency=low
+
+  * fix wheezy and squeeze build
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 19 Jan 2015 22:44:33 +0300
+
 dyatel (0.0.95) UNRELEASED; urgency=low
 
   * Allow adding callgroups into callgroups (with recursion)
