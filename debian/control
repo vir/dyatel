@@ -4,9 +4,10 @@ Priority: optional
 Maintainer: Vasily i. Redkin <vir@ctm.ru>
 Build-Depends: build-essential, debhelper (>= 7), pkg-config,
  autoconf (>= 2.50), libcatalyst-devel-perl, libcatalyst-modules-perl,
- libmodule-install-perl, libtest-fatal-perl, libjson-maybexs-perl,
- libplack-middleware-methodoverride-perl, libsafe-isa-perl,
- libstream-buffered-perl
+ libmodule-install-perl
+#, libtest-fatal-perl, libjson-maybexs-perl,
+# libplack-middleware-methodoverride-perl, libsafe-isa-perl,
+# libstream-buffered-perl
 Standards-Version: 3.7.3
 Homepage: http://github.com/vir/dyatel/
 
