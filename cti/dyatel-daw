@@ -388,7 +388,6 @@ my $q = MCE::Queue->new;
 sub task1
 {
 	my($mce) = @_;
-	$0 = 'reader';
 	my $h = $opts{t}
 		? Dyatel::Daw::TestHandle->new($conf, $q)
 		: Dyatel::Daw::YateHandle->new($conf, $q);
@@ -399,16 +398,11 @@ sub task2
 {
 	my($mce) = @_;
 	my $arg = $mce->user_args();
-	$0 = 'processor';
 	my $p = Dyatel::Daw::Processor->new($conf, $q);
 	$p->run();
 }
 
 my $mce = MCE->new(
-	task_end   => sub {
-		my ($mce, $task_id, $task_name) = @_;
-		print "Task [$task_id -- $task_name] completed processing\n";
-	},
 	user_tasks => [{
 		task_name   => 'reader',
 		max_workers => 1,
@@ -420,7 +414,21 @@ my $mce = MCE->new(
 		user_func   => \&task2,
 		use_threads => 0,
 		user_args => [ qw/ one two three / ]
-	}]
+	}],
+	task_end   => sub {
+		my($mce, $task_id, $task_name) = @_;
+		print "Task [$task_id -- $task_name] completed processing\n";
+	},
+	user_begin => sub {
+		my($mce, $task_id, $task_name) = @_;
+		$0 =~ s#.*/##;
+		$0 .= '-'.$task_name if $task_name;
+	},
+	on_post_exit => sub {
+		my($self, $e) = @_;
+		print "$e->{wid}: $e->{pid}: status $e->{status}: $e->{msg}";
+		$self->restart_worker($e->{wid});
+	},
 );
 
 MCE->run();
