@@ -207,7 +207,7 @@ ctrlrModule.controller('CallDlgCtrl', function($http, $scope, $modalInstance, $t
 
 });
 
-ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout, CTI) {
+ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout, CTI, $rootScope) {
 	$scope.phone = '';
 	$scope.linetracker = [ ];
 	$scope.blfs = [ ];
@@ -367,7 +367,29 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	$scope.addNote = false;
 	$scope.$watch('current.activecallid', $scope.updateCallLog);
 	$scope.$on('calllog', $scope.updateCallLog);
+
+	if($rootScope.redirInfo) {
+		var a = $rootScope.redirInfo.action.split('/', 2);
+		switch(a[0].toLowerCase()) {
+			case 'call':
+				var x = { num: a[1] };
+				$scope.phone = x.num;
+				$scope.doCall(x);
+				break;
+			default:
+				alert('Unknown action: ' + angular.toJson($rootScope.redirInfo));
+				break;
+		}
+		$rootScope.redirInfo = null;
+	}
 });
+
+ctrlrModule.controller('GoRedirCtrl', function($rootScope, $routeParams, $location) {
+	$rootScope.redirInfo = angular.copy($routeParams);
+	$location.search('');
+	$location.path('/home');
+});
+
 ctrlrModule.directive('callTime', function() {
 	return {
 		restrict: 'E',

@@ -15,6 +15,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/myphone',         { templateUrl: '/static/u/myphone.htm',    controller: 'MyPhoneCtrl',            title: 'Мой телефон' }).
 	when('/myabbrs',         { templateUrl: '/static/u/myabbrs.htm',    controller: 'MyAbbrsCtrl',            title: 'Сокращенные номера' }).
 	when('/blfs',            { templateUrl: '/static/u/blfs.htm',       controller: 'MyBLFsCtrl',             title: 'BLF' }).
+	when('/go/:action*',     { template: ' ', controller: 'GoRedirCtrl', reloadOnSearch: true, caseInsensitiveMatch: true, }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);
