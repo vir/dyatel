@@ -1,3 +1,10 @@
+dyatel (0.0.97) UNRELEASED; urgency=low
+
+  * restart crashed dyatel-daw workers
+  * GET request for /u/spa#/go/call/+NUMBER url will open call dialog
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 22 Jan 2015 12:46:49 +0300
+
 dyatel (0.0.96) UNRELEASED; urgency=low
 
   * fix wheezy and squeeze build
