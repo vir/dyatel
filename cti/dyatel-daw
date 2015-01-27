@@ -23,12 +23,13 @@ use lib '.';
 #                               `-------'
 
 package Dyatel::Daw::Base;
+use MCE;
 sub print
 {
 	my $self = shift;
 	my $pkg = ref $self;
 	$pkg =~ s#.*::##;
-	print "$pkg: @_\n";
+	MCE->sendto("STDOUT", "$pkg: @_\n");
 }
 
 package Dyatel::Daw::YateHandle;
@@ -295,7 +296,7 @@ sub process
 	my($template, $tag, $inf);
 	if(my $row = $self->db->resultset('Users')->find({num => $e->{called}})) {
 		my $uid = $row->get_column('id');
-		print "Found user id $uid\n" if $self->{verbose};
+		$self->print("Found user id $uid\n") if $self->{verbose};
 		if($e->{reason} && $e->{reason} eq 'transfer') {
 			($inf) = @{ $self->db->xinfo($e->{diverter}, { uid => $uid }) };
 			$template = 'transfer.tt';
@@ -337,11 +338,11 @@ sub process
 		info => $inf,
 		event => $e,
 	};
-	print "template '$template' parameters: ".Dumper($vars) if $self->{verbose};
+	$self->print("template '$template' parameters: ".Dumper($vars)) if $self->{verbose};
 	$self->{tt}->process($template, $vars, \$output)
 		or die $self->{tt}->error(), "\n";
 
-	print "Rendered template $template: $output\n";
+	$self->print("Rendered template $template: $output\n") if $self->{verbose};
 
 	$self->db->resultset('Calllog')->search({
 		billid => $e->{billid},
@@ -417,7 +418,7 @@ my $mce = MCE->new(
 	}],
 	task_end   => sub {
 		my($mce, $task_id, $task_name) = @_;
-		print "Task [$task_id -- $task_name] completed processing\n";
+		MCE->sendto("STDOUT", "Task [$task_id -- $task_name] completed processing\n");
 	},
 	user_begin => sub {
 		my($mce, $task_id, $task_name) = @_;
@@ -426,7 +427,7 @@ my $mce = MCE->new(
 	},
 	on_post_exit => sub {
 		my($self, $e) = @_;
-		print "$e->{wid}: $e->{pid}: status $e->{status}: $e->{msg}";
+		MCE->sendto("STDOUT", "$e->{wid}: $e->{pid}: status $e->{status}: $e->{msg}");
 		$self->restart_worker($e->{wid});
 	},
 );
