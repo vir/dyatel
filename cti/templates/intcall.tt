@@ -6,7 +6,6 @@
 	<dt>Display name</dt><dd>[% event.callername|html %]</dd>
 	<dt>Caller</dt><dd>[% info.num %]</dd>
 	<dt>Number</dt><dd>[% info.numkind %]</dd>
-	<dt>Call ID</dt><dd>[% event.billid %]</dd>
 </dl>
 <span class="clearfix" />
 
