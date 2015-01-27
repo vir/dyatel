@@ -53,15 +53,15 @@ sub install_handlers
 	$y->setlocal('nonblocking', 'true');
 	$y->install('call.execute', sub {
 		my $msg = shift;
-		$self->print("Got message ".$msg->header('name'));
+		$self->print("Got message ".$msg->header('name')) if $self->{verbose};
 		unless($msg->param('billid')) {
-			$self->print('No billid');
+			$self->print('No billid') if $self->{verbose};
 			return undef;
 		}
 		# key includes called number as different users can have different phonebooks
 		my $key = ($msg->param('billid')//'x').'-'.($msg->param('caller')//'x').'-'.($msg->param('called')//'x');
 		if($self->{seen_h}{$key} && (time() - $self->{seen_h}{$key} < SEEN_TIMEOUT)) {
-			$self->print("key $key already known for ",  time() - $self->{seen_h}{ $self->{seen_q}[0] }, " seconds");
+			$self->print("key $key already known for ",  time() - $self->{seen_h}{ $self->{seen_q}[0] }, " seconds") if $self->{verbose};
 			return undef;
 		}
 		$self->{seen_h}{$key} = time();
@@ -342,7 +342,7 @@ sub process
 	$self->{tt}->process($template, $vars, \$output)
 		or die $self->{tt}->error(), "\n";
 
-	$self->print("Rendered template $template: $output\n") if $self->{verbose};
+	$self->print("Rendered template $template: $output\n");
 
 	$self->db->resultset('Calllog')->search({
 		billid => $e->{billid},
