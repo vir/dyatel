@@ -10,6 +10,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/home',            { templateUrl: '/static/p/home.htm',       controller: 'HomePageCtrl',           title: 'Start page' }).
 	when('/users',           { templateUrl: '/static/p/users.htm',      controller: 'UsersListCtrl',          title: 'Users' }).
 	when('/users/:userId',   { templateUrl: '/static/p/user.htm',       controller: 'UserDetailCtrl',         title: 'User' }).
+	when('/regs',            { templateUrl: '/static/p/regs.htm',       controller: 'RegsListCtrl',           title: 'Active registrations' }).
 	when('/provisions',      { templateUrl: '/static/p/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
 	when('/provisions/:pId', { templateUrl: '/static/p/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
 	when('/cgroups',         { templateUrl: '/static/p/cgroups.htm',    controller: 'CallGroupsListCtrl',     title: 'Call groups' }).

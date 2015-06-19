@@ -29,7 +29,7 @@ sub index :Path :Args(0) {
 sub list :Local
 {
 	my($self, $c) = @_;
-	my $opts = {order_by => 'userid, ts DESC'};
+	my $opts = {order_by => 'ts DESC', join => 'userid', columns => [qw( userid.id userid.num ts location expires device driver ip_transport ip_host ip_port audio route_params )]};
 	my $where = { };
 	$where->{userid} = $c->request->params->{uid} if $c->request->params->{uid};
 	$c->stash(rows => [$c->model('DB::Regs')->search($where, $opts)], template => 'regs/list.tt');

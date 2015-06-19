@@ -324,6 +324,55 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http, $timeout, 
 	$scope.getData();
 });
 
+/* * * * * * * * * * Active registrations * * * * * * * * * */
+
+dyatelControllers.controller('RegsListCtrl', function($scope, $http, $timeout, $filter) {
+	$scope.filterOptions = {
+		filterText: "",
+		useExternalFilter: true,
+	};
+	$scope.$watch('filterOptions', function (newVal, oldVal) {
+		if (newVal !== oldVal) {
+			$scope.updateResults();
+		}
+	}, true);
+	$scope.updateResults = function() {
+		if($scope.getDataTimeout)
+			$timeout.cancel($scope.getDataTimeout);
+		$scope.getDataTimeout = $timeout(function() {
+			$scope.getData();
+		}, 500);
+		$scope.$on('$destroy', function() {
+			$timeout.cancel($scope.getDataTimeout);
+		});
+	};
+	$scope.getData = function() {
+		$http.get('/a/regs/list').success(function(data) {
+			$scope.myData = $filter('filter')(data.rows, $scope.filterOptions.filterText);
+		});
+	};
+	$scope.selection = [ ];
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field: 'userid', displayName:'Number', cellTemplate: '<div class="ngCellText"><abbr title="{{row.getProperty(\'userid.num.descr\')}}"><a ng-href="#/users/{{row.getProperty(\'userid.id\')}}">{{row.getProperty(col.field).num.num}}</a></abbr></div>', width:'4%'},
+			{field: 'ts', width:'15%' },
+			{field: 'location' },
+//			{field: 'expires' },
+			{field: 'device' },
+//			{field: 'driver' },
+			{field: 'ip_transport', width:'7%' },
+			{field: 'ip_host', width:'10%' },
+			{field: 'ip_port', width:'5%' },
+//			{field: 'audio' },
+//			{field: 'route_params' },
+		],
+		filterOptions: $scope.filterOptions,
+		selectedItems: $scope.selection,
+		multiSelect: false,
+	};
+	$scope.getData();
+});
 
 /* * * * * * * * * * Call Groups * * * * * * * * * */
 

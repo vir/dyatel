@@ -1,0 +1,12 @@
+<div id="regslist" class="container-fluid">
+<div class="row-fluid">
+	<h1>Active rgistrations</h1>
+	<div class="controls">
+		<input id="filter" ng-model="filterOptions.filterText" type="text" placeholder="Filter" class="pull-right search-query" focus-me />
+	</div>
+	<div class="gridStyle span11" ng-grid="gridOptions"></div>
+</div>
+<div class="row-fluid">
+	<pre class="span12">{{ selection[0] }}</pre>
+</div>
+</div>
