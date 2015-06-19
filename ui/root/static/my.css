@@ -50,6 +50,20 @@ html,body{height:100%;}
 	border-radius: 6px;
 }
 
+#callemall {
+	padding: 0 0 6px 0;
+}
+#callemall input {
+	height: 36px;
+	font-size: 32px;
+	line-height: 32px;
+	width: 80%;
+}
+#callemall button {
+	height: 46px;
+	vertical-align: middle;
+}
+
 #phonebook input.input-large {
 	width: 50%;
 	height: 36px;

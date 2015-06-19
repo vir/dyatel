@@ -26,6 +26,10 @@
       options: [ en, ru ]
       defval: en
       descr: User interface language
+    - name: debug
+      type: boolean
+      defval: false
+      descr: Show developer's user interface elements
 
 # vim: ts=2 sw=2 sts=2 et
 

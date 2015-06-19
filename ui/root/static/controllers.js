@@ -167,16 +167,18 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 					  { field: 'numkind.descr', displayName: 'Kind' },
 						{ field: 'val', displayName: 'Number' },
 						{ field: 'descr', displayName: 'Description' },
-						{ field: null, displayName: 'Divertion', cellTemplate: '<i show="row.getProperty(\'div_offline\')" divertion-icon="offline" ></i> <i show="row.getProperty(\'div_noans\')" divertion-icon="noans" ></i><span ng-show="row.getProperty(\'div_noans\')">{{row.getProperty(\'timeout\')}}</span>' },
+						{ field: null, displayName: 'Divertion', cellTemplate: '<div class="ngCellText"><i show="row.getProperty(\'div_offline\')" divertion-icon="offline" ></i> <i show="row.getProperty(\'div_noans\')" divertion-icon="noans" ></i><span ng-show="row.getProperty(\'div_noans\')">{{row.getProperty(\'timeout\')}}</span></div>' },
 					],
 					showFilter: true,
 					multiSelect: false,
 					selectedItems: $scope.selection,
 				};
-				$scope.ok = function () {
+				$scope.btnNew = function () {
+				};
+				$scope.btnSave = function () {
 					$modalInstance.close($scope.selected.item);
 				};
-				$scope.cancel = function () {
+				$scope.btnClose = function () {
 					$modalInstance.dismiss('cancel');
 				};
 			},
@@ -311,13 +313,13 @@ dyatelControllers.controller('UsersListCtrl', function($scope, $http, $timeout, 
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
-			{field:'num', displayName:'Number', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field).num}}</a>', width:'10%'},
-			{             displayName:'Name', cellTemplate: '<a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(\'num\').descr}}</a>', width:'58%'},
+			{field:'num', displayName:'Number', cellTemplate: '<div class="ngCellText"><a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field).num}}</a></div>', width:'10%'},
+			{             displayName:'Name', cellTemplate: '<div class="ngCellText"><a ng-href="#/users/{{row.getProperty(\'id\')}}">{{row.getProperty(\'num\').descr}}</a></div>', width:'58%'},
 			{field:'login', displayName:'Login', width:'15%'},
-			{field:'badges', displayName:'Badges', cellTemplate: '<span><div class="mybadge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span>', width:'15%'},
+			{field:'badges', displayName:'Badges', cellTemplate: '<div class="ngCellText"><span><div class="mybadge" ng-repeat="b in row.getProperty(\'badges\')">{{b}}</div></span></div>', width:'15%'},
 		],
 		filterOptions: $scope.filterOptions,
-//		showFilter: true,
+		multiSelect: false,
 	};
 	$scope.getData();
 });
@@ -358,7 +360,7 @@ dyatelControllers.controller('PickupGroupsListCtrl', function($scope, $http) {
 	$scope.gridOptions = {
 		data: 'myData',
 		columnDefs: [
-			{field:'id', displayName:'Id', cellTemplate: '<a ng-href="#/pgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
+			{field:'id', displayName:'Id', cellTemplate: '<div class="ngCellText"><a ng-href="#/pgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a></div>'},
 			{field:'descr', displayName:'Name'},
 		],
 		showFilter: true,
@@ -520,8 +522,8 @@ dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
 		data: 'myData',
 		columnDefs: [
 //			{field:'id', displayName:'id'},
-			{field:'ts', displayName:'Timestamp', cellTemplate:'<abbr title="{{row.getProperty(\'ts\')}}">{{row.getProperty(\'ts\').substr(11,8)}}</abbr>' },
-			{field:'chan', displayName:'Channel', cellTemplate:"<span>{{row.getProperty('chan')}}  <abbr class=\"pull-right\" title=\"{{row.getProperty('direction')}}\">{{ {'incoming':'&lt;&lt;&lt;', 'outgoing':'&gt;&gt;&gt;'}[row.getProperty('direction')] }}</abbr></span>" },
+			{field:'ts', displayName:'Timestamp', cellTemplate:'<div class="ngCellText"><abbr title="{{row.getProperty(\'ts\')}}">{{row.getProperty(\'ts\').substr(11,8)}}</abbr></div>' },
+			{field:'chan', displayName:'Channel', cellTemplate:"<div class=\"ngCellText\">{{row.getProperty('chan')}} <abbr title=\"{{row.getProperty('direction')}}\">{{ {'incoming':'&lt;&lt;&lt;', 'outgoing':'&gt;&gt;&gt;'}[row.getProperty('direction')] }}</abbr></div>" },
 			{field:'address', displayName:'Address'},
 //			{field:'direction', displayName:'Direction'},
 			{field:'billid', displayName:'Billid'},

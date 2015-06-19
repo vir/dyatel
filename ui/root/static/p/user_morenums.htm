@@ -17,22 +17,20 @@
    <div class="row-fluid">
     <input class="span4" type="text" ng-model="selection[0].numkind.descr" placeholder="NumKind" />
     <input class="span4" type="text" ng-model="selection[0].val" placeholder="Number" />
-    <div class="span4">
-     Divertion:<br />
-     <label><input type="checkbox" ng-checked="selection[0].div_offline" />Offline</label>
-     <label><input type="checkbox" ng-checked="selection[0].div_noans" />No answer</label>
+    <div class="span4">Divertion:<br />
+     <label class="checkbox"><input type="checkbox" ng-checked="selection[0].div_offline" />Offline</label>
+     <label class="checkbox"><input type="checkbox" ng-checked="selection[0].div_noans" />No answer</label>
     </div>
     <input class="span4" type="text" ng-model="selection[0].descr" placeholder="Description" />
-
     <input class="span2" type="text" ng-model="selection[0].timeout" placeholder="Timeout"/>
     <input class="span2" type="text" ng-model="selection[0].sortkey" placeholder="Sort key" />
    </div> <!-- row-fluid -->
   </div> <!-- container-fluid -->
  </div> <!-- modal-body -->
  <div class="modal-footer">
-   <a class="btn">New</a>
-   <a class="btn">Save</a>
-   <a class="btn btn-default">Close</a>
+   <a class="btn" ng-click="btnNew()">New</a>
+   <a class="btn" ng-click="btnSave()">Save</a>
+   <a class="btn btn-default" ng-click="btnClose()">Close</a>
  </div>
 </form>
 

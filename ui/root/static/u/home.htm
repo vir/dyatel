@@ -17,17 +17,13 @@
   <div class="fillpage row-fluid">
    <div class="fillpage span4 noscroll" style="padding:12px;"><!-- left column -->
 
-    <div class="well controls">
-     <h2 translate>CallEmAll</h2>
-     <div class="input-append">
+    <div id="callemall" class="controls input-append">
       <input type="text" ng-model="phone" typeahead="x as x.label for x in dataSource($viewValue) | limitTo:25" typeahead-on-select="selectionDone($item)" focus-me />
       <button class="btn" ng-click="doCall({num: phone, op: 'button'})"><i class="icon-fire"></i></button>
-     </div>
     </div>
 
+    <a ng-show="conf.debug" title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
     <div ng-hide="blfs.length" translate>NoBLFsDefined</div>
-    <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
-    <a title="{{'Edit' | translate}}" href="#/blfs" class="pull-right btn btn-mini"><i class="icon-edit"></i></a>
     <table class="table table-condensed table-hover">
      <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
       <td><div ng-class="'blf-led blf-' + r.status"></div></td>
@@ -46,7 +42,7 @@
         <span ng-switch-when="true" class="rainbow"><i class="flaticon-bell5"></i> <span translate>Ringing</span>!</span>
        </calls-tab-heading>
       </tab-heading>
-      <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
+      <a ng-show="conf.debug" title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateLinetracker()"><i class="icon-refresh"></i></a>
       <em ng-show="linetracker.length === 0" translate>None</em>
       <div ng-hide="linetracker.length === 0">
        <table class="table table-condensed">
@@ -86,7 +82,7 @@
       </div>
      </tab>
      <tab ng-repeat="t in ['all', 'missed', 'answered', 'outgoing']" heading="{{t+'Calls' | capitalize | translate}}" select="setSection(t)">
-      <a title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
+      <a ng-show="conf.debug" title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateCallList()"><i class="icon-refresh"></i></a>
       <div>
        <table class="table table-condensed table-hover">
         <tr><th translate>Time</th><th translate>BillId</th><th translate>Peer</th><th translate>BillTime</th><th translate>RingTime</th><th translate>StatusAndReason</th></tr>
