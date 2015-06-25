@@ -140,6 +140,7 @@ sub get_user_params
 		badges => $badges || [ ],
 #		fingrp => $c->request->params->{fingrp} || undef,
 		secure => $c->request->params->{secure} || 'ssl',
+		cti => $c->request->params->{cti} || '0',
 	};
 }
 

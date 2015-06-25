@@ -46,15 +46,14 @@
 				<option value="on">Enable always</option>
 			</select></label>
 		</div>
-		<div class="span8 controls">
-			<span class="span3">Last registered: {{ user.lastreg }}</span>
-			<span class="span3">Last IP: {{ user.lastip }}</span>
+		<div class="span5 controls form-horizontal">
+			<label class="checkbox"><input type="checkbox" ng-model="user.nat_support" /> NAT support</label>
+			<label class="checkbox"><input type="checkbox" ng-model="user.nat_port_support" /> NAT port support</label>
+			<label class="checkbox"><input type="checkbox" ng-model="user.media_bypass" /> Media bypass</label>
+			<label class="checkbox"><input type="checkbox" ng-model="user.cti" /> CTI</label>
 		</div>
-		<div class="span8 controls form-horizontal">
-			<label class="span4"><input type="checkbox" ng-model="user.nat_support" /> NAT support</label>
-			<label class="span4"><input type="checkbox" ng-model="user.nat_port_support" /> NAT port support</label>
-			<label class="span4"><input type="checkbox" ng-model="user.media_bypass" /> Media bypass</label>
-			<label class="spam4 badge" ng-repeat="b in possibleBadges"><input type="checkbox" ng-model="badges[b]" /> {{ b }}</label>
+		<div class="span3 controls form-horizontal">
+			<label ng-repeat="b in possibleBadges"><input type="checkbox" ng-model="badges[b]" /> <span class="mybadge">{{ b }}</span></label>
 		</div>
 		<div class="span12 form-horizontal">
 			<button class="btn" ng-click="saveUser()">Save</button>

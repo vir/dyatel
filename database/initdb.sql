@@ -70,7 +70,8 @@ CREATE TABLE users (
 	login TEXT NULL,
 	badges TEXT[] NOT NULL DEFAULT '{}',
 	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL,
-	secure encription_mode NOT NULL DEFAULT 'ssl'
+	secure encription_mode NOT NULL DEFAULT 'ssl',
+	cti BOOLEAN DEFAULT FALSE
 );
 ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX users_num_index ON users(num);

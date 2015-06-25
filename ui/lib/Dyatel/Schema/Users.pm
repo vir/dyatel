@@ -165,6 +165,8 @@ __PACKAGE__->add_columns(
     extra => { custom_type_name => "encription_mode", list => ["off", "on", "ssl"] },
     is_nullable => 0,
   },
+  "cti",
+  { data_type => "boolean", default_value => \"false", is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY

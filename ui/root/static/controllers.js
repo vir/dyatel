@@ -121,6 +121,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 				badges: $scope.user.badges,
 //				fingrp: $scope.user.fingrp,
 				secure: $scope.user.secure,
+				cti: $scope.user.cti,
 				save: 1,
 			}, true), // use jQuery to url-encode object
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
