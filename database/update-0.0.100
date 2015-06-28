@@ -1,0 +1,167 @@
+BEGIN;
+
+CREATE OR REPLACE FUNCTION regs_route(msg HSTORE)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+	uoffline BOOLEAN;
+	called_arg TEXT;
+BEGIN
+	res := '';
+	called_arg := msg->'called';
+	SELECT * INTO res, cntr FROM regs_route_part(called_arg, res, 0);
+
+	uoffline := res::TEXT = '';
+
+	-- Add 'offline' and 'No answer' divertions
+	FOR t IN SELECT normalize_num(n.val) AS val, n.timeout, k.*
+			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
+			WHERE uid = userid(called_arg) AND k.callabale AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
+		IF res::TEXT <> '' THEN
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- append to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		IF t.announce IS NOT NULL THEN
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.announce);
+			res := res || hstore('callto.' || cntr || '.single', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.ringer', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.autoring', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, 'lateroute/' || t.ins_prefix || t.val);
+		IF t.set_local_caller THEN
+			res := res || hstore('callto.' || cntr || '.caller', called_arg);
+		END IF;
+		IF t.set_context IS NOT NULL THEN
+			res := res || hstore('callto.' || cntr || '.context', t.set_context);
+		END IF;
+	END LOOP;
+
+	IF res::TEXT = '' THEN
+		RETURN;
+	ELSE
+		res := res || 'location => fork';
+		res := res || hstore(ARRAY['copyparams', 'pbxassist,dtmfpass', 'tonedetect_out', 'true', 'pbxassist', 'true', 'dtmfpass', 'false']);
+		RETURN QUERY SELECT * FROM each(res);
+	END IF;
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callgroups_route(msg HSTORE)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g callgroups;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
+BEGIN
+	-- NOTE: Supported distribution schemes: parallel, linear, queue --
+	SELECT * INTO g FROM callgroups WHERE num = msg->'called';
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+	IF g.distr = 'queue' AND g.queue IS NOT NULL THEN
+		key := 'location';
+		value := 'queue/' || g.queue::TEXT;
+		RETURN NEXT;
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
+	SELECT * INTO res, cntr2 FROM callgroups_route_part(g, res, cntr2);
+
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
+	END IF;
+
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION callpickup_route(msg HSTORE)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+BEGIN
+	IF msg->'called' <> service_code('pickupgroup') THEN
+		RETURN;
+	END IF;
+
+	RETURN QUERY SELECT 'location'::TEXT, ('pickup/' || chan)::TEXT
+		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
+		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
+		WHERE direction = 'outgoing' AND status = 'ringing'
+			AND m2.uid = userid(msg->'caller') ORDER BY m2.id LIMIT 1;
+--			AND m2.uid = 180 AND m1.uid = 179;
+END;
+$$ LANGUAGE PlPgSql;
+
+CREATE OR REPLACE FUNCTION abbrs_route(msg HSTORE)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	u INTEGER;
+BEGIN
+	u := userid(msg->'caller');
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || target::TEXT FROM abbrs WHERE num = msg->'called' AND owner = u
+		UNION SELECT 'location'::TEXT, 'lateroute/' || target FROM abbrs WHERE num = msg->'called' AND owner IS NULL;
+END;
+$$ LANGUAGE PlPgSql;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	cf HSTORE;
+BEGIN
+	cf := config('route');
+	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
+		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
+	END IF;
+
+	RETURN QUERY
+		SELECT * FROM regs_route(msg)
+	UNION
+		SELECT * FROM callgroups_route(msg)
+	UNION
+		SELECT * FROM callpickup_route(msg)
+	UNION
+		SELECT * FROM abbrs_route(msg)
+	UNION
+		SELECT * FROM incoming_route(msg);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+COMMIT;
+-- vim: ft=sql
+

@@ -475,15 +475,17 @@ $$ LANGUAGE SQL IMMUTABLE;
 
 CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
 
-CREATE OR REPLACE FUNCTION regs_route(called_arg TEXT)
+CREATE OR REPLACE FUNCTION regs_route(msg HSTORE)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	res HSTORE;
 	cntr INTEGER;
 	t RECORD;
 	uoffline BOOLEAN;
+	called_arg TEXT;
 BEGIN
 	res := '';
+	called_arg := msg->'called';
 	SELECT * INTO res, cntr FROM regs_route_part(called_arg, res, 0);
 
 	uoffline := res::TEXT = '';
@@ -716,7 +718,7 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
-CREATE OR REPLACE FUNCTION callgroups_route(called_arg TEXT)
+CREATE OR REPLACE FUNCTION callgroups_route(msg HSTORE)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	g callgroups;
@@ -725,7 +727,7 @@ DECLARE
 	cntr2 INTEGER;
 BEGIN
 	-- NOTE: Supported distribution schemes: parallel, linear, queue --
-	SELECT * INTO g FROM callgroups WHERE num = called_arg;
+	SELECT * INTO g FROM callgroups WHERE num = msg->'called';
 	IF NOT FOUND THEN
 		RETURN;
 	END IF;
@@ -907,10 +909,10 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL STABLE;
 
-CREATE OR REPLACE FUNCTION callpickup_route(clrnum TEXT, cldnum TEXT)
+CREATE OR REPLACE FUNCTION callpickup_route(msg HSTORE)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 BEGIN
-	IF cldnum <> service_code('pickupgroup') THEN
+	IF msg->'called' <> service_code('pickupgroup') THEN
 		RETURN;
 	END IF;
 
@@ -918,7 +920,7 @@ BEGIN
 		FROM linetracker l INNER JOIN pickupgrpmembers m1 ON m1.uid = l.uid
 		INNER JOIN pickupgrpmembers m2 ON m2.grp = m1.grp
 		WHERE direction = 'outgoing' AND status = 'ringing'
-			AND m2.uid = userid(clrnum) ORDER BY m2.id LIMIT 1;
+			AND m2.uid = userid(msg->'caller') ORDER BY m2.id LIMIT 1;
 --			AND m2.uid = 180 AND m1.uid = 179;
 END;
 $$ LANGUAGE PlPgSql;
@@ -934,14 +936,14 @@ ALTER TABLE abbrs ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(n
 CREATE INDEX abbrs_uniq_index ON abbrs(num, owner);
 CREATE INDEX abbrs_num_index ON abbrs(num);
 
-CREATE OR REPLACE FUNCTION abbrs_route(clrnum TEXT, cldnum TEXT)
+CREATE OR REPLACE FUNCTION abbrs_route(msg HSTORE)
 	RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	u INTEGER;
 BEGIN
-	u := userid(clrnum);
-	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || target::TEXT FROM abbrs WHERE num = cldnum AND owner = u
-		UNION SELECT 'location'::TEXT, 'lateroute/' || target FROM abbrs WHERE num = cldnum AND owner IS NULL;
+	u := userid(msg->'caller');
+	RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || target::TEXT FROM abbrs WHERE num = msg->'called' AND owner = u
+		UNION SELECT 'location'::TEXT, 'lateroute/' || target FROM abbrs WHERE num = msg->'called' AND owner IS NULL;
 END;
 $$ LANGUAGE PlPgSql;
 
@@ -1025,13 +1027,13 @@ BEGIN
 	END IF;
 
 	RETURN QUERY
-		SELECT * FROM regs_route(msg->'called')
+		SELECT * FROM regs_route(msg)
 	UNION
-		SELECT * FROM callgroups_route(msg->'called')
+		SELECT * FROM callgroups_route(msg)
 	UNION
-		SELECT * FROM callpickup_route(msg->'caller', msg->'called')
+		SELECT * FROM callpickup_route(msg)
 	UNION
-		SELECT * FROM abbrs_route(msg->'caller', msg->'called')
+		SELECT * FROM abbrs_route(msg)
 	UNION
 		SELECT * FROM incoming_route(msg);
 END;

@@ -96,5 +96,54 @@ BEGIN
 END
 $$ LANGUAGE PlPgSql VOLATILE;
 
+CREATE OR REPLACE FUNCTION test_route_pickup() RETURNS VOID AS $$
+DECLARE
+	got HSTORE;
+	exp HSTORE;
+BEGIN
+	exp := '"location"=>"pickup/sip/666"';
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => *1'::HSTORE);
+	if got IS NULL OR got <> exp THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
+	END IF;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
 
+CREATE OR REPLACE FUNCTION test_route_abbr1() RETURNS VOID AS $$
+DECLARE
+	got HSTORE;
+	exp HSTORE;
+BEGIN
+	exp := '"location"=>"lateroute/+79210000002"';
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => #1'::HSTORE);
+	if got IS NULL OR got <> exp THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
+	END IF;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
+
+CREATE OR REPLACE FUNCTION test_route_abbr2() RETURNS VOID AS $$
+DECLARE
+	got HSTORE;
+	exp HSTORE;
+BEGIN
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 223, called => #1'::HSTORE);
+	if got IS NOT NULL THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', got::TEXT, NULL;
+	END IF;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
+
+CREATE OR REPLACE FUNCTION test_route_abbr3() RETURNS VOID AS $$
+DECLARE
+	got HSTORE;
+	exp HSTORE;
+BEGIN
+	exp := '"location"=>"lateroute/+79210000001"';
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 223, called => 666'::HSTORE);
+	if got IS NULL OR got <> exp THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
+	END IF;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
 
