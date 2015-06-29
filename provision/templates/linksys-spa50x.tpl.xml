@@ -155,7 +155,7 @@
   <Mark_All_AVT_Packets ua="na">Yes</Mark_All_AVT_Packets>
   <SIP_TCP_Port_Min ua="na">5060</SIP_TCP_Port_Min>
   <SIP_TCP_Port_Max ua="na">5080</SIP_TCP_Port_Max>
-  <CTI_Enable ua="na">[% params.CTI ? 'Yes' : 'No' %]</CTI_Enable>
+  <CTI_Enable ua="na">[% user.cti ? 'Yes' : 'No' %]</CTI_Enable>
   <Caller_ID_Header ua="na">PAID-RPID-FROM</Caller_ID_Header> <!-- options: PAID-RPID-FROM/PAID-FROM/RPID-PAID-FROM/RPID-FROM/FROM -->
   <SRTP_Method ua="na">x-sipura</SRTP_Method> <!-- options: x-sipura/s-descriptor -->
   <Hold_Target_Before_REFER ua="na">No</Hold_Target_Before_REFER>

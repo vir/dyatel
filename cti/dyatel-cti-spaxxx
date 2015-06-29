@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w
+use utf8;
+use strict;
+use warnings FATAL => 'uninitialized';
+use lib '.';
+use Yate v0.250;
+use DBI;
+use Dyatel::ExtConfig;
+
+$|=1;
+
+my $dbh = Dyatel::ExtConfig->dbh();
+my $sel = $dbh->prepare(q{SELECT r.location FROM regs r INNER JOIN users u ON u.id = r.userid WHERE (device LIKE 'Cisco/SPA%' OR device LIKE 'Linksys/SPA%') AND u.cti AND r.expires > now() AND u.num = ?});
+my $conf = Dyatel::ExtConfig::load();
+my $em = $conf->{Model}{Yate}{extmodule};
+my $domain = $conf->{Provision}{Params}{SIPServer};
+my $message = new Yate(Debug=>0);
+print "$0 started, domain: $domain\n";
+$message->connect($em->{address}.':'.$em->{port}, 'global', $0);
+$message->install("call.sconnect",\&on_call_sconnect,150);
+$message->listen();
+
+sub on_call_sconnect
+{
+	my $msg = shift;
+	my $caller = $msg->param('from');
+	my $called = $msg->param('to');
+	return undef unless $caller && $called;
+	print "Trying to connect $caller and $called\n";
+	$sel->execute($caller);
+	my $res = $sel->fetchall_arrayref();
+	return undef unless $res && @$res;
+
+	my $uri = $res->[0][0];
+	print "Sending our NOTIFY to $uri\n";
+
+	$msg->message('xsip.generate', undef, undef,
+		method => 'NOTIFY',
+		uri => $uri,
+		domain => $domain,
+		sip_From => "<sip:cti\@$domain>",
+		sip_To => '<'.((split('/', $uri, 2))[1]).'>',
+		sip_Event => 'x-spa-cti',
+		xsip_type => 'application/x-spa-control',
+#		xsip_body => "<spa-control><newcall uri=\"$called\@$domain\" call=\"1\" /></spa-control>",
+		xsip_body => "<spa-control><newcall uri=\"$called\@$domain\" /></spa-control>",
+		xsip_body_encoding => 'raw',
+	);
+	return('true');
+}
+
+
+
+

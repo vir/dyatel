@@ -54,7 +54,9 @@
 <Random_REG_CID_On_Reboot group="SIP/SIP_Parameters">No</Random_REG_CID_On_Reboot>
 <SIP_TCP_Port_Min group="SIP/SIP_Parameters">5060</SIP_TCP_Port_Min>
 <SIP_TCP_Port_Max group="SIP/SIP_Parameters">5080</SIP_TCP_Port_Max>
-<CTI_Enable group="SIP/SIP_Parameters">No</CTI_Enable>
+--> %]
+<CTI_Enable group="SIP/SIP_Parameters">[% user.cti ? 'Yes' : 'No' %]</CTI_Enable>
+[%# <!--
 <Caller_ID_Header group="SIP/SIP_Parameters">PAID-RPID-FROM</Caller_ID_Header>
 <SRTP_Method group="SIP/SIP_Parameters">x-sipura</SRTP_Method>
 <Hold_Target_Before_REFER group="SIP/SIP_Parameters">No</Hold_Target_Before_REFER>
