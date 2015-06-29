@@ -12,5 +12,6 @@ install:
 	install -d ${DESTDIR}@bindir@
 	install -m 755 dyatel-sconnect ${DESTDIR}@bindir@/
 	install -m 755 dyatel-daw ${DESTDIR}@bindir@/
+	install -m 755 dyatel-cti-spaxxx ${DESTDIR}@bindir@/
 
 
