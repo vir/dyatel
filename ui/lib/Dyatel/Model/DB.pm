@@ -93,7 +93,7 @@ SELECT b.key, b.num, b.label, u.id AS uid, d.numtype AS dirtype, d.descr AS dird
 	FROM blfs b
 		LEFT JOIN users u ON u.num = b.num
 		LEFT JOIN directory d ON d.num = b.num
-	WHERE b.uid = ? ORDER BY b.key;
+	WHERE b.uid = ? ORDER BY CASE WHEN b.key ~ '^[0-9]+$' THEN to_char(b.key::INTEGER, '099') ELSE b.key END;
 ***
 	return $self->storage->dbh_do(sub {
 		my $self = shift;

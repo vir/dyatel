@@ -672,7 +672,17 @@ ctrlrModule.controller('MyBLFsCtrl', function($scope, $translate, $http) {
 		$scope.myData = data.rows;
 	});
 	$scope.columnDefs = [
-		{field:'key', displayName:'Key', width:'15%'},
+		{field:'key', displayName:'Key', width:'15%', sortFn: function (a, b) {
+			if(a == parseInt(a, 10) && b == parseInt(b, 10)) { // compare integers
+				return a - b;
+			} else if(a.age < b.age) {
+				return -1;
+			} else if (a.age > b.age) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}, cellClass:'text-right' },
 		{field:'num', displayName:'Number', width:'15%'},
 		{field:'label', displayName:'Label'},
 	];
@@ -687,6 +697,7 @@ ctrlrModule.controller('MyBLFsCtrl', function($scope, $translate, $http) {
 		columnDefs: 'columnDefs',
 		multiSelect: false,
 		selectedItems: $scope.selection,
+		sortInfo: { fields: ['key'], directions: ['asc'] },
 	};
 	$scope.onNew = function() {
 		var newRow = { id: 'create', key:1, num:'', label:'', changed: true };
