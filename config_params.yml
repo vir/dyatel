@@ -6,7 +6,7 @@
 # If type is 'select', additional key 'options' should be added
 # with array of valid values. If 'opptions' is a string of form
 # 'DB::Table.field', options list will be loaded from given
-# daabase table.
+# database table.
 ---
 - section: route
   params:
