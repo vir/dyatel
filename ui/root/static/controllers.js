@@ -45,7 +45,7 @@ dyatelControllers.directive('divertionIcon', function () {
 dyatelControllers.directive('dirnum', function ($http) {
 	return {
 		restrict: 'E',
-		templateUrl: '/static/p/dirnum.htm',
+		templateUrl: '/static/a/dirnum.htm',
 		scope: {
 			dirNum: '=',
 			numType: '@',
@@ -156,7 +156,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 
 	$scope.editOthernums = function() {
 		var modalInstance = $modal.open({
-			templateUrl: '/static/p/user_morenums.htm',
+			templateUrl: '/static/a/user_morenums.htm',
 			controller: function($scope, $modalInstance, uid) {
 				$http.get('/a/morenums/list?uid=' + uid).success(function(data) {
 					$scope.myData = data.rows;
@@ -193,7 +193,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 
 	$scope.editBLFs = function() {
 		var modalInstance = $modal.open({
-			templateUrl: '/static/p/user_blfs.htm',
+			templateUrl: '/static/a/user_blfs.htm',
 			controller: function($scope, $modalInstance, items) {
 				$scope.items = items;
 				$scope.ok = function () {
@@ -213,7 +213,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 
 	$scope.editAvatar = function() {
 		var modalInstance = $modal.open({
-			templateUrl: '/static/p/avatar_dialog.htm',
+			templateUrl: '/static/a/avatar_dialog.htm',
 			controller: function($scope, $modalInstance) {
 				var url = '/a/users/' + $routeParams.userId + '/avatar';
 				$scope.form = { };

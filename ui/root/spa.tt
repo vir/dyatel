@@ -32,7 +32,7 @@ javascripts = [ 'jquery-1.10.2.min.js', 'angular.min.js'
  <title>{{ Title.get() }}</title>
 </head><body><div id="wholescreen">
  <div id="myheader">
-  <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/p/[% prefix %]navbar.htm'"></div>
+  <div class="navbar navbar-inverse navbar-static-top" ng-include="'/static/[% prefix %]navbar.htm'"></div>
  </div>
  <div id="viewwrapper">
   <div id="view" ng-view></div>

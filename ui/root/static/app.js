@@ -7,23 +7,23 @@ var dyatelApp = angular.module('dyatelApp', [
 
 dyatelApp.config(['$routeProvider', function($routeProvider) {
 	$routeProvider.
-	when('/home',            { templateUrl: '/static/p/home.htm',       controller: 'HomePageCtrl',           title: 'Start page' }).
-	when('/users',           { templateUrl: '/static/p/users.htm',      controller: 'UsersListCtrl',          title: 'Users' }).
-	when('/users/:userId',   { templateUrl: '/static/p/user.htm',       controller: 'UserDetailCtrl',         title: 'User' }).
-	when('/regs',            { templateUrl: '/static/p/regs.htm',       controller: 'RegsListCtrl',           title: 'Active registrations' }).
-	when('/provisions',      { templateUrl: '/static/p/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
-	when('/provisions/:pId', { templateUrl: '/static/p/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
-	when('/cgroups',         { templateUrl: '/static/p/cgroups.htm',    controller: 'CallGroupsListCtrl',     title: 'Call groups' }).
-	when('/cgroups/:grpId',  { templateUrl: '/static/p/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group' }).
-	when('/pgroups',         { templateUrl: '/static/p/pgroups.htm',    controller: 'PickupGroupsListCtrl',   title: 'Pickup groups' }).
-	when('/pgroups/:grpId',  { templateUrl: '/static/p/pgroup.htm',     controller: 'PickupGroupDetailCtrl',  title: 'Pickup group' }).
-	when('/ivr-aas',         { templateUrl: '/static/p/ivr-aas.htm',    controller: 'IvrAAsCtrl',             title: 'IVR - AA' }).
-	when('/ivr-mds',         { templateUrl: '/static/p/ivr-mds.htm',    controller: 'IvrMDsCtrl',             title: 'IVR - MD' }).
-	when('/cdr',             { templateUrl: '/static/p/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
-	when('/status',          { templateUrl: '/static/p/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
-	when('/status/:module',  { templateUrl: '/static/p/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
-	when('/schedule',        { templateUrl: '/static/p/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
-	when('/config',          { templateUrl: '/static/p/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
+	when('/home',            { templateUrl: '/static/a/home.htm',       controller: 'HomePageCtrl',           title: 'Start page' }).
+	when('/users',           { templateUrl: '/static/a/users.htm',      controller: 'UsersListCtrl',          title: 'Users' }).
+	when('/users/:userId',   { templateUrl: '/static/a/user.htm',       controller: 'UserDetailCtrl',         title: 'User' }).
+	when('/regs',            { templateUrl: '/static/a/regs.htm',       controller: 'RegsListCtrl',           title: 'Active registrations' }).
+	when('/provisions',      { templateUrl: '/static/a/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
+	when('/provisions/:pId', { templateUrl: '/static/a/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
+	when('/cgroups',         { templateUrl: '/static/a/cgroups.htm',    controller: 'CallGroupsListCtrl',     title: 'Call groups' }).
+	when('/cgroups/:grpId',  { templateUrl: '/static/a/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group' }).
+	when('/pgroups',         { templateUrl: '/static/a/pgroups.htm',    controller: 'PickupGroupsListCtrl',   title: 'Pickup groups' }).
+	when('/pgroups/:grpId',  { templateUrl: '/static/a/pgroup.htm',     controller: 'PickupGroupDetailCtrl',  title: 'Pickup group' }).
+	when('/ivr-aas',         { templateUrl: '/static/a/ivr-aas.htm',    controller: 'IvrAAsCtrl',             title: 'IVR - AA' }).
+	when('/ivr-mds',         { templateUrl: '/static/a/ivr-mds.htm',    controller: 'IvrMDsCtrl',             title: 'IVR - MD' }).
+	when('/cdr',             { templateUrl: '/static/a/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
+	when('/status',          { templateUrl: '/static/a/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
+	when('/status/:module',  { templateUrl: '/static/a/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
+	when('/schedule',        { templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
+	when('/config',          { templateUrl: '/static/a/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);
