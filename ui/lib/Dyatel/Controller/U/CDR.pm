@@ -115,7 +115,7 @@ sub list :Local Args(1)
 			'+select' => [{ MIN => 'id', -as => 'min' }, { MAX => 'id', -as => 'max' }],
 			'+as' =>   [qw/ min max /],
 		})->first();
-		my $total = $row->get_column('max') - $row->get_column('min');
+		my $total = ($row->get_column('max')||0) - ($row->get_column('min')||0);
 		$c->stash(totalrows => $total);
 	} else {
 		$opts->{rows} = $c->request->params->{limit} || 50;
