@@ -30,7 +30,7 @@
 
    </ul>
    <ul class="nav pull-right">
-    <li><a href="/wiki/Help" translate>Help</a></li>
+    <li><a href="/docs/Help{{helpLink}}" translate>Help</a></li>
     <li ng-repeat="b in user.badges"><p class="navbar-text"><a class="mybadge" href="/{{ b.substr(0, 1) }}/">{{ b }}</a></p></li>
     <li><p class="navbar-text"><abbr title="{{ user.name }}">{{ user.login }}</abbr></p></li>
    </ul>

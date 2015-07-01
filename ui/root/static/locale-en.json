@@ -35,7 +35,7 @@
 , "BillTime": "Talk time"
 , "RingTime": "Ring time"
 , "StatusAndReason": "Status/Reason"
-, "AddYourNote": "Add your note. <a href=\"/wiki/Markdown\" title=\"Markdown formatting help\">Markdown</a> formatting available."
+, "AddYourNote": "Add your note. <a href=\"/docs/Markdown\" title=\"Markdown formatting help\">Markdown</a> formatting available."
 
 , "Key": "Key"
 , "Number": "Number"

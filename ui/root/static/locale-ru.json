@@ -35,7 +35,7 @@
 , "BillTime": "Разговор"
 , "RingTime": "Звонок"
 , "StatusAndReason": "Статус/Причина"
-, "AddYourNote": "Изложите умные мысли. Можно использовать форматирование <a href=\"/wiki/Markdown\" title=\"Справка по форматированию\">Markdown</a>."
+, "AddYourNote": "Изложите умные мысли. Можно использовать форматирование <a href=\"/docs/Markdown\" title=\"Справка по форматированию\">Markdown</a>."
 
 , "Key": "Клавиша"
 , "Number": "Номер"

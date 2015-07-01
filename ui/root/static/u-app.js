@@ -40,8 +40,10 @@ dyatelApp.factory('Title', function() {
 dyatelApp.run(['Title', '$rootScope', function(Title, $rootScope) {
 	$rootScope.Title = Title;
 	$rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-		if(current.$$route)
+		if(current.$$route) {
 			Title.set(current.$$route.title);
+			$rootScope.helpLink = current.$$route.templateUrl.replace(/.*\/(\w+)\/(\w+)/, function(_, sec, page) { return sec.toUpperCase() + page.charAt(0).toUpperCase() + page.slice(1); });
+		}
 	});
 }]);
 
