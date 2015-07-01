@@ -19,4 +19,5 @@ ui/dyatel_local.conf
 ui/root/avatars/*.png
 provision/output/
 tools/bu_root/
+stuff/*
 
