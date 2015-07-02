@@ -470,7 +470,8 @@ CREATE TABLE morenums(
 );
 
 CREATE OR REPLACE FUNCTION normalize_num(n TEXT) RETURNS PHONE AS $$
-	SELECT regexp_replace($1, '[^0-9\*\#\+]', '', 'g')::PHONE;
+	-- allow '+' only in the beginning, remove all other non-"digits"
+	SELECT NULLIF(regexp_replace($1, '^(\+)|[^0-9\*\#]', '\1', 'g'), '')::PHONE;
 $$ LANGUAGE SQL IMMUTABLE;
 
 CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
