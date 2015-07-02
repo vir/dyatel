@@ -1,3 +1,12 @@
+dyatel (0.0.102) UNRELEASED; urgency=medium
+
+  * Daw: trying to skip all call.executes except final one
+  * User's home page made slightly better
+  * Fix query crash when invalid number is searched
+
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 02 Jul 2015 18:38:15 +0300
+
 dyatel (0.0.101) UNRELEASED; urgency=medium
 
   * dyatel-daw fix for group calls
