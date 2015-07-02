@@ -25,9 +25,9 @@
     <a ng-show="conf.debug" title="{{'Refresh' | translate}}" class="pull-right btn btn-mini" ng-click="updateBLFs()"><i class="icon-refresh"></i></a>
     <div ng-hide="blfs.length" translate>NoBLFsDefined</div>
     <table class="table table-condensed table-hover">
-     <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)">
+     <tr ng-repeat="r in blfs" ui-on-drop="onDrop($data, 'num', r.num)" ng-click="doCall({num: r.num, op: 'blf'})">
       <td><div ng-class="'blf-led blf-' + r.status"></div></td>
-      <td><a href="javascript:void(0)" ng-click="doCall({num: r.num, op: 'blf'})">{{ r.num }}</a></td>
+      <td>{{ r.num }}</td>
       <td>{{ r.label || r.dirdescr }}</td>
      </tr>
     </table>

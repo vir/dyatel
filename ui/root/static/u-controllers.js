@@ -314,15 +314,17 @@ ctrlrModule.controller('HomePageCtrl', function($scope, $http, $modal, $timeout,
 	// Calls drag-and-drop support
 	$scope.onDrop = function(obj, what, target) {
 		console.log('Dropped ' + obj.direction + ' channel ' + obj.chan + ' on ' + what + ' ' + target);
-		var modalInstance = $modal.open({
-			templateUrl: '/static/u/calldialog.htm',
-			controller: 'CallDlgCtrl',
-			resolve: {
-				num: function () { return target; },
-				activeCall: function () { return obj; },
-				usage: function() { return 'dnd' },
-			},
-		});
+		if(obj.chan != target) {
+			var modalInstance = $modal.open({
+				templateUrl: '/static/u/calldialog.htm',
+				controller: 'CallDlgCtrl',
+				resolve: {
+					num: function () { return target; },
+					activeCall: function () { return obj; },
+					usage: function() { return 'dnd' },
+				},
+			});
+		}
 	};
 
 	// Call list
