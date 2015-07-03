@@ -12,6 +12,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/home',            { templateUrl: '/static/u/home.htm',       controller: 'HomePageCtrl',           title: 'Моя телефония' }).
 	when('/phonebook',       { templateUrl: '/static/u/phonebook.htm',  controller: 'PhoneBookCtrl',          title: 'Телефонная книга' }).
 	when('/calllist',        { templateUrl: '/static/u/calllist.htm',   controller: 'CallListCtrl',           title: 'История вызовов' }).
+	when('/calllist/:billid',{ templateUrl: '/static/u/calllist.htm',   controller: 'CallListCtrl',           title: 'История вызовов' }).
 	when('/myphone',         { templateUrl: '/static/u/myphone.htm',    controller: 'MyPhoneCtrl',            title: 'Мой телефон' }).
 	when('/myabbrs',         { templateUrl: '/static/u/myabbrs.htm',    controller: 'MyAbbrsCtrl',            title: 'Сокращенные номера' }).
 	when('/blfs',            { templateUrl: '/static/u/blfs.htm',       controller: 'MyBLFsCtrl',             title: 'BLF' }).

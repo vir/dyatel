@@ -87,7 +87,7 @@
        <table class="table table-condensed table-hover">
         <tr><th translate>Time</th><th translate>BillId</th><th translate>Peer</th><th translate>BillTime</th><th translate>RingTime</th><th translate>StatusAndReason</th></tr>
         <tr ng-repeat="r in calls[section]">
-         <td><abbr title="{{r.ts}}">{{r.ts.substr(8,11)}}</abbr></td> <td>{{r.billid}}</td>
+         <td><abbr title="{{r.ts}}">{{r.ts.substr(8,11)}}</abbr></td> <td><a ng-href="#/calllist/{{r.billid}}">{{r.billid}}</a></td>
          <td>
 	  <abbr title="{{{outgoing: 'Incoming', incoming: 'Outgoing'}[r.direction]}}"><i ng-class="{outgoing: 'flaticon-arrow219', incoming: 'flaticon-arrow217'}[r.direction]"></i></abbr>
           <a href="javascript:void(0)" ng-click="reCall(r)">{{ 'outgoing' === r.direction && r.caller || r.called }}</a>

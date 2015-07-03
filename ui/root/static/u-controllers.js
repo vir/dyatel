@@ -572,8 +572,8 @@ function TodayMidnightISODateString(d){
 		+' 00:00:00';
 }
 
-ctrlrModule.controller('CallListCtrl', function($scope, $http) {
-	$scope.filter = { datefrom:TodayMidnightISODateString(new Date), empty: true };
+ctrlrModule.controller('CallListCtrl', function($scope, $routeParams, $http) {
+	$scope.filter = { empty: true };
 	$scope.section = 'all';
 	$scope.selection = [ ];
 	$scope.calllog = [ ];
@@ -583,6 +583,11 @@ ctrlrModule.controller('CallListCtrl', function($scope, $http) {
 		pageSize: 50,
 		currentPage: 1
 	};
+	if($routeParams.billid) {
+		$scope.filter.billid = $routeParams.billid;
+	} else {
+		$scope.datefrom = TodayMidnightISODateString(new Date);
+	}
 	$scope.getData = function(pageSize, page) {
 		var query = $.param($scope.filter, true); // use jQuery to url-encode object
 		$http.get('/u/cdr/list/' + $scope.section + '?page=' + $scope.pagingOptions.currentPage + '&perpage=' + $scope.pagingOptions.pageSize + '&' + query).success(function(data) {
