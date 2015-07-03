@@ -40,8 +40,8 @@ use constant SEEN_TIMEOUT => 30;
 sub new
 {
 	my $class = shift;
-	my($config, $queue) = @_;
-	my $self = bless { config => $config->{Model}{Yate}{extmodule}, dataqueue => $queue }, $class;
+	my($config, $opts, $queue) = @_;
+	my $self = bless { config => $config->{Model}{Yate}{extmodule}, dataqueue => $queue, %$opts }, $class;
 	return $self;
 }
 
@@ -240,8 +240,8 @@ our @required_modules = qw( Dyatel::Model::DB Dyatel::Schema Template Dyatel::Mo
 sub new
 {
 	my $class = shift; local $_;
-	my($config, $queue) = @_;
-	my $self = bless { config => $config->{Daw}, dataqueue => $queue }, $class;
+	my($config, $opts, $queue) = @_;
+	my $self = bless { config => $config->{Daw}, dataqueue => $queue, %$opts }, $class;
 	foreach(@required_modules) {
 		eval "require $_" or die "Can't load $_: $@";
 	}
@@ -407,8 +407,8 @@ sub task1
 {
 	my($mce) = @_;
 	my $h = $opts{t}
-		? Dyatel::Daw::TestHandle->new($conf, $q)
-		: Dyatel::Daw::YateHandle->new($conf, $q);
+		? Dyatel::Daw::TestHandle->new($conf, { verbose => $opts{v} }, $q)
+		: Dyatel::Daw::YateHandle->new($conf, { verbose => $opts{v} }, $q);
 	$h->run();
 }
 
@@ -416,7 +416,7 @@ sub task2
 {
 	my($mce) = @_;
 	my $arg = $mce->user_args();
-	my $p = Dyatel::Daw::Processor->new($conf, $q);
+	my $p = Dyatel::Daw::Processor->new($conf, { verbose => $opts{v} }, $q);
 	$p->run();
 }
 
@@ -434,8 +434,9 @@ my $mce = MCE->new(
 		user_args => [ qw/ one two three / ]
 	}],
 	task_end   => sub {
+	  # executes in manager process
 		my($mce, $task_id, $task_name) = @_;
-		MCE->sendto("STDOUT", "Task [$task_id -- $task_name] completed processing\n");
+		print "Task [$task_id -- $task_name] completed processing\n";
 	},
 	user_begin => sub {
 		my($mce, $task_id, $task_name) = @_;
