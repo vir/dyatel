@@ -1,14 +1,22 @@
 
 ## [% event.caller|html %]
+[% IF info.operator %]Operator: [% info.operator; info.delete('operator'); END %]
+
+[% IF info.loc %]<strong>[% info.loc %]</strong>[% IF info.reg %], [% info.reg %][% END; END %]
+[% IF info.longitude %] (<a href="http://www.wikimapia.org/#lat=[% info.latitude %]&lon=[% info.longitude %]&z=11&l=0&m=h&v=2" title="[% info.loc %]">map</a>)[% END %]
+[% info.delete('loc', 'reg', 'latitude', 'longitude') %]
+
+[% IF info.timezone %]Timezone: [% info.timezone %], local time: <strong>[% info.localtime.substr(0, 5) %]</strong> [% info.delete('timezone', 'localtime'); END %]
 
 [% IF info.callcount %]
 Found [% info.callcount %] calls in last [% info.minage %].
 
 Most recent call: [% info.maxts %] ([% info.maxage %] ago).
-[% ELSE %]
-No previous calls found.
-[% END %]
+[% info.delete('callcount', 'minage', 'maxage', 'maxts') %]
+[% ELSE %]No previous calls found.[% END %]
 
-<span class="clearfix" />
+<dl>
+[% FOREACH key IN info.sort %] <dt>[% key %]</dt><dd>[% info.$key %]</dd>
+[% END %]</dl>
 
 

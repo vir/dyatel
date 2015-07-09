@@ -317,6 +317,18 @@ sub process
 	my($template, $tag, $inf);
 	my $caller = $e->{caller};
 	my $called = $e->{called};
+	my $helpers = $self->{config}{Helper} || [];
+	$helpers = [ $helpers ] unless ref($helpers) eq 'ARRAY';
+	my @helper_fh;
+
+	foreach my $h(@$helpers) {
+		my $exec = $h->{exec};
+		$self->print("Executing helper: $exec") if $self->{verbose};
+		my $pipe = undef;
+		open($pipe, '-|', "$exec $caller $called")
+			and push @helper_fh, $pipe;
+	}
+
 	$self->print("Processing call $e->{billid} from $caller to $called sent by $e->{id}") if $self->{verbose};
 	my $uid;
 	if(my $row = $self->db->resultset('Users')->find({num => $called})) {
@@ -360,10 +372,26 @@ sub process
 		$template = 'extcall.tt';
 	}
 
+	foreach my $fh(@helper_fh) {
+		while(<$fh>) {
+			s#^\s+##s;
+			s#\s+$##s;
+			next unless length;
+			if(/^(\w+)\s+(.*)$/) {
+				$inf->{$1} = $2;
+			} else {
+				warn "Invalid output from helper: <<$_>>\n";
+			}
+		}
+		$fh->close;
+	}
+	@helper_fh = ();
+
 	my $output = '';
 	my $vars = {
 		info => $inf,
 		event => $e,
+		config => $self->{config},
 	};
 	$self->print("template '$template' parameters: ".Dumper($vars)) if $self->{verbose};
 	$self->{tt}->process($template, $vars, \$output)
@@ -371,25 +399,13 @@ sub process
 
 	$self->print("Rendered template $template: $output\n") if $self->{verbose};
 
-	my $helpers = $self->{config}{Helper} || [];
-	$helpers = [ $helpers ] unless ref($helpers) eq 'ARRAY';
-
-	foreach my $h(@$helpers) {
-		$self->print("Executing helper: $h->{exec}") if $self->{verbose};
-		my $stuff = eval { `$h->{exec} $caller` };
-		if($@) {
-			$self->error("Can't execute '$h->{exec} $caller': $@");
-		} else {
-			$output .= $stuff;
-		}
-	}
-
 	unless($self->{config}{multiple_msgs}) {
 		$self->db->resultset('Calllog')->search({
 			billid => $e->{billid},
 			tag => $tag,
 		})->delete;
 	}
+	$self->print("Finally, inserting call info: <<$output>>\n") if $self->{verbose};
 	$self->db->resultset('Calllog')->create({
 		billid => $e->{billid},
 		tag => $tag,
