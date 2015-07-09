@@ -1,3 +1,9 @@
+dyatel (0.0.105) UNRELEASED; urgency=medium
+
+  * Fixed daw templates installation
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 09 Jul 2015 21:50:37 +0300
+
 dyatel (0.0.104) UNRELEASED; urgency=medium
 
   * Daw: added ru/en language switch (global UI lang)
