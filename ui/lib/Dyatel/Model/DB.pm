@@ -121,6 +121,13 @@ sub notify
 	return $self->storage->dbh_do(sub { shift; return shift->do("NOTIFY $name, ?", undef, $payload); });
 }
 
+sub function
+{
+	my $self = shift;
+	my($name, @args) = @_;
+	return $self->storage->dbh_do(sub { shift; return shift->selectrow_array("SELECT $name(".join(', ', ('?') x @args).")", undef, @args); });
+}
+
 =head1 NAME
 
 Dyatel::Model::DB - Catalyst DBIC Schema Model

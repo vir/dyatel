@@ -1,0 +1,10 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION config(section_name text, param_name TEXT) RETURNS TEXT AS $$
+	SELECT params->$2 FROM config WHERE section = $1;
+$$ LANGUAGE SQL STABLE;
+
+COMMIT;
+-- vim: ft=sql
+

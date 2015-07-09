@@ -1,0 +1,22 @@
+
+## [% event.caller|html %]
+[% IF info.operator %]Оператор: [% info.operator; info.delete('operator'); END %]
+
+[% IF info.loc %]<strong>[% info.loc %]</strong>[% IF info.reg %], [% info.reg %][% END; END %]
+[% IF info.longitude %] (<a href="http://www.wikimapia.org/#lat=[% info.latitude %]&lon=[% info.longitude %]&z=11&m=h&v=2" title="[% info.loc %]">карта</a>)[% END %]
+[% info.delete('loc', 'reg', 'latitude', 'longitude') %]
+
+[% IF info.timezone %]Временная зона: [% info.timezone %], местное время: <strong>[% info.localtime.substr(0, 5) %]</strong> [% info.delete('timezone', 'localtime'); END %]
+
+[% IF info.callcount %]
+Предыдущие звонки: [% info.callcount %] за последние [% info.minage %].
+
+Последний звонок: [% info.maxts %] ([% info.maxage %] назад).
+[% info.delete('callcount', 'minage', 'maxage', 'maxts') %]
+[% ELSE %]No previous calls found.[% END %]
+
+<dl>
+[% FOREACH key IN info.sort %] <dt>[% key %]</dt><dd>[% info.$key %]</dd>
+[% END %]</dl>
+
+

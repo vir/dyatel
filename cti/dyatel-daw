@@ -372,6 +372,10 @@ sub process
 		$template = 'extcall.tt';
 	}
 
+	my $lang = $self->db->function('config', 'ui', 'language');
+	$lang ||= 'en';
+	$template = "$lang/$template" if $lang;
+
 	foreach my $fh(@helper_fh) {
 		while(<$fh>) {
 			s#^\s+##s;
@@ -389,6 +393,7 @@ sub process
 
 	my $output = '';
 	my $vars = {
+		lang => $lang,
 		info => $inf,
 		event => $e,
 		config => $self->{config},

@@ -359,6 +359,10 @@ CREATE OR REPLACE FUNCTION config(section_name TEXT) RETURNS HSTORE AS $$
 	SELECT params FROM config WHERE section = $1;
 $$ LANGUAGE SQL STABLE;
 
+CREATE OR REPLACE FUNCTION config(section_name text, param_name TEXT) RETURNS TEXT AS $$
+	SELECT params->$2 FROM config WHERE section = $1;
+$$ LANGUAGE SQL STABLE;
+
 CREATE OR REPLACE FUNCTION toBoolean(s TEXT, def BOOLEAN DEFAULT NULL) RETURNS BOOLEAN AS $$
 BEGIN
 	IF LOWER(s) IN('false', 'no', 'off', 'disable', 'f') THEN

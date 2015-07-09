@@ -1,0 +1,12 @@
+[% IF info.avatar %]
+<img align="left" width="200" height="200" src="[% info.avatar %]" />
+[% END %]
+## [% info.descr|html %]
+<dl class="inline">
+	<dt>Имя для показа</dt><dd>[% event.callername|html %]</dd>
+	<dt>Номен</dt><dd>[% info.num %]</dd>
+	<dt>Тип</dt><dd>[% info.numkind %]</dd>
+</dl>
+<span class="clearfix" />
+
+
