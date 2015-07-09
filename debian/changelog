@@ -1,3 +1,10 @@
+dyatel (0.0.104) UNRELEASED; urgency=medium
+
+  * Daw: added ru/en language switch (global UI lang)
+  * Reacher daw messages, helpers output format change
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 09 Jul 2015 15:43:43 +0300
+
 dyatel (0.0.103) UNRELEASED; urgency=medium
 
   * Daw: Allow external helpers
