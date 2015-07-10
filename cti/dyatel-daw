@@ -327,6 +327,7 @@ sub process
 		my $pipe = undef;
 		open($pipe, '-|', "$exec $caller $called")
 			and push @helper_fh, $pipe;
+		binmode $pipe, ':utf8';
 	}
 
 	$self->print("Processing call $e->{billid} from $caller to $called sent by $e->{id}") if $self->{verbose};
