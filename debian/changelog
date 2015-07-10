@@ -1,3 +1,9 @@
+dyatel (0.0.106) UNRELEASED; urgency=medium
+
+  * Fixed daw helper unicode output
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 10 Jul 2015 06:48:18 +0300
+
 dyatel (0.0.105) UNRELEASED; urgency=medium
 
   * Fixed daw templates installation
