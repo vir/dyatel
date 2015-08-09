@@ -167,6 +167,8 @@ __PACKAGE__->add_columns(
   },
   "cti",
   { data_type => "boolean", default_value => \"false", is_nullable => 1 },
+	"linesnum",
+	{ data_type => "integer", default_value => 1, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY

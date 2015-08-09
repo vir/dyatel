@@ -39,6 +39,9 @@
 		<div class="span8 controls form-inline">
 			<label>Domain login: <input type="text" placeHolder="Domain login" ng-model="user.login" /></label>
 		</div>
+		<div class="span8 controls form-inline">
+			<label>Lines number: <input type="number" min="1" max="999" placeHolder="Number of lines" ng-model="user.linesnum" /></label>
+		</div>
 		<div class="span8 controls form-horizontal">
 			<label>Voice traffic encryption mode: <select ng-model="user.secure">
 				<option value="off">Disabled</option>

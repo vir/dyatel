@@ -141,6 +141,7 @@ sub get_user_params
 #		fingrp => $c->request->params->{fingrp} || undef,
 		secure => $c->request->params->{secure} || 'ssl',
 		cti => $c->request->params->{cti} || '0',
+		linesnum => $c->request->params->{linesnum} || 1,
 	};
 }
 
