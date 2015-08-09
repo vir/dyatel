@@ -71,7 +71,8 @@ CREATE TABLE users (
 	badges TEXT[] NOT NULL DEFAULT '{}',
 	fingrp INTEGER REFERENCES fingroups(id) ON DELETE SET NULL,
 	secure encription_mode NOT NULL DEFAULT 'ssl',
-	cti BOOLEAN DEFAULT FALSE
+	cti BOOLEAN DEFAULT FALSE,
+	linesnum INTEGER NOT NULL DEFAULT 1
 );
 ALTER TABLE users ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX users_num_index ON users(num);
@@ -695,8 +696,8 @@ DECLARE
 	x RECORD;
 BEGIN
 	cntr2 := cntr;
-	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
-			WHERE m.grp = grprec.id AND m.enabled AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+	OR x IN SELECT m, cg2 AS sg FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
+			WHERE m.grp = grprec.id AND m.enabled AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
 		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
 			cntr2 := cntr2 + 1;
 			res := res || hstore('callto.' || cntr2, nextcallto);
