@@ -698,23 +698,30 @@ DECLARE
 	x RECORD;
 BEGIN
 	cntr2 := cntr;
-	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m
+	FOR x IN SELECT m, d, cg2 AS sg FROM callgrpmembers m
+			INNER JOIN directory d ON (m.num = d.num AND NOT d.is_prefix) OR (substr(m.num, 1, length(d.num)) = d.num AND d.is_prefix)
 			LEFT JOIN users u ON u.num = m.num AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id)
 			LEFT JOIN callgroups cg2 ON cg2.num = m.num
-			WHERE m.grp = grprec.id AND m.enabled AND (u.id IS NOT NULL OR cg2.id IS NOT NULL) ORDER BY ord LOOP
+			WHERE m.grp = grprec.id AND m.enabled AND (u.id IS NOT NULL OR cg2.id IS NOT NULL OR d.numtype = 'fictive') ORDER BY ord LOOP
 		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
 			cntr2 := cntr2 + 1;
 			res := res || hstore('callto.' || cntr2, nextcallto);
 			nextcallto := NULL;
 		END IF;
 		cntr3 := cntr2;
-		IF (x.sg).id IS NOT NULL THEN
-			IF NOT (x.sg).num = ANY(stack) THEN
-				SELECT * INTO res, cntr2 FROM callgroups_route_part(x.sg, res, cntr2, stack || (x.sg).num::TEXT);
-			END IF;
-		ELSE
-			SELECT * INTO res, cntr2 FROM regs_route_part((x.m).num, res, cntr2);
-		END IF;
+		CASE (x.d).numtype
+			WHEN 'fictive' THEN
+				cntr2 := cntr2 + 1;
+				res := res || hstore('callto.' || cntr2, 'lateroute/'||(x.m).num);
+			WHEN 'user' THEN
+				SELECT * INTO res, cntr2 FROM regs_route_part((x.m).num, res, cntr2);
+			WHEN 'callgrp' THEN
+				IF NOT (x.sg).num = ANY(stack) THEN
+					SELECT * INTO res, cntr2 FROM callgroups_route_part(x.sg, res, cntr2, stack || (x.sg).num::TEXT);
+				END IF;
+--			WHEN 'abbr' THEN
+--			ELSE
+		END CASE;
 		IF grprec.distr = 'linear' THEN
 			IF cntr3 = cntr2 THEN
 				res := delete(res, 'callto.' || cntr2);
