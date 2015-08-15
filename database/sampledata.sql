@@ -229,6 +229,9 @@ INSERT INTO prices (pref, price, descr) VALUES ('81037261', 8.06000042, 'Эст�
 INSERT INTO prices (pref, price, descr) VALUES ('81037255', 8.06000042, 'Эстония, Моб.');
 INSERT INTO prices (pref, price, descr) VALUES ('8343',     6.19999981, 'Екатеринбург');
 
+INSERT INTO directory VALUES ('3', 'fictive', 'Moscow via regexroute', TRUE);
+
+
 COMMIT;
 
 

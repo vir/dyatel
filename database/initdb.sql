@@ -9,7 +9,8 @@ CREATE TABLE numtypes (
 CREATE TABLE directory (
 	num PHONE PRIMARY KEY,
 	numtype VARCHAR NOT NULL REFERENCES numtypes(numtype),
-	descr TEXT
+	descr TEXT,
+	is_prefix BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX directory_prefix_smart_index ON directory USING btree (num text_pattern_ops);
 
@@ -44,6 +45,7 @@ INSERT INTO numtypes (numtype, descr) VALUES ('user', 'User extension number');
 INSERT INTO numtypes (numtype, descr) VALUES ('callgrp', 'PBX call group');
 INSERT INTO numtypes (numtype, descr) VALUES ('abbr', 'Abbreveated number');
 INSERT INTO numtypes (numtype, descr) VALUES ('ivr', 'Interactive voice response');
+INSERT INTO numtypes (numtype, descr) VALUES ('fictive', 'Fictive number (routed elsewhere)');
 
 
 
@@ -696,8 +698,10 @@ DECLARE
 	x RECORD;
 BEGIN
 	cntr2 := cntr;
-	OR x IN SELECT m, cg2 AS sg FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
-			WHERE m.grp = grprec.id AND m.enabled AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m
+			LEFT JOIN users u ON u.num = m.num AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id)
+			LEFT JOIN callgroups cg2 ON cg2.num = m.num
+			WHERE m.grp = grprec.id AND m.enabled AND (u.id IS NOT NULL OR cg2.id IS NOT NULL) ORDER BY ord LOOP
 		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
 			cntr2 := cntr2 + 1;
 			res := res || hstore('callto.' || cntr2, nextcallto);
@@ -1026,24 +1030,37 @@ $$ LANGUAGE PlPgSQL;
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
 DECLARE
 	cf HSTORE;
+	nt TEXT;
 BEGIN
 	cf := config('route');
 	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
 		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
 	END IF;
 
-	RETURN QUERY
-		SELECT * FROM regs_route(msg)
-	UNION
-		SELECT * FROM callgroups_route(msg)
-	UNION
-		SELECT * FROM callpickup_route(msg)
-	UNION
-		SELECT * FROM abbrs_route(msg)
-	UNION
-		SELECT * FROM incoming_route(msg);
+	SELECT numtype INTO nt FROM directory WHERE (msg->'called' = num AND NOT is_prefix)
+			OR (substr(msg->'called', 1, length(num)) = num AND is_prefix);
+
+-- RAISE NOTICE 'nt: %', nt;
+	CASE nt
+		WHEN 'fictive' THEN
+			field := 'location';
+			value := 'lateroute/'||(msg->'called');
+			RETURN NEXT;
+		WHEN 'user' THEN
+			RETURN QUERY SELECT * FROM regs_route(msg);
+		WHEN 'callgrp' THEN
+			RETURN QUERY SELECT * FROM callgroups_route(msg);
+		WHEN 'abbr' THEN
+			RETURN QUERY SELECT * FROM abbrs_route(msg);
+		ELSE
+			RETURN QUERY
+				SELECT * FROM callpickup_route(msg)
+			UNION
+				SELECT * FROM incoming_route(msg);
+	END CASE;
 END;
 $$ LANGUAGE PlPgSQL;
+
 
 CREATE TABLE blfs(
 	id SERIAL PRIMARY KEY,
@@ -1186,6 +1203,7 @@ CREATE AGGREGATE public.last (
         basetype = anyelement,
         stype    = anyelement
 );
+
 
 
 
