@@ -696,8 +696,10 @@ DECLARE
 	x RECORD;
 BEGIN
 	cntr2 := cntr;
-	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
-			WHERE m.grp = grprec.id AND m.enabled AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY ord LOOP
+	FOR x IN SELECT m, cg2 AS sg FROM callgrpmembers m
+			LEFT JOIN users u ON u.num = m.num AND u.linesnum > (SELECT COUNT(*) FROM linetracker WHERE uid = u.id)
+			LEFT JOIN callgroups cg2 ON cg2.num = m.num AND m.enabled
+			WHERE m.grp = grprec.id AND m.enabled AND (u.id IS NOT NULL OR cg2.id IS NOT NULL) ORDER BY ord LOOP
 		IF nextcallto IS NOT NULL AND cntr2 <> cntr THEN
 			cntr2 := cntr2 + 1;
 			res := res || hstore('callto.' || cntr2, nextcallto);
