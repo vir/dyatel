@@ -1,3 +1,9 @@
+dyatel (0.0.108) UNRELEASED; urgency=medium
+
+  * Fictive numbers support added
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Mon, 17 Aug 2015 14:28:14 +0300
+
 dyatel (0.0.107) UNRELEASED; urgency=medium
 
   * Added new field 'linesnum' to user's record.
