@@ -61,12 +61,10 @@ dyatelControllers.directive('dirnum', function ($http) {
 				});
 				if($scope.numType)
 					$scope.dirNum.numtype = $scope.numType;
-				console.log('scope.numCahnge: ' + $scope.anyChange);
 				if($scope.anyChange)
 					 $scope.anyChange({field: 'num'});
 			};
 			$scope.descrChange = function() {
-				console.log('scope.descrCahnge: ' + $scope.anyChange);
 				if($scope.anyChange)
 					 $scope.anyChange({field: 'descr'});
 			};
@@ -740,4 +738,62 @@ dyatelControllers.controller('ConfigAccordionLoadingController', function($scope
 	});
 });
 
+dyatelControllers.controller('FictiveCtrl', function($scope, $routeParams, $location, $http) {
+	var urlBase = '/a/fictive/';
+	$scope.curNum = $routeParams.num;
+	$scope.change = function() {
+		if($scope.cur)
+			$scope.cur.changed=true;
+	}
+	$http.get(urlBase + 'list').success(function(data) {
+		$scope.rows = data.rows;
+		$scope.rows.forEach(function(r) {
+			if(r.num == $scope.curNum)
+				$scope.cur = r;
+			r.ref = r.num;
+		});
+	});
+	$scope.onNew = function() {
+		var newRow = { ref: 'create', num:'', descr:'New fictive number', is_prefix:false, changed: true };
+		$scope.rows.push(newRow);
+		$scope.cur = newRow;
+	};
+	$scope.onSave = function() {
+		$http({
+			method: 'POST',
+			url: urlBase + $scope.cur.ref,
+			data: $.param({
+				action: 'save',
+				num: $scope.cur.num,
+				descr: $scope.cur.descr,
+				is_prefix: $scope.cur.is_prefix,
+			}), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			$scope.cur.changed = false;
+			$scope.cur.ref = $scope.cur.num;
+		}).error(function (data, status, headers, config) {
+			alert('Error: ' + status + "\n" + data);
+		});
+	};
+	$scope.onDelete = function() {
+		$http({
+			method: 'POST',
+			url: urlBase + $scope.cur.ref,
+			data: $.param({
+				action: 'delete',
+			}), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			for(var i = $scope.rows.length - 1; i >= 0; i--) {
+				if($scope.rows[i] === $scope.cur) {
+					$scope.rows.splice(i, 1);
+				}
+			}
+			$location.path('/fictive');
+		}).error(function (data, status, headers, config) {
+			alert('Error: ' + status + "\n" + data);
+		});
+	};
+});
 
