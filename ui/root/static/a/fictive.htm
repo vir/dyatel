@@ -1,0 +1,23 @@
+<h1 ng-hide="curNum">Fictive numbers</h1>
+<h1 ng-show="curNum">Fictive number {{curNum}}</h1>
+
+<table class="table">
+	<tr><th>Num</th><th>Descr</th></tr>
+	<tr ng-repeat="row in rows" ng-class="{ 'warning': row.changed }">
+		<td><a ng-href="#/fictive/{{row.num}}">{{ row.num }}<span ng-show="row.is_prefix">&hellip;</span></a></td>
+		<td>{{ row.descr }}</td>
+	</tr>
+</table>
+
+<div class="well" ng-show="cur">
+	<dirnum dir-num="cur" num-type="fictive" num-readonly="false" any-change="change()" />
+	<label class="checkbox">Is_prefix: <input type="checkbox" ng-model="cur.is_prefix" ng-change="change()" /></label>
+</div>
+
+<div class="controls">
+	<button class="btn" ng-click="onNew()" translate>New</button>
+	<button class="btn" ng-click="onSave()" ng-disabled="!cur.changed || !cur.num.length" translate>Save</button>
+	<button class="btn" ng-click="onDelete()" ng-disabled="!cur || cur.ref == 'create'" translate>Delete</button>
+</div>
+
+

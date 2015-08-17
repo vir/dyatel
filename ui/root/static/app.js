@@ -24,6 +24,8 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/status/:module',  { templateUrl: '/static/a/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
 	when('/schedule',        { templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
 	when('/config',          { templateUrl: '/static/a/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
+//	when('/fictive',         { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
+	when('/fictive/:num?',    { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
 	otherwise({ redirectTo: '/home' });
 	//$locationProvider.html5Mode( true );
 }]);

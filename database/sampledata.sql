@@ -151,6 +151,7 @@ INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 1, '231', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 2, '232', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (7, 3, '5004', true); -- loop!
 
+-- 5007 - see below, in fictive numbers
 
 
 
@@ -228,6 +229,15 @@ INSERT INTO prices (pref, price, descr) VALUES ('8878',     4.96000004, 'Чер�
 INSERT INTO prices (pref, price, descr) VALUES ('81037261', 8.06000042, 'Эстония');
 INSERT INTO prices (pref, price, descr) VALUES ('81037255', 8.06000042, 'Эстония, Моб.');
 INSERT INTO prices (pref, price, descr) VALUES ('8343',     6.19999981, 'Екатеринбург');
+
+-- fictive numbers
+INSERT INTO directory VALUES ('64', 'fictive', 'Pull of fictive numbers', TRUE);
+INSERT INTO directory (num, numtype, descr) VALUES ('5007', 'callgrp', 'grup with fictive member');
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5007', 'parallel', 0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 1, '231', true);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 2, '232', true);
+INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 3, '6415', true); -- fictive member
+
 
 COMMIT;
 

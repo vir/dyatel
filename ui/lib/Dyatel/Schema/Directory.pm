@@ -66,6 +66,8 @@ __PACKAGE__->add_columns(
   },
   "descr",
   { data_type => "text", is_nullable => 1 },
+	"is_prefix",
+	{ data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
