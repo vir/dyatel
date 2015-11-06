@@ -45,6 +45,7 @@ INSERT INTO numtypes (numtype, descr) VALUES ('user', 'User extension number');
 INSERT INTO numtypes (numtype, descr) VALUES ('callgrp', 'PBX call group');
 INSERT INTO numtypes (numtype, descr) VALUES ('abbr', 'Abbreveated number');
 INSERT INTO numtypes (numtype, descr) VALUES ('ivr', 'Interactive voice response');
+INSERT INTO numtypes (numtype, descr) VALUES ('switch', 'Several choices based on some condition');
 INSERT INTO numtypes (numtype, descr) VALUES ('fictive', 'Fictive number (routed elsewhere)');
 
 
@@ -593,7 +594,7 @@ $$ LANGUAGE PlPgSQL;
 
 CREATE OR REPLACE FUNCTION linetracker_fin(msg HSTORE) RETURNS VOID AS $$
 BEGIN
-	-- make hangup of channel fork/30 clean up entries for fork/30/*
+	-- make hangup of channel fork/30 clean up entries for fork/30/...
         DELETE FROM linetracker WHERE chan = msg->'chan' OR chan LIKE msg->'chan' || '/%';
 END;
 $$ LANGUAGE PlPgSQL;
@@ -1006,6 +1007,63 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+
+
+-- switch route
+CREATE TABLE switches(
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	param TEXT NOT NULL,
+	arg TEXT NULL,
+	defroute PHONE NOT NULL
+);
+ALTER TABLE switches ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE switch_cases(
+	id SERIAL PRIMARY KEY,
+	switch INTEGER REFERENCES switches(id) ON UPDATE CASCADE ON DELETE CASCADE,
+	value TEXT NULL NULL,
+	route PHONE NOT NULL,
+	comments TEXT NULL
+);
+CREATE UNIQUE INDEX switch_cases_uniq_index ON switch_cases(switch, value);
+
+CREATE OR REPLACE FUNCTION switch_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	sw RECORD;
+	r RECORD;
+	m TEXT;
+BEGIN
+	SELECT * INTO sw FROM switches WHERE num = msg->'called';
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Switch % not found', msg->'called';
+	END IF;
+
+	CASE sw.param
+		WHEN 'schedule' THEN
+			m := scheduled_mode();
+		WHEN 'config' THEN
+			m := config('route', sw.arg);
+		WHEN 'random' THEN
+			SELECT c.value INTO m FROM switch_cases c WHERE c.switch = sw.id ORDER BY random() LIMIT 1;
+		WHEN 'custom' THEN
+			EXECUTE 'SELECT ' || sw.arg || '($1)' INTO m USING msg;
+		ELSE
+			RAISE EXCEPTION 'Invalid parameter % in switch %', sw.param, sw.num;
+	END CASE;
+
+	SELECT * INTO r FROM switch_cases c WHERE c.value = m;
+	IF NOT FOUND THEN
+		RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || sw.defroute;
+	ELSE
+		RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || r.route;
+	END IF;
+
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
 -- route incoming calls
 CREATE TABLE incoming(
 	id SERIAL PRIMARY KEY,
@@ -1059,6 +1117,8 @@ BEGIN
 			RETURN QUERY SELECT * FROM callgroups_route(msg);
 		WHEN 'abbr' THEN
 			RETURN QUERY SELECT * FROM abbrs_route(msg);
+		WHEN 'switch' THEN
+			RETURN QUERY SELECT * FROM switch_route(msg);
 		ELSE
 			RETURN QUERY
 				SELECT * FROM callpickup_route(msg)

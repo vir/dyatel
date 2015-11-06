@@ -1,0 +1,97 @@
+BEGIN;
+
+INSERT INTO numtypes (numtype, descr) VALUES ('switch', 'Several choices based on some condition');
+
+CREATE TABLE switches(
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	param TEXT NOT NULL,
+	arg TEXT NULL,
+	defroute PHONE NOT NULL
+);
+ALTER TABLE switches ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE switch_cases(
+	id SERIAL PRIMARY KEY,
+	switch INTEGER REFERENCES switches(id) ON UPDATE CASCADE ON DELETE CASCADE,
+	value TEXT NULL NULL,
+	route PHONE NOT NULL,
+	comments TEXT NULL
+);
+CREATE UNIQUE INDEX switch_cases_uniq_index ON switch_cases(switch, value);
+
+CREATE OR REPLACE FUNCTION switch_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	sw RECORD;
+	r RECORD;
+	m TEXT;
+BEGIN
+	SELECT * INTO sw FROM switches WHERE num = msg->'called';
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Switch % not found', msg->'called';
+	END IF;
+
+	CASE sw.param
+		WHEN 'schedule' THEN
+			m := scheduled_mode();
+		WHEN 'config' THEN
+			m := config('route', sw.arg);
+		WHEN 'random' THEN
+			SELECT c.value INTO m FROM switch_cases c WHERE c.switch = sw.id ORDER BY random() LIMIT 1;
+		WHEN 'custom' THEN
+			EXECUTE 'SELECT ' || sw.arg || '($1)' INTO m USING msg;
+		ELSE
+			RAISE EXCEPTION 'Invalid parameter % in switch %', sw.param, sw.num;
+	END CASE;
+
+	SELECT * INTO r FROM switch_cases c WHERE c.value = m;
+	IF NOT FOUND THEN
+		RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || sw.defroute;
+	ELSE
+		RETURN QUERY SELECT 'location'::TEXT, 'lateroute/' || r.route;
+	END IF;
+
+END;
+$$ LANGUAGE PlPgSQL;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	cf HSTORE;
+	nt TEXT;
+BEGIN
+	cf := config('route');
+	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
+		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
+	END IF;
+
+	SELECT numtype INTO nt FROM directory WHERE (msg->'called' = num AND NOT is_prefix)
+			OR (substr(msg->'called', 1, length(num)) = num AND is_prefix);
+
+-- RAISE NOTICE 'nt: %', nt;
+	CASE nt
+		WHEN 'fictive' THEN
+			field := 'location';
+			value := 'lateroute/'||(msg->'called');
+			RETURN NEXT;
+		WHEN 'user' THEN
+			RETURN QUERY SELECT * FROM regs_route(msg);
+		WHEN 'callgrp' THEN
+			RETURN QUERY SELECT * FROM callgroups_route(msg);
+		WHEN 'abbr' THEN
+			RETURN QUERY SELECT * FROM abbrs_route(msg);
+		WHEN 'switch' THEN
+			RETURN QUERY SELECT * FROM switch_route(msg);
+		ELSE
+			RETURN QUERY
+				SELECT * FROM callpickup_route(msg)
+			UNION
+				SELECT * FROM incoming_route(msg);
+	END CASE;
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
+
+
+

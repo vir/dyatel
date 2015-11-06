@@ -238,6 +238,19 @@ INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 1, '231', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 2, '232', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 3, '6415', true); -- fictive member
 
+-- switches
+INSERT INTO directory(num, numtype, descr, is_prefix) VALUES ('765', 'switch', 'Incoming based on work mode switch', FALSE);
+INSERT INTO switches(num, param, arg, defroute) VALUES ('765', 'schedule', 'mode', '888');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (1, 'work',    '885', 'Work time IVR at day');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (1, 'evening', '889', 'Evening IVR at ... evening');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (1, 'night',   '886', 'We are all sleeping');
+
+INSERT INTO directory(num, numtype, descr, is_prefix) VALUES ('764', 'switch', 'Random IVR just for fun', FALSE);
+INSERT INTO switches(num, param, defroute) VALUES ('764', 'random', '888');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'work',    '885', 'Work time IVR at day');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'evening', '889', 'Evening IVR at ... evening');
+INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'night',   '886', 'We are all sleeping');
+
 
 COMMIT;
 
