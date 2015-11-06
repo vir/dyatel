@@ -51,6 +51,12 @@ __PACKAGE__->table("callgrpmembers");
   data_type: 'phone'
   is_nullable: 0
 
+=head2 enabled
+
+  data_type: 'boolean'
+  default_value: true
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -60,6 +66,8 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_nullable => 0 },
   "num",
   { data_type => "phone", is_nullable => 0 },
+  "enabled",
+  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -89,8 +97,8 @@ Related object: L<Dyatel::Schema::Callgroups>
 __PACKAGE__->belongs_to("grp", "Dyatel::Schema::Callgroups", { id => "grp" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PGJ5poNeTfGzb70drZFzGA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:44:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:unLVCY9MW0Up3YomxWhieA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

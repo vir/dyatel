@@ -77,6 +77,12 @@ __PACKAGE__->table("callgroups");
   data_type: 'phone'
   is_nullable: 1
 
+=head2 queue
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -107,6 +113,8 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => 0, is_nullable => 0 },
   "exitpos",
   { data_type => "phone", is_nullable => 1 },
+  "queue",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -177,9 +185,19 @@ __PACKAGE__->has_many(
   undef,
 );
 
+=head2 queue
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oi71oXT9jR4d/WfoynmDew
+Type: belongs_to
+
+Related object: L<Dyatel::Schema::Queues>
+
+=cut
+
+__PACKAGE__->belongs_to("queue", "Dyatel::Schema::Queues", { id => "queue" });
+
+
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:44:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rzBxPJVfswCeTkM+HoqzPw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

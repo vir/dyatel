@@ -69,6 +69,17 @@ __PACKAGE__->table("numkinds");
   default_value: (empty string)
   is_nullable: 0
 
+=head2 callabale
+
+  data_type: 'boolean'
+  default_value: false
+  is_nullable: 0
+
+=head2 announce
+
+  data_type: 'text'
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -89,6 +100,10 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "ins_prefix",
   { data_type => "text", default_value => "", is_nullable => 0 },
+  "callabale",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "announce",
+  { data_type => "text", is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -136,8 +151,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dWz3Pmd7r4quj3ofumADhA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:51:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9KA8NL/AhVAISuNoizg+6g
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

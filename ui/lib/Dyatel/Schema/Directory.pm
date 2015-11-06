@@ -52,6 +52,12 @@ __PACKAGE__->table("directory");
   data_type: 'text'
   is_nullable: 1
 
+=head2 is_prefix
+
+  data_type: 'boolean'
+  default_value: false
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -66,8 +72,8 @@ __PACKAGE__->add_columns(
   },
   "descr",
   { data_type => "text", is_nullable => 1 },
-	"is_prefix",
-	{ data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "is_prefix",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -158,6 +164,21 @@ __PACKAGE__->belongs_to(
   { numtype => "numtype" },
 );
 
+=head2 switches
+
+Type: has_many
+
+Related object: L<Dyatel::Schema::Switches>
+
+=cut
+
+__PACKAGE__->has_many(
+  "switches",
+  "Dyatel::Schema::Switches",
+  { "foreign.num" => "self.num" },
+  undef,
+);
+
 =head2 users
 
 Type: has_many
@@ -174,9 +195,9 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mDdyMDXOVpyGQ6qEcCaKxg
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:51:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fF+qLQB2R+V+NeYlTOnGTA
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
