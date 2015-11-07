@@ -701,6 +701,40 @@ dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
 	};
 });
 
+/* * * * * * * * * * Switches * * * * * * * * * */
+
+dyatelControllers.controller('SwitchesListCtrl', function($scope, $http) {
+	$http.get('/a/switches/list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+});
+
+dyatelControllers.controller('SwitchDetailCtrl', function($scope, $routeParams, $http) {
+	if($routeParams.userId == 'new') {
+		$scope.existing = false;
+	} else {
+		$http.get('switches/' + $routeParams.swId).success(function(data) {
+			$scope.switch = data.switch;
+			$scope.cases = data.cases;
+			$scope.existing = true;
+		});
+	}
+	// members list
+	$scope.gridOptions = {
+		data: 'cases',
+		columnDefs: [
+			{ field: 'value',    displayName: 'Value',     width: '16%' },
+			{ field: 'route',    displayName: 'Route',     width: '10%' },
+			{ field: 'comments', displayName: 'Comments' },
+		],
+		showFilter: true,
+		multiSelect: false,
+		selectedItems: $scope.selection,
+	};
+});
+
+/* * * * * * * * * * Config * * * * * * * * * */
+
 dyatelControllers.controller('ConfigCtrl', function($scope, $http) {
 	$scope.defs = [ ];
 	$scope.conf = { };

@@ -1,0 +1,44 @@
+
+<div id="userdetail" class="container-fluid">
+ <h1>{{ existing ? (switch.num.num + ': ' + switch.num.descr) : 'New switch' }}</h1>
+ <form novalidate="1">
+
+  <div class="row-fluid">
+   <div class="span12 well">
+    <dirnum dir-num="switch.num" num-type="switch" num-readonly="existing" />
+   </div>
+  </div>
+
+  <div id="switchparams1" class="row-fluid form-inline">
+   <div class="span12">
+    <label>Switch on
+     <select ng-model="switch.param">
+      <option value="schedule">Schedule</option>
+      <option value="config">Configuration parameter</option>
+      <option value="random">Random selection</option>
+      <option value="custom">Custom SQL function</option>
+     </select>
+    </label>
+    <label ng-if="switch.param != 'random'">Arg: <input type="text" ng-model="switch.arg" /></label>
+    <br />
+    <label>Default route: <input type="num" ng-model="switch.defroute" /></label>
+   </div>
+  </div> <!-- row -->
+
+  <div class="row-fluid" ng-show="existing">
+   <div id="switchcases" class="span12">
+    <h2>Cases</h2>
+    <div ng-grid="gridOptions" style="height:200px;"></div>
+   </div>
+  </div> <!-- row -->
+
+ </form>
+</div> <!-- container-fluid -->
+
+<!--
+<button ng-click="save()">Save</button>
+<button ng-show="existing" ng-click="delete()">Delete</button>
+-->
+<a href="#/switches">Back to list</a>
+
+

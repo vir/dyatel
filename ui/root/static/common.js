@@ -1,4 +1,4 @@
-var dyatelCommon = angular.module('dyatelCommon', [ 'ngSanitize' ]);
+var dyatelCommon = angular.module('dyatelCommon', [ 'ngSanitize', 'ui.bootstrap.typeahead' ]);
 
 dyatelCommon.filter('unsafe', function($sce) {
 	return function(val) {
@@ -73,4 +73,34 @@ dyatelCommon.service('fileUpload', ['$http', function ($http) {
 	}
 }]);
 
+/* input with type="num" will have number selection typeahead */
+dyatelCommon.directive('input', function($compile, $http) {
+	var ds = function (a) {
+		var url = '/u/phonebook/search?' + $.param({ q: a, loc: 1, more: 1, pvt: 1, com: 1 }, true); // use jQuery to url-encode object
+		return $http.get(url).then(function (response) {
+			return response.data.result.map(function(a) { return {
+				num: a.num,
+				label: a.num + ' ' + a.descr,
+			}});
+		});
+	};
+	return {
+		restrict: 'E',
+		terminal: true,
+		priority: 1000,
+		compile: function(element, attrs) {
+			if(attrs.type != 'num')
+				return;
+			element.attr('typeahead', "x.num as x.label for x in numLookupDataSource($viewValue) | limitTo:25");
+			element.attr('type', 'text');
+			return {
+				pre: function preLink(scope, iElement, iAttrs, controller) {  },
+				post: function postLink(scope, iElement, iAttrs, controller) {
+					scope.numLookupDataSource = ds; // Yes, i am adding it to parent scope. Shame on me.
+					$compile(iElement)(scope);
+				}
+			};
+		},
+	};
+});
 
