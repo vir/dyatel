@@ -17,7 +17,7 @@
 		<fieldset ng-disabled="!selection[0]">
 			<label>Number length <input type="text" ng-model="selection[0].numlen" ng-change="selection[0].changed=true" /></label>
 			<label>Allowed First digits <input type="text" ng-model="selection[0].firstdigit" ng-change="selection[0].changed=true" /></label>
-			<label>Exit position on timeout <input type="text" ng-model="selection[0].etimeout" ng-change="selection[0].changed=true" /></label>
+			<label>Exit position on timeout <input type="num" ng-model="selection[0].etimeout" ng-change="selection[0].changed=true" /></label>
 			<label>Timeout in seconds <input type="text" ng-model="selection[0].timeout" ng-change="selection[0].changed=true" /></label>
 			<label>Prompt file <input type="text" ng-model="selection[0].prompt" ng-change="selection[0].changed=true" /></label>
 		</fieldset>

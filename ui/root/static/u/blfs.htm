@@ -6,8 +6,7 @@
    <label for="inpKey" translate>Key</label>
    <input id="inpKey" type="text" ng-model="selection[0].key"   ng-readonly="!selection.length" ng-change="selection[0].changed=true" />
    <label for="inpNum" translate>Number</label>
-   <input id="inpNum" type="text" ng-model="selection[0].num"   ng-readonly="!selection.length" ng-change="selection[0].changed=true"
-          typeahead="x.num as x.label for x in dataSource($viewValue) | limitTo:25"/>
+   <input id="inpNum" type="num" ng-model="selection[0].num"    ng-readonly="!selection.length" ng-change="selection[0].changed=true" />
    <label for="inpLab" translate>Label</label>
    <input id="inpLab" type="text" ng-model="selection[0].label" ng-readonly="!selection.length" ng-change="selection[0].changed=true" />
    <div class="controls">

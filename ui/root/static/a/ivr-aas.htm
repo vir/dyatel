@@ -1,5 +1,5 @@
+<div id="a-ivr-aa" class="container-fluid">
 <h1>IVR &mdash; AA</h1>
-<div class="row-fluid">
 
 <div class="span6">
 	<div class="gridStyle" ng-grid="gridOptions" style="width:100%"></div>
@@ -12,29 +12,29 @@
 	<p class="warning" ng-show="selection[0].changed">Current row is not saved</p>
 </div>
 
-<form name="editForm" class="form-inline span6" role="form"><div class="well" style="width:16em; text-align:center;">
+<form name="editForm" class="form-inline span6" role="form"><div class="well">
 	<fieldset ng-disabled="!selection[0]">
-	<div class="row-fluid">
+	<div id="keypad" class="row-fluid">
 		<div>
-		<div class="span4"><label>1<br /><input type="text" ng-model="selection[0].e1" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>2<br /><input type="text" ng-model="selection[0].e2" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>3<br /><input type="text" ng-model="selection[0].e3" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>1<br /><input type="num" ng-model="selection[0].e1" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>2<br /><input type="num" ng-model="selection[0].e2" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>3<br /><input type="num" ng-model="selection[0].e3" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
 		</div><div>
-		<div class="span4"><label>4<br /><input type="text" ng-model="selection[0].e4" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>5<br /><input type="text" ng-model="selection[0].e5" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>6<br /><input type="text" ng-model="selection[0].e6" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>4<br /><input type="num" ng-model="selection[0].e4" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>5<br /><input type="num" ng-model="selection[0].e5" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>6<br /><input type="num" ng-model="selection[0].e6" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
 		</div><div>
-		<div class="span4"><label>7<br /><input type="text" ng-model="selection[0].e7" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>8<br /><input type="text" ng-model="selection[0].e8" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>9<br /><input type="text" ng-model="selection[0].e9" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>7<br /><input type="num" ng-model="selection[0].e7" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>8<br /><input type="num" ng-model="selection[0].e8" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>9<br /><input type="num" ng-model="selection[0].e9" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
 		</div><div>
-		<div class="span4"><label>*<br /><input type="text" ng-model="selection[0].estar" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>0<br /><input type="text" ng-model="selection[0].e0" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
-		<div class="span4"><label>#<br /><input type="text" ng-model="selection[0].ehash" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>*<br /><input type="num" ng-model="selection[0].estar" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>0<br /><input type="num" ng-model="selection[0].e0" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
+		<div class="span4"><label>#<br /><input type="num" ng-model="selection[0].ehash" ng-change="selection[0].changed=true" style="width:60%" /></label></div>
 		</div>
 	</div>
 	<div class="row-fluid">
-		<label>Exit position on timeout <input type="text" ng-model="selection[0].etimeout" ng-change="selection[0].changed=true" /></label>
+		<label>Exit position on timeout <input type="num" ng-model="selection[0].etimeout" ng-change="selection[0].changed=true" /></label>
 		<label>Timeout in seconds <input type="text" ng-model="selection[0].timeout" ng-change="selection[0].changed=true" /></label>
 		<label>Prompt file <input type="text" ng-model="selection[0].prompt" ng-change="selection[0].changed=true" /></label>
 	</div>

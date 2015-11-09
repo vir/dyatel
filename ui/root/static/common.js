@@ -91,7 +91,7 @@ dyatelCommon.directive('input', function($compile, $http) {
 		compile: function(element, attrs) {
 			if(attrs.type != 'num')
 				return;
-			element.attr('typeahead', "x.num as x.label for x in numLookupDataSource($viewValue) | limitTo:25");
+			element.attr('typeahead', "x.num as x.label for x in numLookupDataSource($viewValue) | limitTo:20");
 			element.attr('type', 'text');
 			return {
 				pre: function preLink(scope, iElement, iAttrs, controller) {  },

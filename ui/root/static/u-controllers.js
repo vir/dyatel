@@ -763,15 +763,6 @@ ctrlrModule.controller('MyBLFsCtrl', function($scope, $translate, $http) {
 			}).success(delRow);
 		}
 	};
-	$scope.dataSource = function (a) {
-		var url = '/u/phonebook/search?' + $.param({ q: a, loc: 1, more: 1, pvt: 1, com: 1 }, true); // use jQuery to url-encode object
-		return $http.get(url).then(function (response) {
-			return response.data.result.map(function(a) { return {
-				num: a.num,
-				label: a.num + ' ' + a.descr,
-			}});
-		});
-	};
 });
 
 
