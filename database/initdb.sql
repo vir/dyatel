@@ -967,7 +967,14 @@ $$ LANGUAGE PlPgSql;
 
 
 -- Scheduled route changes
-CREATE TABLE schedule (
+CREATE TABLE schedules (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	comments TEXT
+);
+CREATE UNIQUE INDEX schedules_name_index ON schedules(name);
+
+CREATE TABLE schedtable (
 	id SERIAL PRIMARY KEY,
 	prio INTEGER NOT NULL DEFAULT 100,
 	mday DATE,
@@ -975,38 +982,52 @@ CREATE TABLE schedule (
 	dow SMALLINT[] NOT NULL DEFAULT '{0,1,2,3,4,5,6}',
 	tstart TIME WITHOUT TIME ZONE NOT NULL,
 	tend TIME WITHOUT TIME ZONE NOT NULL,
-	mode TEXT NOT NULL
+	mode TEXT NOT NULL,
+	schedule INTEGER NOT NULL REFERENCES schedules(id) ON DELETE CASCADE
 );
 
-INSERT INTO schedule (prio,      tstart, tend, mode) VALUES ( 0,                '00:00', '24:00', 'holiday');
-INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (10, '{1,2,3,4,5}', '09:00', '18:00', 'work');
--- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (20, '{1,2,3,4,5}', '18:00', '21:00', 'evening');
--- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '21:00', '24:00', 'night');
--- INSERT INTO schedule (prio, dow, tstart, tend, mode) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night');
--- INSERT INTO schedule (mday, days, tstart, tend, mode) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday');
+INSERT INTO schedules(name) VALUES ('mode');
+INSERT INTO schedtable (prio,      tstart, tend, mode, schedule) VALUES ( 0,                '00:00', '24:00', 'holiday', currval('schedules_id_seq'));
+INSERT INTO schedtable (prio, dow, tstart, tend, mode, schedule) VALUES (10, '{1,2,3,4,5}', '09:00', '18:00', 'work',    currval('schedules_id_seq'));
+-- INSERT INTO schedtable (prio, dow, tstart, tend, mode, schedule) VALUES (20, '{1,2,3,4,5}', '18:00', '21:00', 'evening', currval('schedules_id_seq'));
+-- INSERT INTO schedtable (prio, dow, tstart, tend, mode, schedule) VALUES (30, '{1,2,3,4,5}', '21:00', '24:00', 'night',   currval('schedules_id_seq'));
+-- INSERT INTO schedtable (prio, dow, tstart, tend, mode, schedule) VALUES (30, '{1,2,3,4,5}', '00:00', '09:00', 'night',   currval('schedules_id_seq'));
+-- INSERT INTO schedtable (mday, days, tstart, tend, mode, schedule) VALUES ('2013-12-31', 9, '0:00', '24:00', 'holiday',   currval('schedules_id_seq'));
 
-CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION scheduled_mode(schedname TEXT, ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
 DECLARE
 	wts TIMESTAMP WITH TIME ZONE;
 	d DATE;
 	t TIME WITHOUT TIME ZONE;
 	wd SMALLINT;
 	r TEXT;
+	sid INTEGER;
 BEGIN
+	SELECT id INTO sid FROM schedules WHERE name = schedname;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Schedule % not found', schedname;
+	END IF;
 	wts := ts AT TIME ZONE tz;
 	d := wts;
 	t := wts;
 	wd := EXTRACT(dow FROM d)::SMALLINT;
 	-- RAISE NOTICE 'wts: %, d: %, t: %, wd: %', wts, d, t, wd;
-	SELECT mode INTO r FROM schedule s WHERE wd = ANY (s.dow)
+	SELECT mode INTO r FROM schedtable s WHERE schedule = sid
+		AND wd = ANY (s.dow)
 		AND t >= s.tstart AND t < s.tend
 		AND (mday IS NULL OR
-			(d >= mday AND d < mday + days)) 
+			(d >= mday AND d < mday + days))
 		ORDER BY prio DESC, mday DESC, tstart DESC LIMIT 1;
 	RETURN r;
 END;
 $$ LANGUAGE PlPgSQL;
 
+-- backward compatibility
+CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+BEGIN
+	RETURN scheduled_mode('mode'::TEXT, ts, tz);
+END;
+$$ LANGUAGE PlPgSQL;
 
 
 -- switch route

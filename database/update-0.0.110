@@ -1,0 +1,59 @@
+
+BEGIN;
+
+ALTER TABLE schedule RENAME TO schedtable;
+
+CREATE TABLE schedules (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	comments TEXT
+);
+CREATE UNIQUE INDEX schedules_name_index ON schedules(name);
+
+INSERT INTO schedules(name) VALUES ('mode');
+
+ALTER TABLE schedtable ADD schedule INTEGER REFERENCES schedules(id) ON DELETE CASCADE;
+UPDATE schedtable SET schedule = (SELECT id FROM schedules WHERE name = 'mode');
+ALTER TABLE schedtable ALTER COLUMN schedule SET NOT NULL;
+
+-- ALTER TABLE schedtable ADD schedule INTEGER NOT NULL REFERENCES schedules(id) ON DELETE CASCADE;
+
+CREATE OR REPLACE FUNCTION scheduled_mode(schedname TEXT, ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+DECLARE
+	wts TIMESTAMP WITH TIME ZONE;
+	d DATE;
+	t TIME WITHOUT TIME ZONE;
+	wd SMALLINT;
+	r TEXT;
+	sid INTEGER;
+BEGIN
+	SELECT id INTO sid FROM schedules WHERE name = schedname;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Schedule % not found', schedname;
+	END IF;
+	wts := ts AT TIME ZONE tz;
+	d := wts;
+	t := wts;
+	wd := EXTRACT(dow FROM d)::SMALLINT;
+	-- RAISE NOTICE 'wts: %, d: %, t: %, wd: %', wts, d, t, wd;
+	SELECT mode INTO r FROM schedtable s WHERE schedule = sid
+		AND wd = ANY (s.dow)
+		AND t >= s.tstart AND t < s.tend
+		AND (mday IS NULL OR
+			(d >= mday AND d < mday + days))
+		ORDER BY prio DESC, mday DESC, tstart DESC LIMIT 1;
+	RETURN r;
+END;
+$$ LANGUAGE PlPgSQL;
+
+-- backward compatibility
+CREATE OR REPLACE FUNCTION scheduled_mode(ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, tz TEXT DEFAULT current_setting('TIMEZONE')) RETURNS TEXT AS $$
+BEGIN
+	RETURN scheduled_mode('mode'::TEXT, ts, tz);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+COMMIT;
+-- vim: ft=sql
+

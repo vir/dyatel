@@ -177,3 +177,45 @@ BEGIN
 END
 $$ LANGUAGE PlPgSql VOLATILE;
 
+CREATE OR REPLACE FUNCTION test_schedule1() RETURNS VOID AS $$
+DECLARE
+	r RECORD;
+BEGIN
+	FOR r IN SELECT d, x, scheduled_mode('mode', d::TIMESTAMP) AS m
+		FROM (VALUES
+			('2015-11-10 15:21', 'work'),
+			('2015-11-08 11:11', 'holiday'),
+			('2015-11-09 18:15', 'evening'),
+			('2014-01-02 10:00', 'holiday'),
+			('2015-11-09 03:14', 'night')
+		) AS t(d, x)
+	LOOP
+		if r.m IS NULL OR r.x <> r.m THEN
+			RAISE EXCEPTION 'For date %: Got: %, Expected: %', r.d, r.m, r.x;
+		END IF;
+	END LOOP;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
+
+CREATE OR REPLACE FUNCTION test_schedule2() RETURNS VOID AS $$
+DECLARE
+	got TEXT;
+	exp TEXT;
+BEGIN
+	exp := 'sunday';
+	got := scheduled_mode('weekends', '2015-11-08'::TIMESTAMP);
+	if got IS NULL OR got <> exp THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', got, exp;
+	END IF;
+	exp := 'workday';
+	got := scheduled_mode('weekends', '2015-11-10'::TIMESTAMP);
+	if got IS NULL OR got <> exp THEN
+		RAISE EXCEPTION 'Got: %, Expected: %', got, exp;
+	END IF;
+END
+$$ LANGUAGE PlPgSql VOLATILE;
+
+
+
+
+

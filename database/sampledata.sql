@@ -166,12 +166,14 @@ INSERT INTO pickupgrpmembers(grp, uid) VALUES (1, 6);
 INSERT INTO pickupgrpmembers(grp, uid) VALUES (1, 7);
 
 
-INSERT INTO schedule(prio,                  tstart, tend, mode) VALUES ( 0,                                 '00:00', '24:00', 'holiday');
-INSERT INTO schedule(prio,             dow, tstart, tend, mode) VALUES (10,                  '{1,2,3,4,5}', '09:00', '18:00', 'work');
-INSERT INTO schedule(prio,             dow, tstart, tend, mode) VALUES (20,                  '{1,2,3,4,5}', '18:00', '21:00', 'evening');
-INSERT INTO schedule(prio,             dow, tstart, tend, mode) VALUES (30,                  '{1,2,3,4,5}', '21:00', '24:00', 'night');
-INSERT INTO schedule(prio,             dow, tstart, tend, mode) VALUES (30,                  '{1,2,3,4,5}', '00:00', '09:00', 'night');
-INSERT INTO schedule(      mday, days,      tstart, tend, mode) VALUES (    '2013-12-31', 9,                 '0:00', '24:00', 'holiday');
+DELETE FROM schedules WHERE name = 'mode';
+INSERT INTO schedules(name) VALUES ('mode');
+INSERT INTO schedtable(prio,                  tstart, tend, mode, schedule) VALUES ( 0,                                 '00:00', '24:00', 'holiday', currval('schedules_id_seq'));
+INSERT INTO schedtable(prio,             dow, tstart, tend, mode, schedule) VALUES (10,                  '{1,2,3,4,5}', '09:00', '18:00', 'work',    currval('schedules_id_seq'));
+INSERT INTO schedtable(prio,             dow, tstart, tend, mode, schedule) VALUES (20,                  '{1,2,3,4,5}', '18:00', '21:00', 'evening', currval('schedules_id_seq'));
+INSERT INTO schedtable(prio,             dow, tstart, tend, mode, schedule) VALUES (30,                  '{1,2,3,4,5}', '21:00', '24:00', 'night',   currval('schedules_id_seq'));
+INSERT INTO schedtable(prio,             dow, tstart, tend, mode, schedule) VALUES (30,                  '{1,2,3,4,5}', '00:00', '09:00', 'night',   currval('schedules_id_seq'));
+INSERT INTO schedtable(      mday, days,      tstart, tend, mode, schedule) VALUES (    '2013-12-31', 9,                 '0:00', '24:00', 'holiday', currval('schedules_id_seq'));
 
 
 INSERT INTO regs(userid, ts, location, expires, device, driver, ip_transport, ip_host, ip_port, audio, route_params) VALUES (1, 'now()', '222@voip.ctm.ru/Yate',                             'now'::TIMESTAMP WITH TIME ZONE + '1 hour'::INTERVAL, NULL, 'jabber', NULL, '192.168.67.222', 23882, true, NULL);
@@ -251,6 +253,11 @@ INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'work',    '
 INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'evening', '889', 'Evening IVR at ... evening');
 INSERT INTO switch_cases(switch, value, route, comments) VALUES (2, 'night',   '886', 'We are all sleeping');
 
+-- more schedules
+INSERT INTO schedules(name) VALUES ('weekends');
+INSERT INTO schedtable(prio,      tstart, tend, mode, schedule) VALUES ( 0,        '00:00', '24:00', 'workday',  currval('schedules_id_seq'));
+INSERT INTO schedtable(prio, dow, tstart, tend, mode, schedule) VALUES (10, '{6}', '00:00', '24:00', 'saturday', currval('schedules_id_seq'));
+INSERT INTO schedtable(prio, dow, tstart, tend, mode, schedule) VALUES (10, '{0}', '00:00', '24:00', 'sunday',   currval('schedules_id_seq'));
 
 COMMIT;
 
