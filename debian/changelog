@@ -1,3 +1,10 @@
+dyatel (0.0.109) UNRELEASED; urgency=medium
+
+  * Conditional routing added.
+  * Minor admin UI improvements.
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 10 Nov 2015 10:09:23 +0300
+
 dyatel (0.0.108) UNRELEASED; urgency=medium
 
   * Fictive numbers support added
