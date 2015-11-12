@@ -675,30 +675,61 @@ dyatelControllers.directive('timepickerFormatString', function (dateFilter) {
 });
 
 dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
-	$scope.myData = [ ];
-	$scope.wdays = [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб' ];
-	$scope.anymday = $scope.anywday = false;
-	$http.get('/a/schedule/list').success(function(data) {
-		$scope.myData = data.rows;
-	});
-	$scope.selection = [ ];
-	$scope.gridOptions = {
-		data: 'myData',
-		columnDefs: [
-			{ field: 'prio', displayName: 'Priority' },
-			{ field: 'mday', displayName: 'Start date' },
-			{ field: 'days', displayName: 'Days' },
-			{ field: 'dow',  displayName: 'Week days' },
-			{ field: 'tstart', displayName: 'Start time' },
-			{ field: 'tend', displayName: 'End time' },
-			{ field: 'mode', displayName: 'Mode' },
-//			{field:'num', displayName:'Number'},
-//			{field:'', displayName:'', cellTemplate: '<a ng-href="#/cgroups/{{row.getProperty(\'id\')}}">{{row.getProperty(col.field)}}</a>'},
-//			{field:'descr', displayName:'Description'},
-		],
-		multiSelect: false,
-		selectedItems: $scope.selection,
+	$scope.wday = {
+		'any': false,
+		'names': [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб' ],
+		'chk': [ false, false, false, false, false, false, false ],
 	};
+	$scope.anymday = $scope.wholeday = false;
+	$scope.editsched = false;
+	$scope.sel = { sched: null, row: null };
+	$scope.schedule = [ ];
+	$http.get('/a/schedule/').success(function(data) {
+		$scope.list = data.rows;
+		$scope.sel.sched = data.rows[0];
+	});
+	$scope.$watch('sel.sched', function(n, o) {
+		console.log('sel.sched updated');
+		if($scope.sel.sched && $scope.sel.sched.id) {
+			$http.get('/a/schedule/' + $scope.sel.sched.id).success(function(data) {
+				$scope.schedule = data.rows;
+		console.log('schedle downloaded: ' + data.rows.length + ' rows');
+			});
+		}
+	}, true);
+	$scope.$watch('sel.row', function(n, o) {
+		/*
+		$http.get('/a/schedule/' + $scope.schedid + '/' + $scope.rowid).success(function(data) {
+			$scope.schedule = data.rows;
+		});
+		*/
+		if($scope.sel.row) {
+			$scope.wday.any = true;
+			for(var i =0; i < $scope.wday.names.length; ++i) {
+				var on = $scope.sel.row.dow.indexOf(i) != -1;
+				$scope.wday.chk[i] = on;
+				if(! on)
+					$scope.wday.any = false;
+			}
+			$scope.anymday = ! $scope.sel.row.mday;
+			$scope.wholeday = ($scope.sel.row.tstart == "00:00:00" && $scope.sel.row.tend == "24:00:00");
+		}
+	});
+	$scope.$watch('wday', function(n, o) { /* week day - back to row */
+		var newarr = [ ];
+		for(var i =0; i < $scope.wday.names.length; ++i) {
+			if($scope.wday.any || $scope.wday.chk[i])
+				newarr.push(i);
+		}
+		if($scope.sel.row)
+			$scope.sel.row.dow = newarr;
+	}, true);
+	$scope.$watch('wholeday', function(n, o) {
+		if(n && $scope.sel.row) {
+			$scope.sel.row.tstart = "00:00:00";
+			$scope.sel.row.tend = "24:00:00";
+		}
+	});
 });
 
 /* * * * * * * * * * Switches * * * * * * * * * */

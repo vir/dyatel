@@ -1,12 +1,12 @@
 use utf8;
-package Dyatel::Schema::Schedule;
+package Dyatel::Schema::Schedtable;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-Dyatel::Schema::Schedule
+Dyatel::Schema::Schedtable
 
 =cut
 
@@ -27,11 +27,11 @@ use base 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::Serializer");
 
-=head1 TABLE: C<schedule>
+=head1 TABLE: C<schedtable>
 
 =cut
 
-__PACKAGE__->table("schedule");
+__PACKAGE__->table("schedtable");
 
 =head1 ACCESSORS
 
@@ -80,6 +80,12 @@ __PACKAGE__->table("schedule");
   data_type: 'text'
   is_nullable: 0
 
+=head2 schedule
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -108,6 +114,8 @@ __PACKAGE__->add_columns(
   { data_type => "time", is_nullable => 0 },
   "mode",
   { data_type => "text", is_nullable => 0 },
+  "schedule",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -122,10 +130,22 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 13:27:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QxpaZGQZD6b1EE3NUjnHRA
+=head2 schedule
+
+Type: belongs_to
+
+Related object: L<Dyatel::Schema::Schedules>
+
+=cut
+
+__PACKAGE__->belongs_to("schedule", "Dyatel::Schema::Schedules", { id => "schedule" });
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-10 16:14:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AHSgEDvyu7QklI6JSF+e9g
+
+
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

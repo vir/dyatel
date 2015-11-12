@@ -86,7 +86,7 @@ dyatelCommon.directive('input', function($compile, $http) {
 	};
 	return {
 		restrict: 'E',
-		terminal: true,
+//		terminal: true,
 		priority: 1000,
 		compile: function(element, attrs) {
 			if(attrs.type != 'num')

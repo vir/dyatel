@@ -23,22 +23,24 @@ Catalyst Controller.
 
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
-		$c->response->redirect($c->uri_for($self->action_for('list')));
+#		$c->response->redirect($c->uri_for($self->action_for('list')));
+	$c->stash(rows => [$c->model('DB::Schedules')->all]);
 }
 
-sub list :Local
-{
-	my($self, $c) = @_;
-	my $opts = { order_by => 'prio DESC, mday DESC, tstart DESC' };
-	my $where = { };
-	$c->stash(rows => [$c->model('DB::Schedule')->search($where, $opts)]);
-}
-
-sub one :Path Args(1)
+sub schedule :Path Args(1)
 {
 	my($self, $c, $id) = @_;
-	die "Invalid id $id" unless $id =~ /^\d+$/;
-	my $o = $c->model('DB::Schedule')->find($id);
+	my $s = ($id =~ /^\d+$/) ? $c->model('DB::Schedules')->find($id) : $c->model('DB::Schedules')->find({name => $id});
+	my $opts = { order_by => 'prio DESC, mday DESC, tstart DESC' };
+	my $where = { };
+	$c->stash(sched => $s, rows => [$s->schedtables->search($where, $opts)]);
+}
+
+sub row :Path Args(2)
+{
+	my($self, $c, $sid, $rid) = @_;
+	die "Invalid id" unless $sid =~ /^\d+$/ && $rid =~ /^\d+$/;
+	my $o = $c->model('DB::Schedules')->find($sid)->schedtables->find($rid);
 	if($c->request->method eq 'POST') {
 		$o->update($c->request->params);
 	}

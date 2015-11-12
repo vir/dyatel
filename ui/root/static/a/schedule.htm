@@ -1,61 +1,105 @@
 <h1>Schedule</h1>
 
 <div class="container-fluid">
+<form novalidate>
 <div class="row-fluid">
-	<div class="gridStyle span12" ng-grid="gridOptions"></div>
+	<div class="span6">
+		<table class="table table-condensed">
+			<tr ng-repeat="s in list" ng-class="{'info': sel.sched.id == s.id}" ng-click="sel.sched = s">
+				<td><input type="radio" ng-model="sel.sched" name="sched" ng-value="s" /></td>
+				<td>{{s.id}}</td>
+				<td>{{s.name}}</td>
+				<td>{{s.comments}}</td>
+			</tr>
+		</table>
+	</div>
 </div> <!-- row-fluid -->
 
-<form novalidate>
-<div class="row-fluid form-horizontal">
-	<div class="span2">
-		<input type="text" ng-model="selection[0].prio" placeholder="Priority" tooltip="Priority" />
+<div class="row-fluid" ng-show="sel.sched">
+	<h2>Schedule &laquo;{{sel.sched.name}}&raquo;</h2>
+
+	<label type="checkbox">Редактировать <input type="checkbox" ng-model="editsched" /></label>
+	<div ng-hide="editsched" markdown="{{sel.sched.comments}}" />
+	<div ng-show="editsched">
+		<input ng-model="sel.sched.name" /><br />
+		<textarea ng-model="sel.sched.comments" /><br />
+		<button ng-click="savesched()">Save schedule name and comments</button>
 	</div>
-	<div class="span3">
-		<label class="checkbox"><input type="checkbox" ng-model="anymday" /> Любая дата</label>
-		<div collapse="anymday">
-			<input type="text" class="span8" ng-model="selection[0].mday" placeholder="Start date" tooltip="Start date" /> <!-- datepicker-popup="dd.MM.yyyy" -->
-			<input type="text" class="span4" ng-model="selection[0].days" placeholder="Days" tooltip="Days" />
-			<div class+"well well-small" style="display:inline-block" ng-model="selection[0].mday" datepicker-format-string="yyyy-MM-dd">
-				<datepicker show-weeks="false" />
+
+	<div class="span6">
+		<table class="table table-condensed"><tr>
+			<th colspan="2">Id</th>
+			<th>Priority</th>
+			<th>Start date</th>
+			<th>Days</th>
+			<th>Days of week</th>
+			<th>Start time</th>
+			<th>End time</th>
+			<th>Mode</th>
+		</tr><tr ng-repeat="s in schedule" ng-class="{'info': sel.row.id == s.id}" ng-click="sel.row = s">
+			<td><input type="radio" name="row" ng-model="sel.row" ng-value="s" /></td>
+			<td>{{s.id}}</td>
+			<td>{{s.prio}}</td>
+			<td>{{s.mday}}</td>
+			<td>{{s.days}}</td>
+			<td>{{s.dow}}</td>
+			<td>{{s.tstart}}</td>
+			<td>{{s.tend}}</td>
+			<td>{{s.mode}}</td>
+		</tr></table>
+	</div>
+</div> <!-- row-fluid -->
+
+<div class="row-fluid form-inline" ng-show="sel.row">
+	<div class="span12">
+		<label class="text">Приоритет: <input type="number" ng-model="sel.row.prio" placeholder="Priority" tooltip="Priority" style="width:3em;" /></label>
+
+		<div>
+			Дата:&nbsp;
+			<label class="checkbox"><input type="checkbox" ng-model="anymday" /> любая</label>
+			<div collapse="anymday">
+				с&nbsp;
+				<input type="text" ng-model="sel.row.mday" placeholder="Start date" tooltip="Start date" /> <!-- datepicker-popup="dd.MM.yyyy" -->
+				<input type="number" ng-model="sel.row.days" placeholder="Days" tooltip="Days" style="width:3em;" />
+				&nbsp;дней
+				<!--
+				<div class+"well well-small" style="display:inline-block" ng-model="selection[0].mday" datepicker-format-string="yyyy-MM-dd">
+					<datepicker show-weeks="false" />
+				</div>
+				-->
 			</div>
 		</div>
-	</div>
-	<div class="span3">
-		<label class="checkbox" class="sp1n3"><input type="checkbox" ng-model="anywday" /> Любой день недели</label>
-		<div collapse="anywday">
-			<label class="wday" ng-repeat="d in wdays">{{d}}<br /><input type="checkbox" /></label>
-		</div>
-	</div>
-	<div class="span4">
-		<input type="text" ui-mask="99:99" class="span4"
-		style="font-size:200%"
-		re-validate="(?:[01][0-9]|2[0-3])\:[0-5][0-9]"
-		placeholder="Время" tooltip="Время (чч:мм)"
-		ng-model="selection[0].tstart"
-		ng-required />
 
-		<input type="text" ui-mask="99:99" class="span4"
-		style="font-size:200%"
-		re-validate="(?:[01][0-9]|2[0-3])\:[0-5][0-9]"
-		placeholder="Время" tooltip="Время (чч:мм)"
-		ng-model="selection[0].tend"
-		ng-required />
+		<div>
+			День недели:&nbsp;
+			<label class="checkbox"><input type="checkbox" ng-model="wday.any" /> любой</label>
+			<div collapse="wday.any">
+				<label class="wday" ng-repeat="d in wday.names">{{d}}<br /><input type="checkbox" ng-model="wday.chk[$index]"/></label>
+			</div>
+		</div>
 
-		<div ng-model="selection[0].tstart" class="well well-small" datepicker-format-string="hh:mm:ss">
-			<timepicker hour-step="1" minute-step="1" show-meridian="false"></timepicker>
+		<div>
+			Время:&nbsp;
+			<label class="checkbox"><input type="checkbox" ng-model="wholeday" /> целый день</label>
+			<div collapse="wholeday">
+				с&nbsp;
+				<input type="text" ui-mask="99:99" re-validate="(?:[01][0-9]|2[0-3])\:[0-5][0-9]" style="width:6em;"
+					placeholder="Время" tooltip="Время (чч:мм)" ng-model="sel.row.tstart" ng-required />
+				по&nbsp;
+				<input type="text" ui-mask="99:99" re-validate="(?:[01][0-9]|2[0-3])\:[0-5][0-9]" style="width:6em;"
+					placeholder="Время" tooltip="Время (чч:мм)" ng-model="sel.row.tend" ng-required />
+			</div>
 		</div>
-		<div ng-model="selection[0].tend" class="well well-small" style="display:inline-block;" datepicker-format-string="hh:mm:ss">
-			<timepicker hour-step="1" minute-step="1" show-meridian="false"></timepicker>
-		</div>
+
+		<label class="text">Режим: <input type="text" ng-model="sel.row.mode" ng-required="true" /></label>
+
 	</div>
 </div> <!-- row-fluid -->
 </form>
 
 
 <div class="row-fluid">
-<pre>
-{{ selection }}
-</pre>
+	<pre>Sel: {{sel|json}}</pre>
 </div> <!-- row-fluid -->
 </div> <!-- container-fluid -->
 
