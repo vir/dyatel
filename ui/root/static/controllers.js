@@ -674,35 +674,61 @@ dyatelControllers.directive('timepickerFormatString', function (dateFilter) {
 	};
 });
 
-dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
+dyatelControllers.controller('ScheduleCtrl', function($scope, $routeParams, $location, $http) {
 	$scope.wday = {
 		'any': false,
 		'names': [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб' ],
 		'chk': [ false, false, false, false, false, false, false ],
 	};
 	$scope.anymday = $scope.wholeday = false;
-	$scope.editsched = false;
-	$scope.sel = { sched: null, row: null };
+	$scope.openSched = function(id) {
+		$location.path('/schedule/' + id);
+	};
+	$scope.editsched = ($routeParams.id == 'new');
+	$scope.sel = {
+		schedId: $routeParams.id,
+		sched: null,
+		row: null
+	};
 	$scope.schedule = [ ];
 	$http.get('/a/schedule/').success(function(data) {
 		$scope.list = data.rows;
-		$scope.sel.sched = data.rows[0];
-	});
-	$scope.$watch('sel.sched', function(n, o) {
-		console.log('sel.sched updated');
-		if($scope.sel.sched && $scope.sel.sched.id) {
-			$http.get('/a/schedule/' + $scope.sel.sched.id).success(function(data) {
-				$scope.schedule = data.rows;
-		console.log('schedle downloaded: ' + data.rows.length + ' rows');
+		if($scope.sel.schedId) {
+			data.rows.forEach(function(s) {
+				if(s.id == $scope.sel.schedId)
+					$scope.sel.sched = s;
+				else if(s.name == $scope.sel.schedId)
+					$scope.openSched(s.id);
 			});
 		}
-	}, true);
+		else
+			$scope.openSched(data.rows[0].id);
+	});
+	if($scope.sel.schedId == 'new') {
+		$scope.sel.sched = {
+			id: 'new',
+			name: 'New schedule',
+			modified: true
+		};
+	}
+	$scope.modsched = function(x) {
+		if($scope.sel.sched)
+			$scope.sel.sched.modified = true;
+		console.log('modrow(' + x + ')');
+	}
+	$scope.modrow = function(x) {
+		if($scope.sel.row)
+			$scope.sel.row.modified = true;
+		console.log('modrow(' + x + ')');
+	}
+	$scope.$watch('sel.sched', function(n, o) {
+		if($scope.sel.sched && $scope.sel.sched.id && $scope.sel.sched.id != 'new') {
+			$http.get('/a/schedule/' + $scope.sel.sched.id).success(function(data) {
+				$scope.schedule = data.rows;
+			});
+		}
+	});
 	$scope.$watch('sel.row', function(n, o) {
-		/*
-		$http.get('/a/schedule/' + $scope.schedid + '/' + $scope.rowid).success(function(data) {
-			$scope.schedule = data.rows;
-		});
-		*/
 		if($scope.sel.row) {
 			$scope.wday.any = true;
 			for(var i =0; i < $scope.wday.names.length; ++i) {
@@ -721,15 +747,89 @@ dyatelControllers.controller('ScheduleCtrl', function($scope, $http) {
 			if($scope.wday.any || $scope.wday.chk[i])
 				newarr.push(i);
 		}
-		if($scope.sel.row)
+		if($scope.sel.row && !angular.equals($scope.sel.row.dow, newarr)) {
 			$scope.sel.row.dow = newarr;
+			$scope.modrow('wday');
+		}
 	}, true);
 	$scope.$watch('wholeday', function(n, o) {
-		if(n && $scope.sel.row) {
+		if(n && $scope.sel.row && ( $scope.sel.row.tstart != "00:00:00" || $scope.sel.row.tend != "24:00:00" )) {
 			$scope.sel.row.tstart = "00:00:00";
 			$scope.sel.row.tend = "24:00:00";
+			$scope.modrow('whd');
 		}
 	});
+
+	$scope.savesched = function() {
+		var saveData = angular.copy($scope.sel.sched);
+		delete saveData.id;
+		delete saveData.modified;
+		$http({
+			method: 'POST',
+			url: '/a/schedule/' + $scope.sel.sched.id,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function(rsp) {
+			var id = rsp.data.sched.id;
+			if($scope.sel.schedId == id)
+				$scope.sel.sched.modified = false;
+			else
+				$scope.openSched(id);
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	};
+	$scope.killsched = function() {
+		if($scope.sel.sched.id != 'new') {
+			$http({
+				method: 'DELETE',
+				url: '/a/schedule/' + $scope.sel.sched.id,
+			}).then(function() {
+				$scope.openSched($scope.list[0].id);
+			}, function() {
+				alert('Can\'t delete schedule');
+			});
+		} else
+			$scope.openSched($scope.list[0].id);
+	}
+	$scope.addrow = function() {
+		$scope.schedule.push({ id: 'new', modified: true, prio: 100, days: 1, dow: [], tstart: '00:00:00', tend: '24:00:00' });
+	};
+	$scope.saverow = function() {
+		var saveData = angular.copy($scope.sel.row);
+		delete saveData.schedule;
+		delete saveData.id;
+		delete saveData.modified;
+		$http({
+			method: 'POST',
+			url: '/a/schedule/' + $scope.sel.sched.id + '/' + $scope.sel.row.id,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function() {
+			$scope.sel.row.modified = false;
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	}
+	$scope.killrow = function() {
+		var delRow = function() {
+			for(var i = $scope.schedule.length - 1; i >= 0; i--) {
+				if($scope.schedule[i] === $scope.sel.row)
+					$scope.schedule.splice(i, 1);
+			}
+			delete $scope.sel.row;
+		}
+		if($scope.sel.row.id == 'new') {
+			delRow();
+		} else {
+			$http({
+				method: 'DELETE',
+				url: '/a/schedule/' + $scope.sel.sched.id + '/' + $scope.sel.row.id,
+			}).then(delRow, function() {
+				alert('Can\'t delete row');
+			});
+		}
+	}
 });
 
 /* * * * * * * * * * Switches * * * * * * * * * */
@@ -741,6 +841,7 @@ dyatelControllers.controller('SwitchesListCtrl', function($scope, $http) {
 });
 
 dyatelControllers.controller('SwitchDetailCtrl', function($scope, $routeParams, $http) {
+	$scope.sel = { };
 	if($routeParams.userId == 'new') {
 		$scope.existing = false;
 	} else {
@@ -750,18 +851,6 @@ dyatelControllers.controller('SwitchDetailCtrl', function($scope, $routeParams, 
 			$scope.existing = true;
 		});
 	}
-	// members list
-	$scope.gridOptions = {
-		data: 'cases',
-		columnDefs: [
-			{ field: 'value',    displayName: 'Value',     width: '16%' },
-			{ field: 'route',    displayName: 'Route',     width: '10%' },
-			{ field: 'comments', displayName: 'Comments' },
-		],
-		showFilter: true,
-		multiSelect: false,
-		selectedItems: $scope.selection,
-	};
 });
 
 /* * * * * * * * * * Config * * * * * * * * * */

@@ -30,7 +30,20 @@ sub index :Path :Args(0) {
 sub schedule :Path Args(1)
 {
 	my($self, $c, $id) = @_;
-	my $s = ($id =~ /^\d+$/) ? $c->model('DB::Schedules')->find($id) : $c->model('DB::Schedules')->find({name => $id});
+	my $s;
+	if($id eq 'new' and $c->request->method eq 'POST') {
+		$s = $c->model('DB::Schedules')->create($c->request->params);
+	} else {
+		$s = ($id =~ /^\d+$/) ? $c->model('DB::Schedules')->find($id) : $c->model('DB::Schedules')->find({name => $id});
+		if($c->request->method eq 'POST') {
+			$s->update($c->request->params);
+		} elsif($c->request->method eq 'DELETE') {
+			$s->delete;
+			$c->response->redirect($c->uri_for(''));
+			$c->response->status(303);
+			$c->detach;
+		}
+	}
 	my $opts = { order_by => 'prio DESC, mday DESC, tstart DESC' };
 	my $where = { };
 	$c->stash(sched => $s, rows => [$s->schedtables->search($where, $opts)]);
@@ -39,10 +52,30 @@ sub schedule :Path Args(1)
 sub row :Path Args(2)
 {
 	my($self, $c, $sid, $rid) = @_;
-	die "Invalid id" unless $sid =~ /^\d+$/ && $rid =~ /^\d+$/;
-	my $o = $c->model('DB::Schedules')->find($sid)->schedtables->find($rid);
+	die "Invalid schedule id" unless $sid =~ /^\d+$/;
+	my $table = $c->model('DB::Schedules')->find($sid)->schedtables;
+	my $update;
 	if($c->request->method eq 'POST') {
-		$o->update($c->request->params);
+		$update = $c->request->params;
+		if(defined $update->{'dow[]'}) {
+			my $dow = delete $update->{'dow[]'};
+			$update->{dow} = ref($dow) ? $dow : [$dow];
+		}
+		$update->{mday} = undef unless $update->{mday};
+	}
+	my $o;
+	if($rid eq 'new' && $update) {
+		$o = $table->create($update);
+	} else {
+		die "Invalid id" unless $sid =~ /^\d+$/ && $rid =~ /^\d+$/;
+		$o = $table->find($rid);
+		if($c->request->method eq 'POST') {
+			$o->update($update);
+		} elsif($c->request->method eq 'DELETE') {
+			$o->delete;
+		} elsif($c->request->method ne 'GET' and $c->request->method ne 'HEAD') {
+			die 'Invalid method in request';
+		}
 	}
 	$c->stash(obj => $o);
 }

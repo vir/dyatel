@@ -22,13 +22,34 @@
     <label ng-if="switch.param != 'random'">Arg: <input type="text" ng-model="switch.arg" /></label>
     <br />
     <label>Default route: <input type="num" ng-model="switch.defroute" /></label>
+    <br />
+    <button class="btn btn-default">Save</button>
+    <button class="btn btn-danger">Delete switch</button>
    </div>
   </div> <!-- row -->
 
   <div class="row-fluid" ng-show="existing">
    <div id="switchcases" class="span12">
     <h2>Cases</h2>
-    <div ng-grid="gridOptions" style="height:200px;"></div>
+    <table id="switch-cases" class="table table-condensed"><tr>
+     <th>Select</th>
+     <th>Value</th>
+     <th>Route</th>
+     <th>Comments</th>
+    </tr><tr ng-repeat="row in cases" ng-click="sel.row = row" ng-class="{info: sel.row === row, warning: row.modified, clickable: sel.row !== row}">
+     <td><input type="radio" name="row" ng-model="sel.row" ng-value="row" /></td>
+     <td>{{row.value}}</td>
+     <td>{{row.route}}</td>
+     <td>{{row.comments}}</td>
+    </tr><tr ng-show="sel.row">
+     <td>&nbsp;</td>
+     <td><input type="text" ng-model="sel.row.value" /></td>
+     <td><input type="num" ng-model="sel.row.route" /></td>
+     <td><input type="text" ng-model="sel.row.comments" /></td>
+    </tr><tr ng-show="sel.row"><td colspan="4">
+     <button class="btn btn-default">Save row</button>
+     <button class="btn btn-danger">Delete row</button>
+    </td></tr></table>
    </div>
   </div> <!-- row -->
 

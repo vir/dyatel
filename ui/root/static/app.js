@@ -22,7 +22,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/cdr',             { templateUrl: '/static/a/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	when('/status',          { templateUrl: '/static/a/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
 	when('/status/:module',  { templateUrl: '/static/a/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
-	when('/schedule',        { templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
+	when('/schedule/:id?',   { templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
 	when('/switches',        { templateUrl: '/static/a/switches.htm',   controller: 'SwitchesListCtrl',       title: 'Conditional routing' }).
 	when('/switches/:swId',  { templateUrl: '/static/a/switch.htm',     controller: 'SwitchDetailCtrl',       title: 'Conditional routing' }).
 	when('/config',          { templateUrl: '/static/a/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).

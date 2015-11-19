@@ -345,4 +345,6 @@ div.sqr100 i { font-size:64px; line-height:76px; }
 div#a-ivr-aa form div.well { width:16em; text-align:center; }
 div#a-ivr-aa .typeahead { text-align:left; } /* fix text alignment inside typeahead pop-up menu */
 
+.clickable { cursor:pointer; }
+
 
