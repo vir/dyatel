@@ -1,30 +1,47 @@
 
 <div id="userdetail" class="container-fluid">
+	<div class="pull-right">
+		<table class="table table-condensed">
+			<tr ng-repeat="s in list" ng-class="{info: sel.swId == s.id, clickable: sel.swId != s.id}" ng-click="openSwitch(s.id)">
+				<td><input type="radio" ng-model="sel.swId" name="sw" ng-value="s.id" /></td>
+				<td>{{s.num.num}}</td>
+				<td>{{s.num.descr}}</td>
+			</tr>
+			<tr><td colspan="3">
+				<a href="#/switches/new">Add new switch</a>
+				<a href="#/switches">Back to list</a>
+			</td></tr>
+		</table>
+	</div>
  <h1>{{ existing ? (switch.num.num + ': ' + switch.num.descr) : 'New switch' }}</h1>
  <form novalidate="1">
 
   <div class="row-fluid">
    <div class="span12 well">
-    <dirnum dir-num="switch.num" num-type="switch" num-readonly="existing" />
+    <dirnum dir-num="switch.num" num-type="switch" num-readonly="existing" any-change="modSwitch()" />
    </div>
   </div>
 
   <div id="switchparams1" class="row-fluid form-inline">
    <div class="span12">
-    <label>Switch on
-     <select ng-model="switch.param">
-      <option value="schedule">Schedule</option>
-      <option value="config">Configuration parameter</option>
-      <option value="random">Random selection</option>
-      <option value="custom">Custom SQL function</option>
-     </select>
-    </label>
-    <label ng-if="switch.param != 'random'">Arg: <input type="text" ng-model="switch.arg" /></label>
-    <br />
-    <label>Default route: <input type="num" ng-model="switch.defroute" /></label>
-    <br />
-    <button class="btn btn-default">Save</button>
-    <button class="btn btn-danger">Delete switch</button>
+    <div class="pull-left">
+     <label>Switch on
+      <select ng-model="switch.param" ng-change="modSwitch()">
+       <option value="schedule">Schedule</option>
+       <option value="config">Configuration parameter</option>
+       <option value="random">Random selection</option>
+       <option value="custom">Custom SQL function</option>
+      </select>
+     </label>
+     <label ng-if="switch.param != 'random'">Arg: <input type="text" ng-model="switch.arg" ng-change="modSwitch()" /></label>
+     <br />
+     <label>Default route: <input type="num" ng-model="switch.defroute" ng-change="modSwitch()" /></label>
+    </div>
+    <div class="pull-right">
+     <button class="btn btn-default" ng-click="saveSwitch()" ng-disabled="! switch.modified">Save switch</button>
+     <br />
+     <button class="btn btn-danger" ng-click="delSwitch()" ng-disabled="! switch">Delete switch</button>
+    </div>
    </div>
   </div> <!-- row -->
 
@@ -32,23 +49,21 @@
    <div id="switchcases" class="span12">
     <h2>Cases</h2>
     <table id="switch-cases" class="table table-condensed"><tr>
-     <th>Select</th>
      <th>Value</th>
      <th>Route</th>
      <th>Comments</th>
     </tr><tr ng-repeat="row in cases" ng-click="sel.row = row" ng-class="{info: sel.row === row, warning: row.modified, clickable: sel.row !== row}">
-     <td><input type="radio" name="row" ng-model="sel.row" ng-value="row" /></td>
-     <td>{{row.value}}</td>
+     <td><input type="radio" name="row" ng-model="sel.row" ng-value="row" /> {{row.value}}</td>
      <td>{{row.route}}</td>
      <td>{{row.comments}}</td>
     </tr><tr ng-show="sel.row">
-     <td>&nbsp;</td>
-     <td><input type="text" ng-model="sel.row.value" /></td>
-     <td><input type="num" ng-model="sel.row.route" /></td>
-     <td><input type="text" ng-model="sel.row.comments" /></td>
-    </tr><tr ng-show="sel.row"><td colspan="4">
-     <button class="btn btn-default">Save row</button>
-     <button class="btn btn-danger">Delete row</button>
+     <td><input type="text" ng-model="sel.row.value" ng-change="modRow()" /></td>
+     <td><input type="num" ng-model="sel.row.route" ng-change="modRow()" /></td>
+     <td><input type="text" ng-model="sel.row.comments" ng-change="modRow()" /></td>
+    </tr><tr><td colspan="4">
+     <button class="btn" ng-click="addRow()">Add row</button>
+     <button class="btn btn-default" ng-click="saveRow()" ng-disabled="! sel.row || ! sel.row.modified">Save row</button>
+     <button class="btn btn-danger" ng-click="delRow()" ng-disabled="! sel.row">Delete row</button>
     </td></tr></table>
    </div>
   </div> <!-- row -->
@@ -56,10 +71,5 @@
  </form>
 </div> <!-- container-fluid -->
 
-<!--
-<button ng-click="save()">Save</button>
-<button ng-show="existing" ng-click="delete()">Delete</button>
--->
-<a href="#/switches">Back to list</a>
 
 

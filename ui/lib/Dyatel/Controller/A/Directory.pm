@@ -104,6 +104,25 @@ sub update :Private
 	return '0 but true';
 }
 
+sub delete :Private
+{
+	my($self, $c, $num, $numtype) = @_;
+	my $d = $c->model('DB::Directory')->find($num);
+	my $found_numtype = $d->numtype->numtype;
+	die "Wrong numtype $found_numtype should be $numtype" if defined($numtype) && $numtype ne $found_numtype;
+
+	eval { $d->delete; };
+	if($@) {
+		$c->response->status(400);
+		my $msg = 'Directory number update failed: '.$@;
+		$c->response->body($msg);
+		warn "$msg\n";
+		$c->detach;
+		return undef;
+	}
+	return '0 but true';
+}
+
 =encoding utf8
 
 =head1 AUTHOR
