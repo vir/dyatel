@@ -1,3 +1,10 @@
+dyatel (0.0.110) UNRELEASED; urgency=medium
+
+  * Multiple schedules support
+  * Admin UI improvements
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 01 Dec 2015 15:43:30 +0300
+
 dyatel (0.0.109) UNRELEASED; urgency=medium
 
   * Conditional routing added.
