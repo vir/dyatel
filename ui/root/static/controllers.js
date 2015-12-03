@@ -653,6 +653,8 @@ dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $c
 	   'backend' parameter - uri to handle requests
    Optional objects on $scope:
 	   newItem, newRow - templates for new items and rows
+		 onSaveItem, onSaveRow - allows to modify data, posted to server
+		 openFirst - true to open first item in list if no itemId specified
 */
 
 dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route) {
@@ -661,10 +663,16 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 	var uri = $route.current.$$route.backend;
 	var path = $route.current.$$route.originalPath;
 	path = path.slice(0, path.indexOf(':'));
-	$scope.sel = { itemId: $route.current.pathParams.itemId };
-	$http.get(uri + '/list').success(function(data) {
-		$scope.list = data.list;
-	});
+	$scope.sel = $scope.sel || { };
+	$scope.sel.itemId = $route.current.pathParams.itemId;
+	$scope.loadList = function() {
+		$http.get(uri + '/list').success(function(data) {
+			$scope.list = data.list;
+			if($scope.openFirst && data.list.length && ! $scope.sel.itemId)
+				$scope.openItem(data.list[0].id);
+		});
+	};
+	$scope.loadList();
 	if($scope.sel.itemId == 'new') {
 		$scope.existing = false;
 		$scope.item = { id: 'new', modified: true };
@@ -680,7 +688,8 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 			$scope.rows = data.rows;
 			$scope.existing = true;
 		}).error(function() {
-			$scope.openItem('new');
+			if($scope.sel.itemId)
+				$scope.openItem('new');
 		});
 	}
 	$scope.openItem = function(id) {
@@ -694,6 +703,8 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 		var saveData = angular.copy($scope.item);
 		delete saveData.id;
 		delete saveData.modified;
+		if($scope.onSaveItem)
+			$scope.onSaveItem(saveData);
 		if($scope.item.num) {
 			saveData.num = $scope.item.num.num;
 			saveData.descr = $scope.item.num.descr;
@@ -705,9 +716,10 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 		}).then(function(rsp) {
 			var id = rsp.data.item.id;
-			if($scope.sel.itemId == id)
+			if($scope.sel.itemId == id) {
 				$scope.item.modified = false;
-			else
+				$scope.loadList(); // item display name may be modified
+			} else
 				$scope.openItem(id);
 		}, function(rsp) {
 			alert('Error ' + rsp.status);
@@ -751,14 +763,16 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 		var saveData = angular.copy($scope.sel.row);
 		delete saveData.id;
 		delete saveData.modified;
+		if($scope.onSaveRow)
+			$scope.onSaveRow(saveData);
 		$http({
 			method: 'POST',
 			url: uri + '/' + $scope.sel.itemId + '/' + $scope.sel.row.id,
 			data: $.param(saveData),
 			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function(data) {
+		}).then(function(rsp) {
 			$scope.sel.row.modified = false;
-			$scope.sel.row.id = data.id;
+			$scope.sel.row.id = rsp.data.row.id;
 		}, function(rsp) {
 			alert('Error ' + rsp.status);
 		});
@@ -766,10 +780,17 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 	$scope.delRow = function() {
 		var delRow = function() {
 			for(var i = $scope.rows.length - 1; i >= 0; i--) {
-				if($scope.rows[i] === $scope.sel.row)
+				if($scope.rows[i] === $scope.sel.row) {
 					$scope.rows.splice(i, 1);
+					if(i < $scope.rows.length)
+						$scope.sel.row = $scope.rows[i];
+					else if(i)
+						$scope.sel.row = $scope.rows[i - 1];
+					else
+						delete $scope.sel.row;
+					break;
+				}
 			}
-			delete $scope.sel.row;
 		}
 		if($scope.sel.row.id != 'new') {
 			$http({
@@ -817,59 +838,20 @@ dyatelControllers.directive('timepickerFormatString', function (dateFilter) {
 	};
 });
 
-dyatelControllers.controller('ScheduleCtrl', function($scope, $routeParams, $location, $http) {
+dyatelControllers.controller('ScheduleCtrl', function($scope, $routeParams, $location, $http, $controller) {
+	$scope.openFirst = true;
+	$scope.newItem = { name: 'New schedule' };
+	$scope.newRow = { prio: 100, days: 1, dow: [], tstart: '00:00:00', tend: '24:00:00' };
+	$scope.onSaveRow = function(saveData) { delete saveData.schedule; };
+	$controller('U3Ctrl', {$scope: $scope});
+	$scope.editsched = ($scope.sel.itemId == 'new');
+
 	$scope.wday = {
 		'any': false,
 		'names': [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб' ],
 		'chk': [ false, false, false, false, false, false, false ],
 	};
 	$scope.anymday = $scope.wholeday = false;
-	$scope.openSched = function(id) {
-		$location.path('/schedule/' + id);
-	};
-	$scope.editsched = ($routeParams.id == 'new');
-	$scope.sel = {
-		schedId: $routeParams.id,
-		sched: null,
-		row: null
-	};
-	$scope.schedule = [ ];
-	$http.get('/a/schedule/').success(function(data) {
-		$scope.list = data.rows;
-		if($scope.sel.schedId) {
-			data.rows.forEach(function(s) {
-				if(s.id == $scope.sel.schedId)
-					$scope.sel.sched = s;
-				else if(s.name == $scope.sel.schedId)
-					$scope.openSched(s.id);
-			});
-		}
-		else
-			$scope.openSched(data.rows[0].id);
-	});
-	if($scope.sel.schedId == 'new') {
-		$scope.sel.sched = {
-			id: 'new',
-			name: 'New schedule',
-			modified: true
-		};
-	}
-	$scope.modsched = function(x) {
-		if($scope.sel.sched)
-			$scope.sel.sched.modified = true;
-	}
-	$scope.modrow = function(x) {
-		if($scope.sel.row)
-			$scope.sel.row.modified = true;
-		console.log('modrow(' + x + ')');
-	}
-	$scope.$watch('sel.sched', function(n, o) {
-		if($scope.sel.sched && $scope.sel.sched.id && $scope.sel.sched.id != 'new') {
-			$http.get('/a/schedule/' + $scope.sel.sched.id).success(function(data) {
-				$scope.schedule = data.rows;
-			});
-		}
-	});
 	$scope.$watch('sel.row', function(n, o) {
 		if($scope.sel.row) {
 			$scope.wday.any = true;
@@ -891,99 +873,23 @@ dyatelControllers.controller('ScheduleCtrl', function($scope, $routeParams, $loc
 		}
 		if($scope.sel.row && !angular.equals($scope.sel.row.dow, newarr)) {
 			$scope.sel.row.dow = newarr;
-			$scope.modrow('wday');
+			$scope.modRow('wday');
 		}
 	}, true);
 	$scope.$watch('wholeday', function(n, o) {
 		if(n && $scope.sel.row && ( $scope.sel.row.tstart != "00:00:00" || $scope.sel.row.tend != "24:00:00" )) {
 			$scope.sel.row.tstart = "00:00:00";
 			$scope.sel.row.tend = "24:00:00";
-			$scope.modrow('whd');
+			$scope.modRow('whd');
 		}
 	});
-
-	$scope.savesched = function() {
-		var saveData = angular.copy($scope.sel.sched);
-		delete saveData.id;
-		delete saveData.modified;
-		$http({
-			method: 'POST',
-			url: '/a/schedule/' + $scope.sel.sched.id,
-			data: $.param(saveData),
-			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function(rsp) {
-			var id = rsp.data.sched.id;
-			if($scope.sel.schedId == id)
-				$scope.sel.sched.modified = false;
-			else
-				$scope.openSched(id);
-		}, function(rsp) {
-			alert('Error ' + rsp.status);
-		});
-	};
-	$scope.killsched = function() {
-		if($scope.sel.sched.id != 'new') {
-			$http({
-				method: 'DELETE',
-				url: '/a/schedule/' + $scope.sel.sched.id,
-			}).then(function() {
-				$scope.openSched($scope.list[0].id);
-			}, function() {
-				alert('Can\'t delete schedule');
-			});
-		} else
-			$scope.openSched($scope.list[0].id);
-	}
-	$scope.addrow = function() {
-		$scope.schedule.push({ id: 'new', modified: true, prio: 100, days: 1, dow: [], tstart: '00:00:00', tend: '24:00:00' });
-	};
-	$scope.saverow = function() {
-		var saveData = angular.copy($scope.sel.row);
-		delete saveData.schedule;
-		delete saveData.id;
-		delete saveData.modified;
-		$http({
-			method: 'POST',
-			url: '/a/schedule/' + $scope.sel.sched.id + '/' + $scope.sel.row.id,
-			data: $.param(saveData),
-			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function() {
-			$scope.sel.row.modified = false;
-		}, function(rsp) {
-			alert('Error ' + rsp.status);
-		});
-	}
-	$scope.killrow = function() {
-		var delRow = function() {
-			for(var i = $scope.schedule.length - 1; i >= 0; i--) {
-				if($scope.schedule[i] === $scope.sel.row)
-					$scope.schedule.splice(i, 1);
-			}
-			delete $scope.sel.row;
-		}
-		if($scope.sel.row.id == 'new') {
-			delRow();
-		} else {
-			$http({
-				method: 'DELETE',
-				url: '/a/schedule/' + $scope.sel.sched.id + '/' + $scope.sel.row.id,
-			}).then(delRow, function() {
-				alert('Can\'t delete row');
-			});
-		}
-	}
 });
 
 /* * * * * * * * * * Switches * * * * * * * * * */
 
-dyatelControllers.controller('SwitchesListCtrl', function($scope, $http) {
-	$http.get('/a/switches/list').success(function(data) {
-		$scope.myData = data.list;
-	});
-});
-
 /* Reuse U3Ctrl adding default values */
 dyatelControllers.controller('SwitchCtrl', function($scope, $controller) {
+	$scope.openFirst = true;
 	$scope.newRow = {
 		value: 'something',
 		route: '',

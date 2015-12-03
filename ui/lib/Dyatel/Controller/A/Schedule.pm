@@ -21,10 +21,15 @@ Catalyst Controller.
 
 =cut
 
-sub index :Path :Args(0) {
+sub index :Path Args(0) {
     my ( $self, $c ) = @_;
-#		$c->response->redirect($c->uri_for($self->action_for('list')));
-	$c->stash(rows => [$c->model('DB::Schedules')->all]);
+		$c->response->redirect($c->uri_for($self->action_for('list')));
+}
+
+sub list :Local Args(0)
+{
+	my($self, $c) = @_;
+	$c->stash(list => [$c->model('DB::Schedules')->all]);
 }
 
 sub schedule :Path Args(1)
@@ -46,7 +51,7 @@ sub schedule :Path Args(1)
 	}
 	my $opts = { order_by => 'prio DESC, mday DESC, tstart DESC' };
 	my $where = { };
-	$c->stash(sched => $s, rows => [$s->schedtables->search($where, $opts)]);
+	$c->stash(item => $s, rows => [$s->schedtables->search($where, $opts)]);
 }
 
 sub row :Path Args(2)
@@ -77,7 +82,7 @@ sub row :Path Args(2)
 			die 'Invalid method in request';
 		}
 	}
-	$c->stash(obj => $o);
+	$c->stash(row => $o);
 }
 
 =encoding utf8

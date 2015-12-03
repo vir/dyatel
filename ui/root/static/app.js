@@ -22,11 +22,8 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/cdr',             { templateUrl: '/static/a/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	when('/status',          { templateUrl: '/static/a/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
 	when('/status/:module',  { templateUrl: '/static/a/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
-	when('/schedule/:id?',   { templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule' }).
-	when('/switches',        { templateUrl: '/static/a/switches.htm',   controller: 'SwitchesListCtrl',       title: 'Conditional routing' }).
-//	when('/switches/:swId',  { templateUrl: '/static/a/switch.htm',     controller: 'SwitchDetailCtrl',       title: 'Conditional routing' }).
-//	when('/switches/:itemId',{ templateUrl: '/static/a/switch.htm',     controller: 'U3Ctrl',                 title: 'Conditional routing',    backend: '/a/switches' }).
-	when('/switches/:itemId',{ templateUrl: '/static/a/switch.htm',     controller: 'SwitchCtrl',             title: 'Conditional routing',    backend: '/a/switches' }).
+	when('/schedule/:itemId?',{ templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule',               backend: '/a/schedule' }).
+	when('/switches/:itemId?',{ templateUrl: '/static/a/switch.htm',     controller: 'SwitchCtrl',             title: 'Conditional routing',    backend: '/a/switches' }).
 	when('/config',          { templateUrl: '/static/a/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
 //	when('/fictive',         { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
 	when('/fictive/:num?',    { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
