@@ -2,8 +2,8 @@
 <div id="userdetail" class="container-fluid">
 	<div class="pull-right">
 		<table class="table table-condensed">
-			<tr ng-repeat="s in list" ng-class="{info: sel.swId == s.id, clickable: sel.swId != s.id}" ng-click="openSwitch(s.id)">
-				<td><input type="radio" ng-model="sel.swId" name="sw" ng-value="s.id" /></td>
+			<tr ng-repeat="s in list" ng-class="{info: sel.itemId == s.id, clickable: sel.itemId != s.id}" ng-click="openItem(s.id)">
+				<td><input type="radio" ng-model="sel.itemId" name="sw" ng-value="s.id" /></td>
 				<td>{{s.num.num}}</td>
 				<td>{{s.num.descr}}</td>
 			</tr>
@@ -13,12 +13,12 @@
 			</td></tr>
 		</table>
 	</div>
- <h1>{{ existing ? (switch.num.num + ': ' + switch.num.descr) : 'New switch' }}</h1>
+ <h1>{{ existing ? (item.num.num + ': ' + item.num.descr) : 'New switch' }}</h1>
  <form novalidate="1">
 
   <div class="row-fluid">
    <div class="span12 well">
-    <dirnum dir-num="switch.num" num-type="switch" num-readonly="existing" any-change="modSwitch()" />
+    <dirnum dir-num="item.num" num-type="switch" num-readonly="existing" any-change="modItem()" />
    </div>
   </div>
 
@@ -26,21 +26,21 @@
    <div class="span12">
     <div class="pull-left">
      <label>Switch on
-      <select ng-model="switch.param" ng-change="modSwitch()">
+      <select ng-model="item.param" ng-change="modItem()">
        <option value="schedule">Schedule</option>
        <option value="config">Configuration parameter</option>
        <option value="random">Random selection</option>
        <option value="custom">Custom SQL function</option>
       </select>
      </label>
-     <label ng-if="switch.param != 'random'">Arg: <input type="text" ng-model="switch.arg" ng-change="modSwitch()" /></label>
+     <label ng-if="item.param != 'random'">Arg: <input type="text" ng-model="item.arg" ng-change="modItem()" /></label>
      <br />
-     <label>Default route: <input type="num" ng-model="switch.defroute" ng-change="modSwitch()" /></label>
+     <label>Default route: <input type="num" ng-model="item.defroute" ng-change="modItem()" /></label>
     </div>
     <div class="pull-right">
-     <button class="btn btn-default" ng-click="saveSwitch()" ng-disabled="! switch.modified">Save switch</button>
+     <button class="btn btn-default" ng-click="saveItem()" ng-disabled="! item.modified">Save switch</button>
      <br />
-     <button class="btn btn-danger" ng-click="delSwitch()" ng-disabled="! switch">Delete switch</button>
+     <button class="btn btn-danger" ng-click="delItem()" ng-disabled="! item">Delete switch</button>
     </div>
    </div>
   </div> <!-- row -->
@@ -52,7 +52,7 @@
      <th>Value</th>
      <th>Route</th>
      <th>Comments</th>
-    </tr><tr ng-repeat="row in cases" ng-click="sel.row = row" ng-class="{info: sel.row === row, warning: row.modified, clickable: sel.row !== row}">
+    </tr><tr ng-repeat="row in rows" ng-click="sel.row = row" ng-class="{info: sel.row === row, warning: row.modified, clickable: sel.row !== row}">
      <td><input type="radio" name="row" ng-model="sel.row" ng-value="row" /> {{row.value}}</td>
      <td>{{row.route}}</td>
      <td>{{row.comments}}</td>

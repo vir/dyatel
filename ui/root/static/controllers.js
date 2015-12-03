@@ -642,6 +642,149 @@ dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $c
 	$cookieStore.put('statushistory', $scope.history);
 });
 
+
+/* * * * * * * * * * Universal 3-level controller * * * * * * * * * */
+
+/* 3 levels are:
+     * Items list (i.e. Switches list)   called "list"
+     * Selected item (i.e. Switch)       called "item"
+	   * Item's internal data (i.e. Cases) called "row"
+   Required addition to route definition:
+	   'backend' parameter - uri to handle requests
+   Optional objects on $scope:
+	   newItem, newRow - templates for new items and rows
+*/
+
+dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route) {
+//	console.log('$route.current: ' + angular.toJson($route.current));
+//	console.log('$route.current.$$route: ' + angular.toJson($route.current.$$route));
+	var uri = $route.current.$$route.backend;
+	var path = $route.current.$$route.originalPath;
+	path = path.slice(0, path.indexOf(':'));
+	$scope.sel = { itemId: $route.current.pathParams.itemId };
+	$http.get(uri + '/list').success(function(data) {
+		$scope.list = data.list;
+	});
+	if($scope.sel.itemId == 'new') {
+		$scope.existing = false;
+		$scope.item = { id: 'new', modified: true };
+		if($scope.newItem) {
+			for(var key in $scope.newItem) {
+				if($scope.newItem.hasOwnProperty(key))
+					$scope.item[key] = $scope.newItem[key];
+			}
+		}
+	} else {
+		$http.get(uri + '/' + $scope.sel.itemId).success(function(data) {
+			$scope.item = data.item;
+			$scope.rows = data.rows;
+			$scope.existing = true;
+		}).error(function() {
+			$scope.openItem('new');
+		});
+	}
+	$scope.openItem = function(id) {
+		$location.path(path + id);
+	};
+	$scope.modItem = function(x) {
+		if($scope.item)
+			$scope.item.modified = true;
+	}
+	$scope.saveItem = function() {
+		var saveData = angular.copy($scope.item);
+		delete saveData.id;
+		delete saveData.modified;
+		if($scope.item.num) {
+			saveData.num = $scope.item.num.num;
+			saveData.descr = $scope.item.num.descr;
+		}
+		$http({
+			method: 'POST',
+			url: uri + '/' + $scope.sel.itemId,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function(rsp) {
+			var id = rsp.data.item.id;
+			if($scope.sel.itemId == id)
+				$scope.item.modified = false;
+			else
+				$scope.openItem(id);
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	};
+	$scope.delItem = function() {
+		var anotherItem = function() {
+			var id;
+			if($scope.item.id != $scope.list[0].id)
+				return $scope.list[0].id;
+			if($scope.list[1].id)
+				return $scope.list[1].id;
+			return 'new';
+		};
+		if($scope.item.id != 'new') {
+			$http({
+				method: 'DELETE',
+				url: uri + '/' + $scope.item.id,
+			}).then(function() {
+				$scope.openItem(anotherItem());
+			}, function() {
+				alert('Can\'t delete item');
+			});
+		} else
+			$scope.openItem(anotherItem());
+	};
+	$scope.modRow = function() {
+		$scope.sel.row.modified = true;
+	};
+	$scope.addRow = function() {
+		$scope.sel.row = { id: 'new', modified: true };
+		if($scope.newRow) {
+			for(var key in $scope.newRow) {
+				if($scope.newRow.hasOwnProperty(key))
+					$scope.sel.row[key] = $scope.newRow[key];
+			}
+		}
+		$scope.rows.push($scope.sel.row);
+	};
+	$scope.saveRow = function() {
+		var saveData = angular.copy($scope.sel.row);
+		delete saveData.id;
+		delete saveData.modified;
+		$http({
+			method: 'POST',
+			url: uri + '/' + $scope.sel.itemId + '/' + $scope.sel.row.id,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function(data) {
+			$scope.sel.row.modified = false;
+			$scope.sel.row.id = data.id;
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	};
+	$scope.delRow = function() {
+		var delRow = function() {
+			for(var i = $scope.rows.length - 1; i >= 0; i--) {
+				if($scope.rows[i] === $scope.sel.row)
+					$scope.rows.splice(i, 1);
+			}
+			delete $scope.sel.row;
+		}
+		if($scope.sel.row.id != 'new') {
+			$http({
+				method: 'DELETE',
+				url: uri + '/' + $scope.sel.itemId + '/' + $scope.sel.row.id,
+			}).then(delRow, function() {
+				alert('Can\'t delete row');
+			});
+		} else {
+			delRow();
+		}
+	};
+});
+
+
 /* Schedule */
 dyatelControllers.directive('datepickerFormatString', function (dateFilter) {
 	return {
@@ -835,114 +978,24 @@ dyatelControllers.controller('ScheduleCtrl', function($scope, $routeParams, $loc
 
 dyatelControllers.controller('SwitchesListCtrl', function($scope, $http) {
 	$http.get('/a/switches/list').success(function(data) {
-		$scope.myData = data.rows;
+		$scope.myData = data.list;
 	});
 });
 
-dyatelControllers.controller('SwitchDetailCtrl', function($scope, $routeParams, $location, $http) {
-	$scope.sel = { swId: $routeParams.swId };
-	if($routeParams.swId == 'new') {
-		$scope.existing = false;
-	} else {
-		$http.get('/a/switches/list').success(function(data) {
-			$scope.list = data.rows;
-		});
-		$http.get('switches/' + $scope.sel.swId).success(function(data) {
-			$scope.switch = data.switch;
-			$scope.cases = data.cases;
-			$scope.existing = true;
-		});
-	}
-	$scope.openSwitch = function(id) {
-		$location.path('/switches/' + id);
+/* Reuse U3Ctrl adding default values */
+dyatelControllers.controller('SwitchCtrl', function($scope, $controller) {
+	$scope.newRow = {
+		value: 'something',
+		route: '',
+		comments: 'new row',
 	};
-	$scope.modSwitch = function(x) {
-		if($scope.switch)
-			$scope.switch.modified = true;
-	}
-	$scope.saveSwitch = function() {
-		var saveData = angular.copy($scope.switch);
-		delete saveData.id;
-		delete saveData.modified;
-		saveData.num = $scope.switch.num.num;
-		saveData.descr = $scope.switch.num.descr;
-		$http({
-			method: 'POST',
-			url: '/a/switches/' + $scope.sel.swId,
-			data: $.param(saveData),
-			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function(rsp) {
-			var id = rsp.data.switch.id;
-			if($scope.sel.swId == id)
-				$scope.switch.modified = false;
-			else
-				$scope.openSwitch(id);
-		}, function(rsp) {
-			alert('Error ' + rsp.status);
-		});
+	$scope.newItem = {
+		param: 'random',
+		defroute: '666'
 	};
-	$scope.delSwitch = function() {
-		if($scope.switch.id != 'new') {
-			$http({
-				method: 'DELETE',
-				url: '/a/switches/' + $scope.switch.id,
-			}).then(function() {
-				$scope.openSwitch($scope.list[0].id);
-			}, function() {
-				alert('Can\'t delete switch');
-			});
-		} else
-			$scope.openSwitch($scope.list[0].id);
-	};
-	$scope.modRow = function() {
-		$scope.sel.row.modified = true;
-	};
-	$scope.addRow = function() {
-		$scope.sel.row = {
-			id: 'new',
-			value: 'something',
-			route: '',
-			comments: 'new row',
-			modified: true
-		};
-		$scope.cases.push($scope.sel.row);
-	};
-	$scope.saveRow = function() {
-		var saveData = angular.copy($scope.sel.row);
-		delete saveData.id;
-		delete saveData.modified;
-		$http({
-			method: 'POST',
-			url: '/a/switches/' + $scope.sel.swId + '/' + $scope.sel.row.id,
-			data: $.param(saveData),
-			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function(data) {
-			$scope.sel.row.modified = false;
-			$scope.sel.row.id = data.id;
-		}, function(rsp) {
-			alert('Error ' + rsp.status);
-		});
-	};
-	$scope.delRow = function() {
-		var delRow = function() {
-			for(var i = $scope.cases.length - 1; i >= 0; i--) {
-				if($scope.cases[i] === $scope.sel.row)
-					$scope.cases.splice(i, 1);
-			}
-			delete $scope.sel.row;
-		}
-		if($scope.sel.row.id != 'new') {
-			$http({
-				method: 'DELETE',
-				url: '/a/switches/' + $scope.sel.swId + '/' + $scope.sel.row.id,
-			}).then(delRow, function() {
-				alert('Can\'t delete row');
-			});
-		} else {
-			delRow();
-		}
-	};
+	$controller('U3Ctrl', {$scope: $scope});
 });
+
 
 /* * * * * * * * * * Config * * * * * * * * * */
 

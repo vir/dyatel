@@ -29,7 +29,7 @@ sub index :Path Args(0) {
 sub list :Local Args(0)
 {
 	my($self, $c) = @_;
-	$c->stash(rows => [$c->model('DB::Switches')->search({}, {order_by => 'num'})], template => 'switches/list.tt');
+	$c->stash(list => [$c->model('DB::Switches')->search({}, {order_by => 'num'})], template => 'switches/list.tt');
 }
 
 sub switch :Path Args(1)
@@ -63,7 +63,7 @@ sub switch :Path Args(1)
 		return $c->detach;
 	}
 	my $data = [$s->switch_cases->search({}, { columns => [qw/ id value route comments /], order_by => 'id' })];
-	$c->stash(switch => $s, cases => $data);
+	$c->stash(item => $s, rows => $data);
 	$c->forward('show');
 }
 
