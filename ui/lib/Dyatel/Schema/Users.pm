@@ -118,6 +118,18 @@ __PACKAGE__->table("users");
   extra: {custom_type_name => "encription_mode",list => ["off","on","ssl"]}
   is_nullable: 0
 
+=head2 cti
+
+  data_type: 'boolean'
+  default_value: false
+  is_nullable: 1
+
+=head2 linesnum
+
+  data_type: 'integer'
+  default_value: 1
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -167,8 +179,8 @@ __PACKAGE__->add_columns(
   },
   "cti",
   { data_type => "boolean", default_value => \"false", is_nullable => 1 },
-	"linesnum",
-	{ data_type => "integer", default_value => 1, is_nullable => 0 },
+  "linesnum",
+  { data_type => "integer", default_value => 1, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -415,8 +427,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-06-20 14:13:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yRsGo4Jf02Z+Z4AKT+nA9A
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-12-03 16:40:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wMWtKbl6RPGyCshYkWcV3g
 
 __PACKAGE__->belongs_to("fingrp", "Dyatel::Schema::Fingroups", { id => "fingrp" }, { join_type => 'left' });
 
