@@ -1,0 +1,23 @@
+
+BEGIN;
+
+ALTER TABLE callgrpmembers DROP CONSTRAINT callgrpmembers_check_pkey;
+ALTER TABLE callgrpmembers ADD id SERIAL PRIMARY KEY;
+DROP INDEX IF EXISTS callgrpmembers_uniq_index;
+CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
+
+CREATE TABLE ivr_aa2(
+	id SERIAL PRIMARY KEY, num PHONE NOT NULL,
+	prompt TEXT,
+	timeout INTEGER[],                               -- [pre-first-digit,after-first-digit,after-secode-digit]
+	shortnum HSTORE,                                 -- [0-9\*\#] => [\&\~\^]?PHONE
+	numlen INTEGER NOT NULL DEFAULT 3,
+	numtypes VARCHAR[] DEFAULT '{}',                 -- directory number validation
+	assist BOOLEAN DEFAULT TRUE,
+	etimeout PHONE
+);
+ALTER TABLE ivr_aa2 ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+COMMIT;
+-- vim: ft=sql
+

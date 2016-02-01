@@ -34,6 +34,9 @@ INSERT INTO directory(num, numtype, descr) VALUES ('823', 'ivr', 'Sample auto-at
 INSERT INTO ivr_minidisa(num, prompt, timeout, numlen, firstdigit, etimeout) VALUES (
 	'823', '/home/vir/disa.au', 15, 3, '123', '222');
 
+-- INSERT INTO directory VALUES ('898', 'ivr', 'new ivr test', false);
+-- INSERT INTO ivr_aa2 (num, prompt, timeout, shortnum, numlen, numtypes, assist, etimeout) VALUES(898, '/home/vir/menu2.au', '{3,2,7}'::INTEGER[], '1=>111,2=>222'::HSTORE, 4, '{user,callgrp}'::TEXT[], TRUE, 10);
+
 
 INSERT INTO directory(num, numtype, descr) VALUES ('666', 'abbr', 'xxx mobile');
 INSERT INTO abbrs (num, target) VALUES ('666', '+79210000001');

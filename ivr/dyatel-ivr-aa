@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Carp;
 use DBI;
+use Pg::hstore;
 
 sub new
 {
@@ -755,6 +756,7 @@ sub load_db
 	Yate::IVR::flush();
 	load_aa();
 	load_md();
+	load_aa2();
 }
 
 sub check_db
@@ -776,7 +778,7 @@ sub load_aa
 		print "Loading autoattendant $h->{num}\n";
 		my $table = [
 			[ 'start', 'enter', 'answer', 'answered' ],
-			[ 'answered', 'enter', 'playfile '.$h->{prompt}, 'playing' ],
+			[ 'answered', 'enter', $h->{prompt} ? 'playfile '.$h->{prompt} : undef, 'playing' ],
 			[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
 			[ 'switching', 'timeout', 'drop', 'answered' ],
 			[ 'switching', 'dtmf', 'drop', 'answered' ],
@@ -841,6 +843,80 @@ sub load_md
 			return 'invalid' unless grep { $_ eq $type } qw( user callgrp );
 			return 'complete';
 		}));
+	}
+}
+
+sub load_aa2
+{
+	my $sth = $dbh->prepare("SELECT * FROM ivr_aa2 ORDER BY id");
+	$sth->execute();
+	while(my $h = $sth->fetchrow_hashref) {
+		print "Loading enchanced autoattendant $h->{num}\n";
+		my $switch_action = sub {
+			my($num) = @_; my $pref = '';
+			$num = '' unless defined $num;
+			if($num =~ /^([\~\&])\s*(\d.*)/) {
+				($pref, $num) = ($1, $2);
+			}
+			unless($pref) {
+				my($numtype) = $dbh->selectrow_array('SELECT numtype FROM directory WHERE num = ?', undef, $num);
+				if($numtype && $numtype ne 'ivr') {
+					$pref = $h->{assist} ? '&' : '~';
+				}
+			}
+			$pref = '^' unless $pref;
+			if($pref eq '&') { # ringtone with 'assistance' - any dtmf returns to menu
+				return( "originate $num", 'switching' );
+			} elsif($pref eq '~') { # ringtone + switch
+				return( "switch2 $num", 'finish' );
+			} else { # just switch
+				return( "switch $num", 'finish' );
+			}
+		};
+		my $number_validator = sub {
+			my($num) = @_;
+			return 'invalid' if length($num) > $h->{numlen};
+			my($count, $type) = $dbh->selectrow_array("SELECT COUNT(*), FIRST(numtype) FROM directory WHERE num LIKE ?", undef, $num.'%');
+			return 'invalid' if $count == 0;
+			return undef if $count > 1;
+			return 'invalid' if $h->{numtypes} && ! grep { $_ eq $type } @{ $h->{numtypes} };
+			return 'complete';
+		};
+		my @timeout = @{ $h->{timeout} };
+		for(0, 1, 2) { $timeout[$_] = 5 unless defined $timeout[$_] };
+		my $shortnum = Pg::hstore::decode($h->{shortnum});
+		my $table = [
+			[ undef, 'finished', undef, undef ], # ignore playback finish just to skip 'default' in every state
+			[ 'start', 'enter', 'answer', 'answered' ],
+			[ 'answered', 'enter', ['timer '.$timeout[0], 'playfile '.$h->{prompt}], 'playing' ],
+			[ 'playing',  'dtmf', undef, 'second' ],
+		];
+		push @$table, [ 'playing', 'finished', 'timer '.$timeout[0], undef ] if $h->{timeout2};
+		push @$table, [ 'playing', 'timeout', $switch_action->($h->{etimeout}), 'switching' ] if defined $h->{etimeout};
+		foreach my $digit(keys %$shortnum) {
+			push @$table, [ 'playing', 'dtmf_'.$digit, 'timer '.$timeout[1], 'first'.$digit ];
+			push @$table, [ 'first'.$digit, 'dtmf', 'collect '.$digit, 'second' ];
+			push @$table, [ 'first'.$digit, 'timeout', $switch_action->($shortnum->{$digit}) ];
+		}
+		push @$table,
+			[ 'second', 'enter', ['collect', 'timer '.$timeout[2]], undef ],
+			[ 'second', 'dtmf', [ 'collect', 'checknum' ], undef ],
+			[ 'second', 'invalid', 'flush', 'answered' ],
+			[ 'second', 'complete', $switch_action->() ],
+		;
+		push @$table,
+			[ 'switching', 'enter', ['playfile -', 'timer 60'], undef ],
+			[ 'switching', 'timeout', 'drop', 'answered' ],
+			[ 'switching', 'dtmf', 'drop', 'answered' ],
+			[ 'switching', 'ringing', 'playtone ring', 'switching' ],
+			[ 'switching', 'answered', ['timer 5', 'connect'], 'connecting' ],
+			[ 'switching', 'hangup', 'drop', 'answered' ],
+			[ 'switching', 'disconnect', 'drop', 'finish' ],
+			[ 'connecting', 'connected', 'suicide', 'finish' ],
+			[ 'connecting', 'timeout', 'suicide', 'finish' ],
+			[ 'finish', 'enter', 'suicide', 'finish' ], # just in case
+		;
+		Yate::IVR::add($h->{num} => Yate::IVR->new($table, numvalidator => $number_validator));
 	}
 }
 

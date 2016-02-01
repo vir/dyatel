@@ -677,6 +677,7 @@ CREATE TABLE callgroups(
 ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
 CREATE TABLE callgrpmembers(
+	id SERIAL PRIMARY KEY,
 	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	ord INTEGER,
 	num PHONE NOT NULL,
@@ -685,7 +686,6 @@ CREATE TABLE callgrpmembers(
 	keepring BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
-ALTER TABLE callgrpmembers ADD CONSTRAINT callgrpmembers_check_pkey PRIMARY KEY USING INDEX callgrpmembers_uniq_index;
 
 
 CREATE OR REPLACE FUNCTION callgroups_route_part(grprec callgroups, res HSTORE, cntr INTEGER, stack TEXT[] DEFAULT '{}')
@@ -824,6 +824,20 @@ CREATE TABLE ivr_minidisa(
 	etimeout PHONE
 );
 ALTER TABLE ivr_minidisa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE ivr_aa2(
+	id SERIAL PRIMARY KEY, num PHONE NOT NULL,
+	prompt TEXT,
+	timeout INTEGER[],                               -- [pre-first-digit,after-first-digit,after-secode-digit]
+	shortnum HSTORE,                                 -- [0-9\*\#] => [\&\~\^]?PHONE
+	numlen INTEGER NOT NULL DEFAULT 3,
+	numtypes VARCHAR[] DEFAULT '{}',                 -- directory number validation
+	assist BOOLEAN DEFAULT TRUE,
+	etimeout PHONE
+);
+ALTER TABLE ivr_aa2 ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
 
 
 
