@@ -40,6 +40,11 @@ sub on_call_sconnect
 	my $msg = shift;
 	my $caller = $msg->param('from');
 	my $called = $msg->param('to');
+	initiate_connection($msg, $caller, $called);
+}
+sub initiate_connection
+{
+	my($msg, $caller, $called) = @_;
 	return undef unless $caller && $called;
 	print "Trying to connect $caller and $called\n";
 	my $id = "$caller-$called";
@@ -200,6 +205,16 @@ $ym->handle_status(\&make_status);
 $ym->handle_debug(sub {
 	$debug = Yate::Module::_to_boolean($_[0], $debug);
 	return "debug is now $debug\r\n";
+});
+$ym->handle_command('sconnect /\\d+/ /\\+?[\\d-]+/', sub {
+	my($cmd) = @_;
+	warn "got callback(@_)";
+	return "Usage: sconnect" unless $cmd =~ /^\s*sconnect\s+(\S+)\s+(\S+)/;
+	initiate_connection($message, $1, $2);
+});
+$ym->handle_command('sconnect /[a-z]\\w+/ hellow', sub {
+	my($cmd) = @_;
+	warn "got callback2(".join(', ', @_).")";
 });
 $message->listen();
 

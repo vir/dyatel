@@ -43,7 +43,7 @@ sub _install_handler
 {
 	my $self = shift;
 	my($which) = @_;
-warn "_install_handler($which)" if DEBUG;
+	warn "_install_handler($which)" if DEBUG;
 	die unless $self->{handlers}{$which};
 	$self->yate->install("engine.$which", $self->{handlers}{$which}, $self->priority($which));
 }
@@ -52,7 +52,7 @@ sub _uninstall_handler
 {
 	my $self = shift;
 	my($which) = @_;
-warn "_uninstall_handler($which)" if DEBUG;
+	warn "_uninstall_handler($which)" if DEBUG;
 	die unless $self->{handlers}{$which};
 	$self->yate->uninstall("engine.$which", $self->{handlers}{$which});
 }
@@ -68,7 +68,19 @@ sub _on_engine_command
 	if($msg->param('partial')) {
 		my @partline = split(/\s+/, $msg->param('partline')||'');
 		while((my $c = shift @partline) && ref($commands) eq 'HASH') {
-			$commands = $commands->{$c};
+			if($commands->{$c}) {
+				$commands = $commands->{$c};
+			} else {
+				my $found;
+				foreach my $k(keys %$commands) {
+					next unless $k =~ /^\/(.*)\/$/s;
+					if($c =~ /^$1$/) {
+						$found = $commands->{$k};
+						last;
+					}
+				}
+				$commands = $found; # undef unless matching regexp found
+			}
 		}
 		return undef unless 'HASH' eq ref $commands;
 		return undef if 1 == keys(%$commands) && $commands->{(HANDLER_KEY)};
@@ -76,9 +88,11 @@ sub _on_engine_command
 		my $partword = $msg->param('partword')||'';
 		my $rx = qr/^\Q$partword\E/i;
 		my @retvalue = split(/\t/, $msg->header('retvalue')||'');
-		foreach my $k(sort grep { /$rx/ } keys %$commands) {
+		foreach my $k(sort grep { /$rx/ || /^\/.*\/$/ } keys %$commands) {
 			if($k eq HANDLER_KEY) {
 				push @retvalue, '<CR>' unless 1 == keys %$commands;
+			} elsif(grep { /^\/.*\/$/ } keys %$commands) {
+				push @retvalue, $k, ''; # single regexp will not autocomplete
 			} else {
 				push @retvalue, $k unless grep { $_ eq $k } @retvalue;
 			}
@@ -86,12 +100,26 @@ sub _on_engine_command
 		return ['false', join("\t", @retvalue)];
 	} elsif(my $line = $msg->param('line')) {
 		my @line = split(/\s+/, $line);
+		my @args;
 		while(@line && ref($commands) eq 'HASH') {
 			my $c = shift @line;
-			$commands = $commands->{$c};
+			if($commands->{$c}) {
+				$commands = $commands->{$c};
+			} else {
+				my $found;
+				foreach my $k(keys %$commands) {
+					next unless $k =~ /^\/(.*)\/$/s;
+					if($c =~ /^$1$/) {
+						$found = $commands->{$k};
+						push @args, $c;
+						last;
+					}
+				}
+				$commands = $found; # undef unless matching regexp found
+			}
 		}
 		if($commands->{(HANDLER_KEY)} && ('CODE' eq ref($commands->{(HANDLER_KEY)}))) {
-			my $r = $commands->{(HANDLER_KEY)}->(join(' ', @line));
+			my $r = $commands->{(HANDLER_KEY)}->($line, @args);
 			$r =~ s#\s*$#\r\n#s;
 			return $r;
 		}
