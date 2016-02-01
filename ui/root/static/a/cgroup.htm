@@ -1,25 +1,71 @@
-<h1>{{ existingGrp ? (grp.num.num + ': ' + grp.num.descr) : 'New group' }}</h1>
+<div id="callgrp" class="container-fluid">
+
+<div class="pull-right">
+	<div class="form-inline">
+		<button class="btn btn-small" ng-click="openItem(sel.itemPrevId)" ng-disabled="! sel.itemPrevId">&#9664;&#9664; Prev.</button>
+		<select ng-model="item.id" ng-change="openItem(item.id)">
+			<option ng-repeat="s in list" value="{{s.id}}">{{s.num.num}}: {{s.num.descr}}</option>
+		</select>
+		<button class="btn btn-small" ng-click="openItem(sel.itemNextId)" ng-disabled="! sel.itemNextId">Next &#9654;&#9654;</button>
+	</div>
+	<pre>{{sel|json}}</pre>
+	<table class="table table-condensed">
+		<tr ng-repeat="s in list" ng-class="{info: sel.itemId == s.id, clickable: sel.itemId != s.id}" ng-click="openItem(s.id)">
+			<td><input type="radio" ng-model="sel.itemId" name="sw" ng-value="s.id" /></td>
+			<td>{{s.num.num}}</td>
+			<td>{{s.num.descr}}</td>
+		</tr>
+		<tr><td colspan="3">
+			<a href="#/cgroups/new">Add new group</a>
+		</td></tr>
+	</table>
+</div>
+
+<h1>{{ sel.itemId == 'new' ? 'New group' : existing ? (item.num.num + ': ' + item.num.descr) : 'Loading...' }}</h1>
 
 <form novalidate="1">
-<div class="span12 well">
- <dirnum dir-num="grp.num" num-type="callgrp" num-readonly="existingGrp" />
-</div>
-<div id="grpparams" class="span8">
- <dl>
-  <dt>Ringback</dt><dd><input type="text" ng-model="grp.ringback" /></dd>
-  <dt>Call distribution</dt><dd>{{ grp.distr }}</dd>
-  <dt>Max call</dt><dd><input type="text" ng-model="grp.maxcall" /></dd>
-  <dt>Exit position</dt><dd><input type="num" ng-model="grp.exitpos" /></dd>
- </dl>
- <button ng-click="savegrp()">Save</button>
- <button ng-show="existingGrp" ng-click="deletegrp()">Delete</button>
-</div>
+	<div id="grpparams" class="span6">
+		<div class="well">
+			<dirnum dir-num="item.num" num-type="callgrp" num-readonly="existing" />
+		</div>
+		<dl>
+			<dt>Ringback</dt><dd><input type="text"     ng-model="item.ringback" /></dd>
+			<dt>Call distribution</dt><dd><select       ng-model="item.distr"><option value="parallel">Parallel</option></select></dd>
+			<dt>Max call</dt><dd><input type="text"     ng-model="item.maxcall" /></dd>
+			<dt>Exit position</dt><dd><input type="num" ng-model="item.exitpos" /></dd>
+		</dl>
+		<button ng-disabled="! item.modified" ng-click="saveItem()">Save</button>
+		<button ng-disabled="! existing" ng-click="delItem()">Delete</button>
+	</div>
 
-<div id="grpmembers" class="span4" ng-show="existingGrp" style="border:1px dotted red" vresize>
- <h2>Members</h2>
- <div ng-grid="gridOptions" style="height:200px;" style="border:2px dotted blue"></div>
-</div>
+	<div id="grpmembers" class="span6" ng-show="existing" style="border:1px dotted red" vresize>
+		<h2>Members</h2>
+    <table id="members" class="table table-condensed"><tr>
+     <th>Order</th>
+     <th>Number</th>
+     <th>Enabled</th>
+     <th>Keep ring</th>
+     <th>Max call</th>
+    </tr><tr ng-repeat="row in rows" ng-click="sel.row = row" ng-class="{info: sel.row === row, warning: row.modified, clickable: sel.row !== row}">
+     <td><input type="radio" name="row" ng-model="sel.row" ng-value="row" /> {{row.ord}}</td>
+     <td>{{row.num}}</td>
+     <td>{{row.enabled}}</td>
+     <td>{{row.keepring}}</td>
+     <td>{{row.maxcall}}</td>
+    </tr><tr ng-show="sel.row">
+     <td><input type="number"   ng-model="sel.row.ord"      ng-change="modRow()" style="width:3em;" /></td>
+     <td><input type="num"      ng-model="sel.row.num"      ng-change="modRow()" style="width:4em;" /></td>
+     <td><input type="checkbox" ng-model="sel.row.enabled"  ng-change="modRow()" /></td>
+     <td><input type="checkbox" ng-model="sel.row.keepring" ng-change="modRow()" /></td>
+     <td><input type="number"   ng-model="sel.row.maxcall"  ng-change="modRow()" style="width:3em;" /></td>
+    </tr><tr><td colspan="6">
+     <button class="btn" ng-click="addRow()">Add row</button>
+     <button class="btn btn-default" ng-click="saveRow()" ng-disabled="! sel.row || ! sel.row.modified">Save row</button>
+     <button class="btn btn-danger" ng-click="delRow()" ng-disabled="! sel.row">Delete row</button>
+    </td></tr></table>
+	</div>
 
 </form>
 
+</div> <!-- container-fluid -->
 

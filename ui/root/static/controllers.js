@@ -378,7 +378,7 @@ dyatelControllers.controller('RegsListCtrl', function($scope, $http, $timeout, $
 
 dyatelControllers.controller('CallGroupsListCtrl', function($scope, $http) {
 	$http.get('/a/cgroups/list').success(function(data) {
-		$scope.myData = data.rows;
+		$scope.myData = data.list;
 	});
 });
 
@@ -670,6 +670,16 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 			$scope.list = data.list;
 			if($scope.openFirst && data.list.length && ! $scope.sel.itemId)
 				$scope.openItem(data.list[0].id);
+			$scope.sel.itemNextId = $scope.sel.itemPrevId = null;
+			for(var i = 0; i < $scope.list.length; ++i) {
+				if($scope.list[i].id != $scope.sel.itemId)
+					continue;
+				if(i)
+					$scope.sel.itemPrevId = $scope.list[i - 1].id;
+				if(i < $scope.list.length)
+					$scope.sel.itemNextId = $scope.list[i + 1].id;
+				break;
+			}
 		});
 	};
 	$scope.loadList();

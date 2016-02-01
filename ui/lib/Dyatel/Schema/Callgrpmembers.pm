@@ -57,6 +57,25 @@ __PACKAGE__->table("callgrpmembers");
   default_value: true
   is_nullable: 0
 
+=head2 id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+  sequence: 'callgrpmembers_id_seq'
+
+=head2 maxcall
+
+  data_type: 'integer'
+  default_value: 8
+  is_nullable: 0
+
+=head2 keepring
+
+  data_type: 'boolean'
+  default_value: false
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -68,9 +87,34 @@ __PACKAGE__->add_columns(
   { data_type => "phone", is_nullable => 0 },
   "enabled",
   { data_type => "boolean", default_value => \"true", is_nullable => 0 },
+  "id",
+  {
+    data_type         => "integer",
+    is_auto_increment => 1,
+    is_nullable       => 0,
+    sequence          => "callgrpmembers_id_seq",
+  },
+  "maxcall",
+  { data_type => "integer", default_value => 8, is_nullable => 0 },
+  "keepring",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
+
+=over 4
+
+=item * L</id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("id");
+
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<callgrpmembers_uniq_index>
 
 =over 4
 
@@ -82,7 +126,7 @@ __PACKAGE__->add_columns(
 
 =cut
 
-__PACKAGE__->set_primary_key("grp", "ord");
+__PACKAGE__->add_unique_constraint("callgrpmembers_uniq_index", ["grp", "ord"]);
 
 =head1 RELATIONS
 
@@ -97,9 +141,9 @@ Related object: L<Dyatel::Schema::Callgroups>
 __PACKAGE__->belongs_to("grp", "Dyatel::Schema::Callgroups", { id => "grp" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:44:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:unLVCY9MW0Up3YomxWhieA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-12-04 09:54:18
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ooiY2DaBYAA1qpu505XmQg
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
