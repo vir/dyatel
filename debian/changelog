@@ -1,3 +1,11 @@
+dyatel (0.0.111) UNRELEASED; urgency=medium
+
+  * New ivr type 'aa2' - combined minidisa and autoattendant
+  * Admin UI improvements
+  * Minor fixes
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Thu, 04 Feb 2016 23:59:25 +0300
+
 dyatel (0.0.110) UNRELEASED; urgency=medium
 
   * Multiple schedules support
