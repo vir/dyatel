@@ -94,10 +94,11 @@ sub _parse_status
 # Channel's params: routed, routing, total, chans
 	$h->{params} = _parse_params($par) if defined $par;
 # Details
+	my $rowsep = ($det =~ /(;)/s) ? ';' : ','; # Workaround for strange 'zaptel' module status format
 	if($det && $details) {
 		if($h->{format}) {
 			my @format = split(/\|/, $h->{format});
-			my @rows = split(',', $det);
+			my @rows = split($rowsep, $det);
 			foreach(@rows) {
 				$_ = [ split(/[=|]/, $_) ];
 			}
