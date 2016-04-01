@@ -10,6 +10,7 @@
 [% END %]
 </select></p>
 <input type="submit" name="save" value="Save" />
+<input type="submit" name="delete" value="Delete" />
 
 <p>Parameters:<dl>
 [% FOREACH p IN obj.params %]

@@ -32,7 +32,7 @@ sub list :Local
 	my $opts = {join => 'uid', prefetch => 'uid', order_by => 'hw'};
 	my $where = { };
 	$where->{uid} = $c->request->params->{uid} if $c->request->params->{uid};
-	$c->stash(rows => [$c->model('DB::Provision')->search($where, $opts)], template => 'provisions/list.tt');
+	$c->stash(rows => [$c->model('DB::Provision')->search($where, $opts)], params => $c->request->params, template => 'provisions/list.tt');
 }
 
 sub show :Path Args(1)
@@ -42,15 +42,29 @@ sub show :Path Args(1)
 	$c->stash(obj => $o);
 	$c->stash(tpls => $c->model('FS::ProvisionTpls')->list);
 	if($c->request->params->{save}) {
-		my $o = $c->stash->{obj};
 		$o->update({ hw => $c->request->params->{hw}, devtype => $c->request->params->{devtype} });
-		$c->response->redirect('/'.$c->request->path);
+		return $c->response->redirect('/'.$c->request->path);
 	} elsif($c->request->params->{delete}) {
-		$c->response->redirect($c->uri_for($self->action_for('delete'), { id => $o->id }));
+		$o->delete;
+		return $c->response->redirect($c->uri_for($self->action_for('list')));
 	}
 	$c->stash(template => 'provisions/show.tt');
 }
 
+sub create :Local :Args(0)
+{
+	my($self, $c) = @_;
+	my $uid = $c->request->params->{uid};
+	die unless $uid;
+	my $u = $c->model('DB::Users')->find($uid);
+	$c->stash(obj => { uid => $u });
+	$c->stash(tpls => $c->model('FS::ProvisionTpls')->list);
+	if($c->request->params->{save}) {
+		my $o = $c->model('DB::Provision')->create( { uid => $uid, hw => $c->request->params->{hw}, devtype => $c->request->params->{devtype} } );
+		return $c->response->redirect($c->uri_for($self->action_for('list', $o->id)));
+	}
+	$c->stash(template => 'provisions/show.tt');
+}
 
 =head1 AUTHOR
 

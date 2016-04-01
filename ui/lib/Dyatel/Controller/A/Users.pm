@@ -117,7 +117,7 @@ sub show :Chained(user) :PathPart('') :Args(0)
 	}
 	my $avatar = $c->model('FS::Avatars')->get($o->id);
 	my $nav = $c->model('DB::Nextprevusers')->search({id => $o->id}, { })->first;
-	$c->stash(user => $o, provision => scalar $o->provisions->all(), navigation => $nav, avatar => $avatar, template => 'users/user.tt');
+	$c->stash(user => $o, provision => [$o->provisions->all()], navigation => $nav, avatar => $avatar, template => 'users/user.tt');
 #	$c->stash(regs => $o->regs->all); # something wrong with regs XXX TODO sort that out
 }
 

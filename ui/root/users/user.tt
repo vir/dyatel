@@ -3,6 +3,8 @@
 [%# Dumper.dump(user) %]
 
 [% META title = 'User' %]
+<a href="[% navigation.prev %]">Previous</a>
+<a href="[% navigation.next %]">Next</a>
 
 <form method="post">
 <dl>
@@ -28,6 +30,8 @@
 <tr><td><a href="/a/provisions/[% p.id %]">[% p.hw %]</a></td><td><a href="/a/provisions/[% p.id %]">[% p.devtype %]</a></td></tr>
 [% END %]
 </table>
+[<a href="/a/provisions/list?uid=[%user.id%]">Edit</a>]
+[<a href="/a/provisions/create?uid=[%user.id%]">Add new</a>]
 </div>
 
 <div id="user-regs">

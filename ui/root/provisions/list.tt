@@ -6,9 +6,12 @@
 <tr>
 	<td><a href="[% row.id %]">[% row.hw %]</a></td>
 	<td>[% row.devtype %]</td>
-	<td><a href="/users/[% row.uid.id %]">[% row.uid.num.num %]</a></td>
+	<td><a href="/a/users/[% row.uid.id %]">[% row.uid.num.num %]</a></td>
 	<td>[% row.uid.num.descr %]</td>
 </tr>
 [% END %]
 </table>
+[% IF params.uid %]
+<a href="create?uid=[%params.uid%]">Add new</a>
+[% END %]
 
