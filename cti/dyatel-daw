@@ -321,6 +321,11 @@ sub process
 	$helpers = [ $helpers ] unless ref($helpers) eq 'ARRAY';
 	my @helper_fh;
 
+# temp hack to fix outgoing calls info
+	if($e->{direction} ne 'incoming') {
+		($caller, $called) = ($called, $caller);
+	}
+
 	foreach my $h(@$helpers) {
 		my $exec = $h->{exec};
 		$self->print("Executing helper: $exec") if $self->{verbose};
