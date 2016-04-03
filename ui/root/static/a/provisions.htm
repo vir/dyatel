@@ -1,4 +1,15 @@
 <h1>Provisions</h1>
 
-
+<table>
+<tr><th>Hardware address</th><th>Device</th><th>Phone</th><th>User</th></tr>
+<tr ng-repeat="row in provisions">
+	<td><a ng-href="#/provisions/{{ rp.uId }}/{{ row.id }}">{{ row.hw }}</a></td>
+	<td>{{ row.devtype }}</td>
+	<td ng-if="! rp.uId"><a ng-href="#/users/{{ row.uid.id }}">{{ row.uid.num.num }}</a></td>
+	<td ng-if="! rp.uId">{{ row.uid.num.descr }}</td>
+</tr>
+</table>
+<div ng-if="rp.uId">
+	<a class="btn" ng-click="addnew()">Add new</a>
+</div>
 

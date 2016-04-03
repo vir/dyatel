@@ -422,9 +422,98 @@ dyatelControllers.controller('PickupGroupDetailCtrl', function($scope, $routePar
 
 /* * * * * * * * * * Provision * * * * * * * * * */
 
-dyatelControllers.controller('ProvisionsListCtrl', function($scope, $http) {
+dyatelControllers.controller('ProvisionsListCtrl', function($scope, $routeParams, $modal, $http) {
+	$scope.rp = $routeParams;
+	var uri = '/a/provisions/list';
+	if($scope.rp.uId) {
+		uri += '?uid=' + $scope.rp.uId;
+	}
+	$scope.load = function() {
+		$http.get(uri).success(function(data) {
+			$scope.provisions = data.rows;
+		});
+	};
+	$scope.load();
+	$scope.addnew = function() {
+		var modalInstance = $modal.open({
+			templateUrl: '/static/a/provision.htm',
+			controller: function($scope, $modalInstance, uid) {
+				$scope.new = true;
+				$scope.provision = { };
+				$http.get('/a/users/' + uid).success(function(data) {
+					$scope.user = data.user;
+				});
+				$http.get('/a/provisions/create?uid=' + uid).success(function(data) {
+					$scope.tpls = data.tpls;
+				});
+				$scope.save = function () {
+					var saveData = angular.copy($scope.provision);
+					saveData.save = 1;
+					saveData.uid = uid;
+					$http({
+						method: 'POST',
+						url: '/a/provisions/create',
+						data: $.param(saveData),
+						headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+					}).then(function(rsp) {
+						$modalInstance.close('saved');
+					}, function(rsp) {
+						alert('Error ' + rsp.status);
+					});
+				};
+				$scope.close = function () {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+			resolve: {
+				uid: function () {
+					return $routeParams.uId;
+				}
+			},
+		});
+		modalInstance.result.then(function (how) {
+			$scope.load();
+			console.log(how);
+		}, function () {
+			console.log('Modal dismissed at: ' + new Date());
+		});
+	};
 });
-dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParams, $http) {
+dyatelControllers.controller('ProvisionDetailCtrl', function($scope, $routeParams, $http, $location) {
+	$scope.rp = $routeParams;
+	$http.get('/a/users/' + $routeParams.uId).success(function(data) {
+		$scope.user = data.user;
+	});
+	$http.get('/a/provisions/' + $routeParams.pId).success(function(data) {
+		$scope.provision = data.obj;
+		$scope.tpls = data.tpls;
+	});
+	$scope.save = function() {
+		var saveData = angular.copy($scope.provision);
+		saveData.save = 1;
+		$http({
+			method: 'POST',
+			url: '/a/provisions/' + $routeParams.pId,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function(rsp) {
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	};
+	$scope.del = function() {
+		var saveData = { delete: 1 };
+		$http({
+			method: 'POST',
+			url: '/a/provisions/' + $routeParams.pId,
+			data: $.param(saveData),
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).then(function(rsp) {
+			$location.path('/provisions/' +  $routeParams.uId);
+		}, function(rsp) {
+			alert('Error ' + rsp.status);
+		});
+	};
 });
 
 

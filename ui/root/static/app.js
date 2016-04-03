@@ -12,7 +12,8 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/users/:userId',   { templateUrl: '/static/a/user.htm',       controller: 'UserDetailCtrl',         title: 'User' }).
 	when('/regs',            { templateUrl: '/static/a/regs.htm',       controller: 'RegsListCtrl',           title: 'Active registrations' }).
 	when('/provisions',      { templateUrl: '/static/a/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
-	when('/provisions/:pId', { templateUrl: '/static/a/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
+	when('/provisions/:uId', { templateUrl: '/static/a/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
+	when('/provisions/:uId/:pId', { templateUrl: '/static/a/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
 	when('/cgroups',         { templateUrl: '/static/a/cgroups.htm',    controller: 'CallGroupsListCtrl',     title: 'Call groups' }).
 //	when('/cgroups/:grpId',  { templateUrl: '/static/a/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group' }).
 	when('/cgroups/:itemId?',  { templateUrl: '/static/a/cgroup.htm',     controller: 'U3Ctrl',    title: 'Call group', backend: 'cgroups' }).
