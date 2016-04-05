@@ -50,13 +50,23 @@ sub get
 		my $fn2 = "/user_$uid-new.png";
 		my $path2 = $self->fsdir.$fn2;
 		my $tail = '?'.time;
-		return {
-			old => -f($path) ? $self->webdir.$fn.$tail : undef,
-			new => -f($path2) ? $self->webdir.$fn2.$tail : undef,
-		};
+		my $r = { };
+		if(-f $path) {
+			$r->{old} = $self->webdir.$fn.$tail;
+			$r->{oldts} = (stat(_))[9];
+		} else {
+			$r->{old} = undef;
+		}
+		if(-f $path2) {
+			$r->{new} = $self->webdir.$fn2.$tail;
+			$r->{newts} = (stat(_))[9];
+		} else {
+			$r->{new} = undef;
+		}
+		return $r;
 	}
 	return undef unless -f $path;
-	return $self->webdir.$fn;
+	return $self->webdir.$fn.'?'.(stat(_))[9];
 }
 
 sub savepath

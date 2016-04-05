@@ -5,17 +5,17 @@
 <div class="modal-body row-fluid">
 	<!-- <span class="btn btn-default btn-file">Select file<input type="file" file-model="imageFile" onchange="angular.element(this).scope().uploadNewimage(this)" /></span> -->
 	<div class="span6">
-		<h2>Current</h2>
+		<h3>Current</h2>
 		<div class="avatar">
 			<div ng-hide="avatar.old" class="missing" translate>No avatar</div>
-			<img ng-show="avatar.old" ng-src="{{ avatar.old }}" width="200" height="200" alt="old avatar" />
+			<img ng-show="avatar.old" ng-src="{{ avatar.old }}?{{ avatar.oldts }}" width="200" height="200" alt="old avatar" />
 		</div>
 	</div>
 	<div class="span6">
-		<h2>New</h2>
+		<h3>New</h3>
 		<div class="avatar">
 			<div ng-hide="avatar.new" class="missing" translate>No avatar</div>
-			<img ng-show="avatar.new" ng-src="{{ avatar.new }}" width="200" height="200" alt="new avatar" />
+			<img ng-show="avatar.new" ng-src="{{ avatar.new }}?{{ avatar.newts }}" width="200" height="200" alt="new avatar" />
 		</div>
 		<span class="btn btn-default btn-file">Select file<input type="file" file-model="form.imageFile" /></span>
 	</div>

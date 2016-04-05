@@ -242,7 +242,7 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 						data: "replace=1",
 						headers: {'Content-Type': 'application/x-www-form-urlencoded'}
 					}).success(function (data, status, headers, config) {
-						$modalInstance.close(1);
+						$modalInstance.close($scope.avatar.old + '?' + $scope.avatar.newts);
 					}).error(function (data, status, headers, config) {
 						alert('Error: ' + status);
 					});
@@ -254,8 +254,8 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 			},
 		});
 
-		modalInstance.result.then(function (selectedItem) {
-			$scope.avatar += '?' + new Date().getTime(); // force avatar refresh
+		modalInstance.result.then(function (newAvatar) {
+			$scope.avatar = newAvatar; // force avatar refresh
 		}, function () {
 		});
 	};
