@@ -4,7 +4,7 @@
 ## [% info.descr|html %]
 <dl class="inline">
 	<dt>Имя для показа</dt><dd>[% event.callername|html %]</dd>
-	<dt>Номен</dt><dd>[% info.num %]</dd>
+	<dt>Номер</dt><dd>[% info.num %]</dd>
 	<dt>Тип</dt><dd>[% info.numkind %]</dd>
 </dl>
 <span class="clearfix" />
