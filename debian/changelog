@@ -1,3 +1,10 @@
+dyatel (0.0.113) UNRELEASED; urgency=medium
+
+  * Admin UI: Fixed user avatar updating
+  * Typo fixed in russian translation
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 08 Apr 2016 23:20:16 +0300
+
 dyatel (0.0.112) UNRELEASED; urgency=medium
 
   * Fixed outgoing call info
