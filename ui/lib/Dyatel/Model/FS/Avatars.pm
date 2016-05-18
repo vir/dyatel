@@ -110,6 +110,16 @@ sub replace
 	return rename $path1, $path2;
 }
 
+sub delete
+{
+	my $self = shift;
+	my($uid) = @_;
+	my $path = $self->savepath($uid);
+	$path =~ s/-new\././s;
+	warn "UNLINKING $path";
+	return unlink $path;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

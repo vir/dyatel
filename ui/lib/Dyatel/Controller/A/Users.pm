@@ -152,6 +152,9 @@ sub avatar :Chained(user) :Args(0)
 	if($c->request->method eq 'POST') {
 		if($c->request->params->{replace}) {
 			$c->model('FS::Avatars')->replace($o->id);
+		} elsif($c->request->params->{delete}) {
+			$c->model('FS::Avatars')->delete($o->id);
+			return $c->stash(avatar => undef);
 		} else {
 			my $u = $c->request->upload('file');
 			warn "Got upload ".$u->basename;

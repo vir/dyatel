@@ -22,7 +22,8 @@
 </div>
 
 <div class="modal-footer">
-	<button class="btn btn-large" ng-click="ok()">Ok</button>
+	<button class="btn btn-large btn-danger" ng-disabled="!avatar.old" ng-click="btnDel()">Delete</button>
+	<button class="btn btn-large btn-primary" ng-disabled="!avatar.new" ng-click="ok()">Ok</button>
 	<button class="btn btn-large" ng-click="btnCancel()">Cancel</button>
 </div>
 

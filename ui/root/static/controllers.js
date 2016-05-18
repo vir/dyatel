@@ -247,6 +247,18 @@ dyatelControllers.controller('UserDetailCtrl', function($scope, $routeParams, $h
 						alert('Error: ' + status);
 					});
 				};
+				$scope.btnDel = function() {
+					$http({
+						url: url,
+						method: "POST",
+						data: "delete=1",
+						headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+					}).success(function (data, status, headers, config) {
+						$modalInstance.close(null);
+					}).error(function (data, status, headers, config) {
+						alert('Error: ' + status);
+					});
+				};
 				$scope.btnCancel = function () {
 					$modalInstance.dismiss('cancel');
 				};
