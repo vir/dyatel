@@ -120,6 +120,21 @@ __PACKAGE__->has_many(
   undef,
 );
 
+=head2 ivr_aa2s
+
+Type: has_many
+
+Related object: L<Dyatel::Schema::IvrAa2>
+
+=cut
+
+__PACKAGE__->has_many(
+  "ivr_aa2s",
+  "Dyatel::Schema::IvrAa2",
+  { "foreign.num" => "self.num" },
+  undef,
+);
+
 =head2 ivr_aas
 
 Type: has_many
@@ -195,8 +210,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-11-06 11:51:17
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fF+qLQB2R+V+NeYlTOnGTA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-19 15:19:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:n5mSwFVfHeOxTS6Vzxkuxw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

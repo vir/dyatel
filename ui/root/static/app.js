@@ -20,6 +20,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/pgroups',         { templateUrl: '/static/a/pgroups.htm',    controller: 'PickupGroupsListCtrl',   title: 'Pickup groups' }).
 	when('/pgroups/:grpId',  { templateUrl: '/static/a/pgroup.htm',     controller: 'PickupGroupDetailCtrl',  title: 'Pickup group' }).
 	when('/ivr-aas',         { templateUrl: '/static/a/ivr-aas.htm',    controller: 'IvrAAsCtrl',             title: 'IVR - AA' }).
+	when('/ivr-aa2s',        { templateUrl: '/static/a/ivr-aa2s.htm',   controller: 'IvrAA2sCtrl',            title: 'IVR - AA2' }).
 	when('/ivr-mds',         { templateUrl: '/static/a/ivr-mds.htm',    controller: 'IvrMDsCtrl',             title: 'IVR - MD' }).
 	when('/cdr',             { templateUrl: '/static/a/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	when('/status',          { templateUrl: '/static/a/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).

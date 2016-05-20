@@ -623,6 +623,97 @@ dyatelControllers.controller('IvrMDsCtrl', function($scope, $http) {
 	dyatelIvrCommonController($scope, $http, '/a/ivr/md/');
 });
 
+dyatelControllers.controller('IvrAA2sCtrl', function($scope, $http) {
+	var urlBase = '/a/ivr/aa2/';
+	$scope.selection = [ ];
+	$scope.numtypes = { 'user':'User number', /* will be loaded from server */ };
+	$http.get(urlBase + 'list').success(function(data) {
+		$scope.myData = data.rows;
+	});
+	$http.get('/a/directory/types').success(function(data) {
+		data.rows.forEach(function(e) {
+			$scope.numtypes[e[0]] = e[1];
+		});
+	});
+	$scope.gridOptions = {
+		data: 'myData',
+		columnDefs: [
+			{field:'num.num', displayName:'Number', width:'20%'},
+			{field:'num.descr', displayName:'Description'},
+		],
+		multiSelect: false,
+		selectedItems: $scope.selection,
+		rowTemplate:
+			'<div style="height: 100%" ng-class="{changed: !!row.getProperty(\'changed\')}">' +
+				'<div ng-repeat="col in renderedColumns" ng-class="col.colIndex()" class="ngCell">' +
+					'<div ng-cell></div>' +
+				'</div>' +
+			'</div>',
+		beforeSelectionChange: function() {
+			$scope.editForm.$pristine = true;
+			return true;
+		},
+	};
+	$scope.onNew = function() {
+		var newRow = { id: 'create', num: {num:'', numtype:'ivr', desc:''}, timeout:[ ], numtypes:[ ], shortnum:{ }, changed: true };
+		$scope.myData.push(newRow);
+		var index = $scope.myData.indexOf(newRow);
+		console.log('index: ' + index);
+		var e = $scope.$on('ngGridEventData', function() {
+			$scope.gridOptions.selectItem(index, true);
+			var grid = $scope.gridOptions.ngGrid;
+			grid.$viewport.scrollTop((grid.rowMap[index] + 1) * grid.config.rowHeight);
+//			e();
+		});
+	};
+	$scope.onSave = function() {
+		var saveData = {
+			action: 'save',
+			num: $scope.selection[0].num.num,
+			descr: $scope.selection[0].num.descr,
+		};
+		$.each($scope.selection[0], function(key, value) { // XXX depends on jQuery
+				if(key === 'id' || key === 'changed' || key === 'num')
+					return;
+				saveData[key] = value;
+		});
+		$http({
+			method: 'POST',
+			url: urlBase + $scope.selection[0].id,
+			data: $.param(saveData), // XXX depends on jQuery
+			headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+		}).success(function(data) {
+			//alert(angular.toJson(data));
+			if(data.obj) {
+				for(k in data.obj) {
+					$scope.selection[0][k] = data.obj[k];
+				}
+			}
+			$scope.selection[0].changed = false;
+		});
+	};
+	$scope.onDelete = function() {
+		var delRow = function() {
+			var index = $scope.myData.indexOf($scope.selection[0]);
+			$scope.gridOptions.selectItem(index, false);
+			$scope.myData.splice(index, 1);
+		};
+		if(isNaN(parseFloat($scope.selection[0].id)))
+			delRow();
+		else {
+			$http({
+				method: 'POST',
+				url: urlBase + 'delete',
+				data: 'id=' + $scope.selection[0].id,
+				headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+			}).success(delRow);
+		}
+	};
+	$scope.onDirnumChanged = function(field) {
+		$scope.selection[0].changed = true;
+	};
+});
+
 /* CDR */
 
 dyatelControllers.controller('CdrsCtrl', function($scope, $http) {
