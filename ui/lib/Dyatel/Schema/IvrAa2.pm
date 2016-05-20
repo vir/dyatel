@@ -56,12 +56,12 @@ __PACKAGE__->table("ivr_aa2");
 =head2 timeout
 
   data_type: 'integer[]'
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 shortnum
 
   data_type: 'hstore'
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 numlen
 
@@ -79,7 +79,7 @@ __PACKAGE__->table("ivr_aa2");
 
   data_type: 'boolean'
   default_value: true
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 etimeout
 
@@ -101,9 +101,9 @@ __PACKAGE__->add_columns(
   "prompt",
   { data_type => "text", is_nullable => 1 },
   "timeout",
-  { data_type => "integer[]", is_nullable => 1 },
+  { data_type => "integer[]", is_nullable => 0 },
   "shortnum",
-  { data_type => "hstore", is_nullable => 1 },
+  { data_type => "hstore", is_nullable => 0 },
   "numlen",
   { data_type => "integer", default_value => 3, is_nullable => 0 },
   "numtypes",
@@ -113,7 +113,7 @@ __PACKAGE__->add_columns(
     is_nullable   => 1,
   },
   "assist",
-  { data_type => "boolean", default_value => \"true", is_nullable => 1 },
+  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
   "etimeout",
   { data_type => "phone", is_nullable => 1 },
 );
@@ -143,8 +143,8 @@ Related object: L<Dyatel::Schema::Directory>
 __PACKAGE__->belongs_to("num", "Dyatel::Schema::Directory", { num => "num" });
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-19 15:19:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FIhKCP3hYxhBPF/6ixHd+A
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-20 14:34:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lH/2RuxKdDQb0ZyrwCsG8A
 
 __PACKAGE__->add_columns(
 	'shortnum' => {

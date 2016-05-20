@@ -828,15 +828,14 @@ ALTER TABLE ivr_minidisa ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES dire
 CREATE TABLE ivr_aa2(
 	id SERIAL PRIMARY KEY, num PHONE NOT NULL,
 	prompt TEXT,
-	timeout INTEGER[],                               -- [pre-first-digit,after-first-digit,after-secode-digit]
-	shortnum HSTORE,                                 -- [0-9\*\#] => [\&\~\^]?PHONE
+	timeout INTEGER[] NOT NULL,                      -- [pre-first-digit,after-first-digit,after-secode-digit]
+	shortnum HSTORE NOT NULL DEFAULT '',             -- [0-9\*\#] => [\&\~\^]?PHONE
 	numlen INTEGER NOT NULL DEFAULT 3,
-	numtypes VARCHAR[] DEFAULT '{}',                 -- directory number validation
-	assist BOOLEAN DEFAULT TRUE,
+	numtypes VARCHAR[] NOT NULL DEFAULT '{}',        -- directory number validation
+	assist BOOLEAN NOT NULL DEFAULT TRUE,
 	etimeout PHONE
 );
 ALTER TABLE ivr_aa2 ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
-
 
 
 
