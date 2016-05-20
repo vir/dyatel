@@ -8,7 +8,7 @@
 		</select>
 		<button class="btn btn-small" ng-click="openItem(sel.itemNextId)" ng-disabled="! sel.itemNextId">Next &#9654;&#9654;</button>
 	</div>
-	<pre>{{sel|json}}</pre>
+	<pre ng-if="debug">{{sel|json}}</pre>
 	<table class="table table-condensed">
 		<tr ng-repeat="s in list" ng-class="{info: sel.itemId == s.id, clickable: sel.itemId != s.id}" ng-click="openItem(s.id)">
 			<td><input type="radio" ng-model="sel.itemId" name="sw" ng-value="s.id" /></td>

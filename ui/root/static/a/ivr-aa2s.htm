@@ -10,7 +10,7 @@
 	<button class="btn" ng-click="onSave()" ng-disabled="!selection[0].changed">Save</button>
 	<button class="btn" ng-click="onDelete()" ng-disabled="!selection[0].id">Delete</button>
 	<p class="warning" ng-show="selection[0].changed">Current row is not saved</p>
-	<pre>{{ selection | json }}</pre>
+	<pre ng-if="debug">{{ selection | json }}</pre>
 </div>
 
 <form name="editForm" class="form-inline span6" role="form"><div class="well">
