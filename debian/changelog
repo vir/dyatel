@@ -1,3 +1,14 @@
+dyatel (0.0.114) UNRELEASED; urgency=medium
+
+  * Fixed configuration of "1" key in old autoattendant
+  * Super autoattendant improved a bit
+  * Made several database fields NOT NULL
+  * Admin UI: Debug checkbox added to 'Special' menu
+  * Admin UI: SuperAutoattendant configuration added
+  * Allow avatars to be deleted
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 25 May 2016 00:20:46 +0300
+
 dyatel (0.0.113) UNRELEASED; urgency=medium
 
   * Admin UI: Fixed user avatar updating
