@@ -95,7 +95,7 @@ sub get_item_params
 {
 	my($c) = @_;
 	my $x = { };
-	foreach my $k(qw( e0  e2 e3 e4 e5 e6 e7 e8 e9 ehash estar etimeout num prompt timeout )) { # no 'id' and 'descr'
+	foreach my $k(qw( e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ehash estar etimeout num prompt timeout )) { # no 'id' and 'descr'
 		my $v = $c->request->params->{$k};
 		$x->{$k} = (defined($v) && length($v)) ? $v : undef;
 	}
