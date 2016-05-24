@@ -889,14 +889,15 @@ sub load_aa2
 			[ undef, 'finished', undef, undef ], # ignore playback finish just to skip 'default' in every state
 			[ 'start', 'enter', 'answer', 'answered' ],
 			[ 'answered', 'enter', ['timer '.$timeout[0], 'playfile '.$h->{prompt}], 'playing' ],
-			[ 'playing',  'dtmf', undef, 'second' ],
+			[ 'playing',  'dtmf', 'playfile -', 'second' ],
 		];
-		push @$table, [ 'playing', 'finished', 'timer '.$timeout[0], undef ] if $h->{timeout2};
+		push @$table, [ 'playing', 'finished', 'timer '.$timeout[0], undef ] if $h->{timeout2}; # XXX WTF???? XXX
 		push @$table, [ 'playing', 'timeout', $switch_action->($h->{etimeout}), 'switching' ] if defined $h->{etimeout};
 		foreach my $digit(keys %$shortnum) {
 			push @$table, [ 'playing', 'dtmf_'.$digit, 'timer '.$timeout[1], 'first'.$digit ];
+			push @$table, [ 'first'.$digit, 'enter', 'playfile -', undef ];
 			push @$table, [ 'first'.$digit, 'dtmf', 'collect '.$digit, 'second' ];
-			push @$table, [ 'first'.$digit, 'timeout', $switch_action->($shortnum->{$digit}) ];
+			push @$table, [ 'first'.$digit, 'timeout', $switch_action->($shortnum->{$digit}) ]; # next-state returned from switch_action too
 		}
 		push @$table,
 			[ 'second', 'enter', ['collect', 'timer '.$timeout[2]], undef ],
