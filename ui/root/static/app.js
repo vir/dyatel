@@ -25,8 +25,8 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/cdr',             { templateUrl: '/static/a/cdrs.htm',       controller: 'CdrsCtrl',               title: 'Call detail records' }).
 	when('/status',          { templateUrl: '/static/a/status.htm',     controller: 'StatusCtrlOverview',     title: 'Engine status' }).
 	when('/status/:module',  { templateUrl: '/static/a/status_m.htm',   controller: 'StatusCtrlModule',       title: 'Engine status' }).
-	when('/schedule/:itemId?',{ templateUrl: '/static/a/schedule.htm',   controller: 'ScheduleCtrl',           title: 'Schedule',               backend: 'schedule' }).
-	when('/switches/:itemId?',{ templateUrl: '/static/a/switch.htm',     controller: 'SwitchCtrl',             title: 'Conditional routing',    backend: 'switches' }).
+	when('/schedule/:itemId?',{ templateUrl: '/static/a/schedule.htm',  controller: 'ScheduleCtrl',           title: 'Schedule',               backend: 'schedule' }).
+	when('/switches/:itemId?',{ templateUrl: '/static/a/switch.htm',    controller: 'SwitchCtrl',             title: 'Conditional routing',    backend: 'switches' }).
 	when('/config',          { templateUrl: '/static/a/config.htm',     controller: 'ConfigCtrl',             title: 'Configuration' }).
 //	when('/fictive',         { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
 	when('/fictive/:num?',    { templateUrl: '/static/a/fictive.htm',    controller: 'FictiveCtrl',            title: 'Fictive numbers' }).
@@ -47,7 +47,9 @@ dyatelApp.run(['Title', '$rootScope', function(Title, $rootScope) {
 	$rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
 		if(current.$$route) {
 			Title.set(current.$$route.title);
-			$rootScope.helpLink = current.$$route.templateUrl.replace(/.*\/(\w+)\/(\w+)/, function(_, sec, page) { return sec.toUpperCase() + page.charAt(0).toUpperCase() + page.slice(1); });
+			$rootScope.helpLink = current.$$route.templateUrl
+				.replace(/.*\/(\w+)\/(\w+)/, function(_, sec, page) { return sec.toUpperCase() + page.charAt(0).toUpperCase() + page.slice(1); })
+				.replace(/\W+(\w)(\w*)(?=.*\.html?$)/g, function(_, first, tail) { return first.toUpperCase() + tail; });
 		}
 	});
 }]);
