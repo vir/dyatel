@@ -30,8 +30,25 @@ sub list :Local Args(0)
 sub grp :Path Args(1)
 {
 	my($self, $c, $id) = @_;
-	if($id =~ /^\d+$/) {
+	if($id eq 'new' && $c->request->method eq 'POST') {
+		my $scope_guard = $c->model('DB')->txn_scope_guard;
+		return unless $c->forward('/a/directory/create', ['callgrp']);
+		my %params = %{ $c->request->params };
+		delete $params{descr};
+		my $g = $c->model('DB::Callgroups')->create(\%params);
+		$scope_guard->commit;
+		$c->stash(item => $g);
+		$c->forward('show');
+	} elsif($id =~ /^\d+$/) {
 		my $g = $c->model('DB::Callgroups')->find($id);
+		if($c->request->method eq 'DELETE') {
+			my $scope_guard = $c->model('DB')->txn_scope_guard;
+			$g->delete;
+			$g->num->delete;
+			$scope_guard->commit;
+			$c->response->redirect($c->uri_for($self->action_for('list'), { status_msg => "group $id deleted" }));
+			return $c->detach;
+		}
 #		my $m = [$g->callgrpmembers->all];
 		my $m = [$g->callgrpmembers->search({}, { columns => [qw/ id num ord enabled maxcall keepring /], order_by => 'ord' })];
 		$c->stash(item => $g, rows => $m);

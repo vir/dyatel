@@ -15,8 +15,7 @@ dyatelApp.config(['$routeProvider', function($routeProvider) {
 	when('/provisions/:uId', { templateUrl: '/static/a/provisions.htm', controller: 'ProvisionsListCtrl',     title: 'Provisions' }).
 	when('/provisions/:uId/:pId', { templateUrl: '/static/a/provision.htm',  controller: 'ProvisionDetailCtrl',    title: 'Provision' }).
 	when('/cgroups',         { templateUrl: '/static/a/cgroups.htm',    controller: 'CallGroupsListCtrl',     title: 'Call groups' }).
-//	when('/cgroups/:grpId',  { templateUrl: '/static/a/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group' }).
-	when('/cgroups/:itemId?',  { templateUrl: '/static/a/cgroup.htm',     controller: 'U3Ctrl',    title: 'Call group', backend: 'cgroups' }).
+	when('/cgroups/:itemId?',  { templateUrl: '/static/a/cgroup.htm',     controller: 'CallGroupDetailCtrl',    title: 'Call group', backend: 'cgroups' }).
 	when('/pgroups',         { templateUrl: '/static/a/pgroups.htm',    controller: 'PickupGroupsListCtrl',   title: 'Pickup groups' }).
 	when('/pgroups/:grpId',  { templateUrl: '/static/a/pgroup.htm',     controller: 'PickupGroupDetailCtrl',  title: 'Pickup group' }).
 	when('/ivr-aas',         { templateUrl: '/static/a/ivr-aas.htm',    controller: 'IvrAAsCtrl',             title: 'IVR - AA' }).

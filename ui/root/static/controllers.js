@@ -394,21 +394,27 @@ dyatelControllers.controller('CallGroupsListCtrl', function($scope, $http) {
 	});
 });
 
-dyatelControllers.controller('CallGroupDetailCtrl', function($scope, $routeParams, $http) {
-	if($routeParams.userId == 'new') {
-		$scope.existingGrp = false;
-	} else {
-		$http.get('cgroups/' + $routeParams.grpId).success(function(data) {
-			$scope.grp = data.grp;
-			$scope.members = data.members;
-			$scope.existingGrp = true;
-		});
-	}
-	// members list
-	$scope.gridOptions = {
-		data: 'members',
-		showFilter: true,
+/* Reuse U3Ctrl adding default values */
+dyatelControllers.controller('CallGroupDetailCtrl', function($scope, $controller) {
+	$scope.openFirst = true;
+	$scope.newRow = function() {
+		var maxOrd = 0;
+			if($scope.rows) {
+			$scope.rows.forEach(function(e) {
+				if(e.ord > maxOrd)
+					maxOrd = e.ord;
+			});
+		}
+		return {
+			ord: maxOrd + 1,
+			enabled: true,
+		};
 	};
+	$scope.newItem = {
+		ringback: 'tone/ring',
+		distr: 'parallel',
+	};
+	$controller('U3Ctrl', {$scope: $scope});
 });
 
 
@@ -836,6 +842,10 @@ dyatelControllers.controller('StatusCtrlNav2', function($scope, $routeParams, $c
 
 
 /* * * * * * * * * * Universal 3-level controller * * * * * * * * * */
+function isFunction(functionToCheck) {
+	var getType = {};
+	return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
 
 /* 3 levels are:
      * Items list (i.e. Switches list)   called "list"
@@ -855,6 +865,15 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 	var uri = $route.current.$$route.backend;
 	var path = $route.current.$$route.originalPath;
 	path = path.slice(0, path.indexOf(':'));
+	var copyDef = function(to, from) {
+		if(! from)
+			return;
+		var n = isFunction(from) ? from() : from;
+		for(var key in n) {
+			if(n.hasOwnProperty(key))
+				to[key] = n[key];
+		}
+	};
 	$scope.sel = $scope.sel || { };
 	$scope.sel.itemId = $route.current.pathParams.itemId;
 	$scope.loadList = function() {
@@ -878,12 +897,7 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 	if($scope.sel.itemId == 'new') {
 		$scope.existing = false;
 		$scope.item = { id: 'new', modified: true };
-		if($scope.newItem) {
-			for(var key in $scope.newItem) {
-				if($scope.newItem.hasOwnProperty(key))
-					$scope.item[key] = $scope.newItem[key];
-			}
-		}
+		copyDef($scope.item, $scope.newItem);
 	} else {
 		$http.get(uri + '/' + $scope.sel.itemId).success(function(data) {
 			$scope.item = data.item;
@@ -953,12 +967,7 @@ dyatelControllers.controller('U3Ctrl', function($scope, $location, $http, $route
 	};
 	$scope.addRow = function() {
 		$scope.sel.row = { id: 'new', modified: true };
-		if($scope.newRow) {
-			for(var key in $scope.newRow) {
-				if($scope.newRow.hasOwnProperty(key))
-					$scope.sel.row[key] = $scope.newRow[key];
-			}
-		}
+		copyDef($scope.sel.row, $scope.newRow);
 		$scope.rows.push($scope.sel.row);
 	};
 	$scope.saveRow = function() {
