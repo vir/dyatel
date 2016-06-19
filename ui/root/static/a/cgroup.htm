@@ -30,7 +30,11 @@
 		</div>
 		<dl>
 			<dt>Ringback</dt><dd><input type="text"     ng-model="item.ringback" /></dd>
-			<dt>Call distribution</dt><dd><select       ng-model="item.distr"><option value="parallel">Parallel</option></select></dd>
+			<dt>Call distribution</dt><dd><select       ng-model="item.distr">
+				<option value="parallel">Parallel</option>
+				<option value="linear">Linear</option>
+				<option value="queue">Queue</option>
+			</select></dd>
 			<dt>Max call</dt><dd><input type="text"     ng-model="item.maxcall" /></dd>
 			<dt>Exit position</dt><dd><input type="num" ng-model="item.exitpos" /></dd>
 		</dl>
