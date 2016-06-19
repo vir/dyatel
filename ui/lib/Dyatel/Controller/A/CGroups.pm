@@ -27,6 +27,12 @@ sub list :Local Args(0)
 	$c->stash(list => [$c->model('DB::Callgroups')->search({}, {order_by => 'num'})], template => 'groups/clist.tt');
 }
 
+sub distributions :Local Args(0)
+{
+	my($self, $c) = @_;
+	$c->stash(ist => $c->model('DB')->list_enum('CALLDISTRIBUTION'), template => 'groups/distrs.tt');
+}
+
 sub grp :Path Args(1)
 {
 	my($self, $c, $id) = @_;

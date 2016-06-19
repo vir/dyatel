@@ -128,6 +128,13 @@ sub function
 	return $self->storage->dbh_do(sub { shift; return shift->selectrow_array("SELECT $name(".join(', ', ('?') x @args).")", undef, @args); });
 }
 
+sub list_enum
+{
+	my $self = shift;
+	my($name) = @_;
+	return $self->storage->dbh_do(sub { shift; return shift->selectcol_arrayref("SELECT unnest(enum_range(NULL::$name))"); });
+}
+
 =head1 NAME
 
 Dyatel::Model::DB - Catalyst DBIC Schema Model
