@@ -1,3 +1,12 @@
+dyatel (0.0.115) UNRELEASED; urgency=medium
+
+  * Queues-related fixes
+  * Admin UI: more calls distributions in list
+  * Admin UI: Call groups addition/deletion implemented
+  * Help link fix
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Tue, 21 Jun 2016 06:39:27 +0300
+
 dyatel (0.0.114) UNRELEASED; urgency=medium
 
   * Fixed configuration of "1" key in old autoattendant
