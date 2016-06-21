@@ -855,7 +855,7 @@ sub load_aa2
 		my $switch_action = sub {
 			my($num) = @_; my $pref = '';
 			$num = '' unless defined $num;
-			if($num =~ /^([\~\&])\s*(\d.*)/) {
+			if($num =~ /^([\^\~\&])\s*(\d.*)/) {
 				($pref, $num) = ($1, $2);
 			}
 			unless($pref) {
