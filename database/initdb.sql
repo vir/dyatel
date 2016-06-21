@@ -747,7 +747,7 @@ BEGIN
 	IF NOT FOUND THEN
 		RETURN;
 	END IF;
-	IF g.distr = 'queue' AND g.queue IS NOT NULL THEN
+	IF g.distr = 'queue' THEN
 		key := 'location';
 		value := 'queue/' || g.id::TEXT;
 		RETURN NEXT;

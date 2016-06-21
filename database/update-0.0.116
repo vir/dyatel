@@ -1,0 +1,64 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION callgroups_route(msg HSTORE)
+	RETURNS TABLE(key TEXT, value TEXT) AS $$
+DECLARE
+	g callgroups;
+	res HSTORE;
+	cntr INTEGER;
+	cntr2 INTEGER;
+BEGIN
+	-- NOTE: Supported distribution schemes: parallel, linear, queue --
+	SELECT * INTO g FROM callgroups WHERE num = msg->'called';
+	IF NOT FOUND THEN
+		RETURN;
+	END IF;
+	IF g.distr = 'queue' THEN
+		key := 'location';
+		value := 'queue/' || g.id::TEXT;
+		RETURN NEXT;
+		RETURN;
+	END IF;
+
+	res := 'location => fork';
+	cntr := 0;
+
+	IF LENGTH(g.ringback) > 0 THEN -- Fake ringback
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, g.ringback);
+		res := res || hstore('callto.' || cntr || '.fork.calltype', 'persistent');
+		res := res || hstore('callto.' || cntr || '.fork.autoring', 'true');
+		res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+	END IF;
+
+	cntr2 := cntr;
+	SELECT * INTO res, cntr2 FROM callgroups_route_part(g, res, cntr2);
+
+	IF cntr2 <> cntr THEN -- Members found
+		cntr := cntr2;
+		IF LENGTH(g.exitpos) > 0 THEN -- Exit position
+			cntr := cntr + 1;
+			IF g.maxcall > 0 THEN
+				res := res || hstore('callto.' || cntr, '|exec=' || g.maxcall);
+			ELSE
+				res := res || hstore('callto.' || cntr, '|exec');
+			END IF;
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, 'lateroute/' || g.exitpos);
+		END IF;
+	ELSE -- No members found
+		IF LENGTH(g.exitpos) > 0 THEN
+			res := 'location => lateroute/' || g.exitpos;
+		ELSE
+			res := 'location => "", error => "offline"';
+		END IF;
+	END IF;
+
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
+
