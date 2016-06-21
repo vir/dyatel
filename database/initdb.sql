@@ -604,6 +604,7 @@ $$ LANGUAGE PlPgSQL;
 -- queues
 CREATE TABLE queues(
 	id SERIAL PRIMARY KEY,
+	grp NOT NULL INTEGER REFERENCES callgroups(id) ON DELETE CASCADE,
 	mintime INTEGER DEFAULT 500,
 	length INTEGER DEFAULT 0,
 	maxout INTEGER DEFAULT -1,
@@ -615,18 +616,18 @@ CREATE TABLE queues(
 	detail BOOLEAN DEFAULT TRUE,
 	single BOOLEAN DEFAULT FALSE
 );
+CREATE UNIQUE INDEX queues_grp_uniq_index ON queues(grp);
 CREATE TABLE queuestats(
-	q INTEGER NOT NULL REFERENCES queues(id) ON DELETE CASCADE,
+	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	required INTEGER,
 	cur INTEGER,
 	waiting INTEGER,
 	found INTEGER
 );
-CREATE OR REPLACE FUNCTION queues_avail(q TEXT, required INTEGER, cur INTEGER, waiting INTEGER)
+CREATE OR REPLACE FUNCTION queues_avail(grpid INTEGER, required INTEGER, cur INTEGER, waiting INTEGER)
 	RETURNS TABLE(location TEXT, username TEXT, maxcall INTEGER, prompt TEXT) AS $$
 DECLARE
-	g RECORD;
 	t RECORD;
 	res HSTORE;
 	cntr INTEGER;
@@ -634,11 +635,9 @@ DECLARE
 	k TEXT;
 	v TEXT;
 BEGIN
-	SELECT * INTO g FROM callgroups WHERE queue = q::INTEGER;
-	IF NOT FOUND THEN
-		RETURN;
-	END IF;
-	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = g.id AND m.enabled
+	res := ''::HSTORE;
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = grpid AND m.enabled
+			AND EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > now())
 			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY random() LIMIT required LOOP
 		cntr := 1;
 		SELECT * INTO res, cntr FROM regs_route_part(t.num, res, cntr);
@@ -654,7 +653,7 @@ BEGIN
 			rowcount := rowcount + 1;
 		END IF;
 	END LOOP;
-	INSERT INTO queuestats(q, required, cur, waiting, found) VALUES (g.queue, required, cur, waiting, rowcount);
+	INSERT INTO queuestats(grp, required, cur, waiting, found) VALUES (grpid, required, cur, waiting, rowcount);
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -672,7 +671,6 @@ CREATE TABLE callgroups(
 	ringback TEXT NULL,
 	maxcall INTEGER NOT NULL DEFAULT 0,
 	exitpos PHONE NULL,
-	queue INTEGER NULL REFERENCES queues(id) ON DELETE SET NULL
 );
 ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
@@ -751,7 +749,7 @@ BEGIN
 	END IF;
 	IF g.distr = 'queue' AND g.queue IS NOT NULL THEN
 		key := 'location';
-		value := 'queue/' || g.queue::TEXT;
+		value := 'queue/' || g.id::TEXT;
 		RETURN NEXT;
 		RETURN;
 	END IF;
