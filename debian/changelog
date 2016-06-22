@@ -1,3 +1,10 @@
+dyatel (0.0.116) UNRELEASED; urgency=medium
+
+  * Added database account to queues.conf
+  * Callgroups routing fixed
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Wed, 22 Jun 2016 00:49:00 +0300
+
 dyatel (0.0.115) UNRELEASED; urgency=medium
 
   * Queues-related fixes
