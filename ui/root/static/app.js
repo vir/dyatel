@@ -48,7 +48,7 @@ dyatelApp.run(['Title', '$rootScope', function(Title, $rootScope) {
 			Title.set(current.$$route.title);
 			$rootScope.helpLink = current.$$route.templateUrl
 				.replace(/.*\/(\w+)\/(\w+)/, function(_, sec, page) { return sec.toUpperCase() + page.charAt(0).toUpperCase() + page.slice(1); })
-				.replace(/\W+(\w)(\w*)(?=.*\.html?$)/g, function(_, first, tail) { return first.toUpperCase() + tail; });
+				.replace(/[^a-zA-Z0-9]+([a-z])([a-zA-Z0-9]*)(?=.*\.html?$)/g, function(_, first, tail) { return first.toUpperCase() + tail; });
 		}
 	});
 }]);
