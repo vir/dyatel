@@ -601,10 +601,34 @@ $$ LANGUAGE PlPgSQL;
 
 
 
--- queues
+-- call groups
+-- http://en.wikipedia.org/wiki/Automatic_call_distributor#Distribution_methods
+CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary', 'uniform', 'queue');
+
+CREATE TABLE callgroups(
+	id SERIAL PRIMARY KEY,
+	num PHONE NOT NULL,
+	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
+	rotary_last INTEGER NOT NULL DEFAULT 0,
+	ringback TEXT NULL,
+	maxcall INTEGER NOT NULL DEFAULT 0,
+	exitpos PHONE NULL
+);
+ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
+CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
+CREATE TABLE callgrpmembers(
+	id SERIAL PRIMARY KEY,
+	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
+	ord INTEGER,
+	num PHONE NOT NULL,
+	enabled BOOLEAN NOT NULL DEFAULT TRUE,
+	maxcall INTEGER NOT NULL DEFAULT 8,
+	keepring BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 CREATE TABLE queues(
 	id SERIAL PRIMARY KEY,
-	grp NOT NULL INTEGER REFERENCES callgroups(id) ON DELETE CASCADE,
+	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
 	mintime INTEGER DEFAULT 500,
 	length INTEGER DEFAULT 0,
 	maxout INTEGER DEFAULT -1,
@@ -656,34 +680,6 @@ BEGIN
 	INSERT INTO queuestats(grp, required, cur, waiting, found) VALUES (grpid, required, cur, waiting, rowcount);
 END;
 $$ LANGUAGE PlPgSQL;
-
-
-
--- call groups
--- http://en.wikipedia.org/wiki/Automatic_call_distributor#Distribution_methods
-CREATE TYPE CALLDISTRIBUTION AS ENUM ('parallel', 'linear', 'rotary', 'uniform', 'queue');
-
-CREATE TABLE callgroups(
-	id SERIAL PRIMARY KEY,
-	num PHONE NOT NULL,
-	distr CALLDISTRIBUTION NOT NULL DEFAULT 'parallel',
-	rotary_last INTEGER NOT NULL DEFAULT 0,
-	ringback TEXT NULL,
-	maxcall INTEGER NOT NULL DEFAULT 0,
-	exitpos PHONE NULL,
-);
-ALTER TABLE callgroups ADD CONSTRAINT num_fk FOREIGN KEY (num) REFERENCES directory(num) ON UPDATE CASCADE ON DELETE CASCADE;
-CREATE UNIQUE INDEX callgroups_num_index ON callgroups(num);
-CREATE TABLE callgrpmembers(
-	id SERIAL PRIMARY KEY,
-	grp INTEGER NOT NULL REFERENCES callgroups(id) ON DELETE CASCADE,
-	ord INTEGER,
-	num PHONE NOT NULL,
-	enabled BOOLEAN NOT NULL DEFAULT TRUE,
-	maxcall INTEGER NOT NULL DEFAULT 8,
-	keepring BOOLEAN NOT NULL DEFAULT FALSE
-);
-CREATE UNIQUE INDEX callgrpmembers_uniq_index ON callgrpmembers(grp, ord);
 
 
 CREATE OR REPLACE FUNCTION callgroups_route_part(grprec callgroups, res HSTORE, cntr INTEGER, stack TEXT[] DEFAULT '{}')

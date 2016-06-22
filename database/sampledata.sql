@@ -91,8 +91,6 @@ INSERT INTO vcards (uid, vcard) VALUES (2, '<vCard xmlns="vcard-temp">
 </vCard>');
 
 
-INSERT INTO queues (id, mintime, length, maxout, greeting, onhold, maxcall, prompt, notify, detail, single) VALUES (1, 500, 0, -1, NULL, NULL, NULL, NULL, NULL, true, false);
-
 
 INSERT INTO directory (num, numtype, descr) VALUES ('5000', 'callgrp', 'Test BIG parallel group');
 INSERT INTO directory (num, numtype, descr) VALUES ('5001', 'callgrp', 'Test Linear Group');
@@ -101,13 +99,15 @@ INSERT INTO directory (num, numtype, descr) VALUES ('5003', 'callgrp', 'Test Fou
 INSERT INTO directory (num, numtype, descr) VALUES ('5004', 'callgrp', 'Group of groups');
 INSERT INTO directory (num, numtype, descr) VALUES ('5005', 'callgrp', 'Simple group');
 INSERT INTO directory (num, numtype, descr) VALUES ('5006', 'callgrp', 'grup with infinite recursion');
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5000', 'parallel', 0, 'tone/ring', 20000, NULL,  NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5001', 'linear',   0, 'tone/ring', 60000, '266', NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5002', 'parallel', 0, NULL,        0,     NULL,  1);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5003', 'parallel', 0, NULL,        0,     NULL,  NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5004', 'linear',   0, NULL,        0,     NULL,  NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5005', 'parallel', 0, NULL,        0,     NULL,  NULL);
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5006', 'linear',   0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5000', 'parallel', 0, 'tone/ring', 20000, NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5001', 'linear',   0, 'tone/ring', 60000, '266');
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5002', 'queue',    0, NULL,        0,     NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5003', 'parallel', 0, NULL,        0,     NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5004', 'linear',   0, NULL,        0,     NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5005', 'parallel', 0, NULL,        0,     NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5006', 'linear',   0, NULL,        0,     NULL);
+
+INSERT INTO queues (id, grp, mintime, length, maxout, greeting, onhold, maxcall, prompt, notify, detail, single) VALUES (1, (SELECT id FROM callgroups WHERE num = '5002'), 500, 0, -1, NULL, NULL, NULL, NULL, NULL, true, false);
 
 -- 5000
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (1, 1, '222', true);
@@ -238,7 +238,7 @@ INSERT INTO prices (pref, price, descr) VALUES ('8343',     6.19999981, 'Ека�
 -- fictive numbers
 INSERT INTO directory VALUES ('64', 'fictive', 'Pull of fictive numbers', TRUE);
 INSERT INTO directory (num, numtype, descr) VALUES ('5007', 'callgrp', 'grup with fictive member');
-INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos, queue) VALUES ('5007', 'parallel', 0, NULL,        0,     NULL,  NULL);
+INSERT INTO callgroups (num, distr, rotary_last, ringback, maxcall, exitpos) VALUES ('5007', 'parallel', 0, NULL,        0,     NULL);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 1, '231', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 2, '232', true);
 INSERT INTO callgrpmembers (grp, ord, num, enabled) VALUES (8, 3, '6415', true); -- fictive member
