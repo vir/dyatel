@@ -728,8 +728,8 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
-CREATE OR REPLACE FUNCTION callgroups_route(msg HSTORE)
-	RETURNS TABLE(key TEXT, value TEXT) AS $$
+CREATE OR REPLACE FUNCTION route_callgrp(msg HSTORE)
+	RETURNS HSTORE AS $$
 DECLARE
 	g callgroups;
 	res HSTORE;
@@ -739,13 +739,10 @@ BEGIN
 	-- NOTE: Supported distribution schemes: parallel, linear, queue --
 	SELECT * INTO g FROM callgroups WHERE num = msg->'called';
 	IF NOT FOUND THEN
-		RETURN;
+		RETURN ''::HSTORE;
 	END IF;
 	IF g.distr = 'queue' THEN
-		key := 'location';
-		value := 'queue/' || g.id::TEXT;
-		RETURN NEXT;
-		RETURN;
+		RETURN HSTORE('location', 'queue/' || g.id::TEXT);
 	END IF;
 
 	res := 'location => fork';
@@ -781,8 +778,7 @@ BEGIN
 			res := 'location => "", error => "offline"';
 		END IF;
 	END IF;
-
-	RETURN QUERY SELECT * FROM each(res);
+	RETURN res;
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -1139,7 +1135,7 @@ BEGIN
 		WHEN 'user' THEN
 			res := route_user(msg);
 		WHEN 'callgrp' THEN
-			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM callgroups_route(msg) rr;
+			res := route_callgrp(msg);
 		WHEN 'abbr' THEN
 			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM abbrs_route(msg) rr;
 		WHEN 'switch' THEN
