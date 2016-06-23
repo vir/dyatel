@@ -1,0 +1,44 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+DECLARE
+	cf HSTORE;
+	nt TEXT;
+	res HSTORE;
+BEGIN
+	cf := config('route');
+	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
+		INSERT INTO calllog(billid, tag, value, params) VALUES (msg->'billid', 'DEBUG', 'call.route', msg);
+	END IF;
+
+	SELECT numtype INTO nt FROM directory WHERE (msg->'called' = num AND NOT is_prefix)
+			OR (substr(msg->'called', 1, length(num)) = num AND is_prefix);
+
+	msg := msg || ('trace => "' || concat_ws(' ', msg->'trace', msg->'called') || '"')::HSTORE;
+-- RAISE NOTICE 'nt: %', nt;
+	CASE nt
+		WHEN 'fictive' THEN
+			res := HSTORE('location', 'lateroute/'||(msg->'called'));
+		WHEN 'user' THEN
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM regs_route(msg) rr;
+		WHEN 'callgrp' THEN
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM callgroups_route(msg) rr;
+		WHEN 'abbr' THEN
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM abbrs_route(msg) rr;
+		WHEN 'switch' THEN
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM switch_route(msg) rr;
+		ELSE
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM (
+				SELECT * FROM callpickup_route(msg) UNION SELECT * FROM incoming_route(msg)
+			) rr;
+	END CASE;
+	RETURN QUERY SELECT * FROM each(res);
+END;
+$$ LANGUAGE PlPgSQL;
+
+
+
+COMMIT;
+-- vim: ft=sql
+

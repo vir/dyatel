@@ -1101,7 +1101,7 @@ CREATE TABLE incoming(
 	route PHONE NOT NULL
 );
 
-CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
+CREATE OR REPLACE FUNCTION incoming_route(msg HSTORE) RETURNS TABLE(key TEXT, value TEXT) AS $$
 DECLARE
 	m TEXT;
 	cf HSTORE;
@@ -1124,6 +1124,7 @@ CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, va
 DECLARE
 	cf HSTORE;
 	nt TEXT;
+	res HSTORE;
 BEGIN
 	cf := config('route');
 	IF (msg->'billid') IS NOT NULL AND toBoolean(cf->'debug', FALSE) THEN
@@ -1136,23 +1137,21 @@ BEGIN
 -- RAISE NOTICE 'nt: %', nt;
 	CASE nt
 		WHEN 'fictive' THEN
-			field := 'location';
-			value := 'lateroute/'||(msg->'called');
-			RETURN NEXT;
+			res := HSTORE('location', 'lateroute/'||(msg->'called'));
 		WHEN 'user' THEN
-			RETURN QUERY SELECT * FROM regs_route(msg);
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM regs_route(msg) rr;
 		WHEN 'callgrp' THEN
-			RETURN QUERY SELECT * FROM callgroups_route(msg);
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM callgroups_route(msg) rr;
 		WHEN 'abbr' THEN
-			RETURN QUERY SELECT * FROM abbrs_route(msg);
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM abbrs_route(msg) rr;
 		WHEN 'switch' THEN
-			RETURN QUERY SELECT * FROM switch_route(msg);
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM switch_route(msg) rr;
 		ELSE
-			RETURN QUERY
-				SELECT * FROM callpickup_route(msg)
-			UNION
-				SELECT * FROM incoming_route(msg);
+			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM (
+				SELECT * FROM callpickup_route(msg) UNION SELECT * FROM incoming_route(msg)
+			) rr;
 	END CASE;
+	RETURN QUERY SELECT * FROM each(res);
 END;
 $$ LANGUAGE PlPgSQL;
 
