@@ -1,6 +1,58 @@
 
 BEGIN;
 
+CREATE OR REPLACE FUNCTION route_user(msg HSTORE)
+	RETURNS HSTORE AS $$
+DECLARE
+	res HSTORE;
+	cntr INTEGER;
+	t RECORD;
+	uoffline BOOLEAN;
+	called_arg TEXT;
+BEGIN
+	res := '';
+	called_arg := msg->'called';
+	SELECT * INTO res, cntr FROM regs_route_part(called_arg, res, 0);
+
+	uoffline := res::TEXT = '';
+
+	-- Add 'offline' and 'No answer' divertions
+	FOR t IN SELECT normalize_num(n.val) AS val, n.timeout, k.*
+			FROM morenums n INNER JOIN numkinds k ON k.id = n.numkind
+			WHERE uid = userid(called_arg) AND k.callabale AND CASE WHEN uoffline THEN div_offline ELSE div_noans END ORDER BY n.sortkey, n.id LOOP
+		IF res::TEXT <> '' THEN
+			res := res || hstore('callto.' || cntr || '.maxcall', (t.timeout * 1000)::TEXT); -- append to previous group
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		IF t.announce IS NOT NULL THEN
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, t.announce);
+			res := res || hstore('callto.' || cntr || '.single', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.ringer', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.autoring', 'yes');
+			res := res || hstore('callto.' || cntr || '.fork.automessage', 'call.progress');
+			cntr := cntr + 1;
+			res := res || hstore('callto.' || cntr, '|');
+		END IF;
+		cntr := cntr + 1;
+		res := res || hstore('callto.' || cntr, 'lateroute/' || t.ins_prefix || t.val);
+		IF t.set_local_caller THEN
+			res := res || hstore('callto.' || cntr || '.caller', called_arg);
+		END IF;
+		IF t.set_context IS NOT NULL THEN
+			res := res || hstore('callto.' || cntr || '.context', t.set_context);
+		END IF;
+	END LOOP;
+
+	IF res::TEXT <> '' THEN
+		res := res || 'location => fork';
+		res := res || hstore(ARRAY['copyparams', 'pbxassist,dtmfpass', 'tonedetect_out', 'true', 'pbxassist', 'true', 'dtmfpass', 'false']);
+	END IF;
+	RETURN res;
+END;
+$$ LANGUAGE PlPgSQL;
+
 CREATE OR REPLACE FUNCTION route_master(msg HSTORE) RETURNS TABLE(field TEXT, value TEXT) AS $$
 DECLARE
 	cf HSTORE;
@@ -20,7 +72,7 @@ BEGIN
 		WHEN 'fictive' THEN
 			res := HSTORE('location', 'lateroute/'||(msg->'called'));
 		WHEN 'user' THEN
-			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM regs_route(msg) rr;
+			res := route_user(msg);
 		WHEN 'callgrp' THEN
 			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM callgroups_route(msg) rr;
 		WHEN 'abbr' THEN
@@ -37,6 +89,7 @@ BEGIN
 END;
 $$ LANGUAGE PlPgSQL;
 
+DROP FUNCTION regs_route(msg HSTORE);
 
 
 COMMIT;

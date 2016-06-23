@@ -484,8 +484,8 @@ $$ LANGUAGE SQL IMMUTABLE;
 
 CREATE INDEX morenums_val_index ON morenums(normalize_num(val));
 
-CREATE OR REPLACE FUNCTION regs_route(msg HSTORE)
-	RETURNS TABLE(key TEXT, value TEXT) AS $$
+CREATE OR REPLACE FUNCTION route_user(msg HSTORE)
+	RETURNS HSTORE AS $$
 DECLARE
 	res HSTORE;
 	cntr INTEGER;
@@ -528,13 +528,11 @@ BEGIN
 		END IF;
 	END LOOP;
 
-	IF res::TEXT = '' THEN
-		RETURN;
-	ELSE
+	IF res::TEXT <> '' THEN
 		res := res || 'location => fork';
 		res := res || hstore(ARRAY['copyparams', 'pbxassist,dtmfpass', 'tonedetect_out', 'true', 'pbxassist', 'true', 'dtmfpass', 'false']);
-		RETURN QUERY SELECT * FROM each(res);
 	END IF;
+	RETURN res;
 END;
 $$ LANGUAGE PlPgSQL;
 
@@ -1139,7 +1137,7 @@ BEGIN
 		WHEN 'fictive' THEN
 			res := HSTORE('location', 'lateroute/'||(msg->'called'));
 		WHEN 'user' THEN
-			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM regs_route(msg) rr;
+			res := route_user(msg);
 		WHEN 'callgrp' THEN
 			SELECT HSTORE(array_agg(rr.key), array_agg(rr.value)) INTO res FROM callgroups_route(msg) rr;
 		WHEN 'abbr' THEN
