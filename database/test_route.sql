@@ -6,8 +6,8 @@ DECLARE
 	got HSTORE;
 	exp HSTORE;
 BEGIN
-	exp := '"callto.1"=>"223@voip.ctm.ru/a13131a6316fc01cae1f8e79936c31b2", "callto.2"=>"223@voip.ctm.ru/bc4244be85e614bceffb92119042837e", "callto.3"=>"223@voip.ctm.ru/3291b21f0567ec3dde269efd001ef178", "dtmfpass"=>"false", "location"=>"fork", "pbxassist"=>"true", "copyparams"=>"pbxassist,dtmfpass", "tonedetect_out"=>"true", "callto.1.secure"=>"yes", "callto.2.secure"=>"yes", "callto.3.secure"=>"yes"';
-	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => 223'::HSTORE);
+	exp := '"callto.1"=>"223@voip.ctm.ru/a13131a6316fc01cae1f8e79936c31b2", "callto.2"=>"223@voip.ctm.ru/bc4244be85e614bceffb92119042837e", "callto.3"=>"223@voip.ctm.ru/3291b21f0567ec3dde269efd001ef178", "dtmfpass"=>"false", "location"=>"fork", "pbxassist"=>"true", "copyparams"=>"pbxassist,dtmfpass", "tonedetect_out"=>"true", "callto.1.secure"=>"yes", "callto.2.secure"=>"yes", "callto.3.secure"=>"yes", "trace"=>"111 222 333 223"';
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => 223, trace => "111 222 333"'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
 	END IF;
@@ -25,8 +25,9 @@ BEGIN
 		|| ', "callto.2"=>"sip/sip:226@192.168.50.26:5060", "callto.2.secure"=>"no", "callto.2.oconnection_id"=>"general"'
 		|| ', "callto.3"=>"sip/sip:227@192.168.60.152:48422;transport=TLS;ob", "callto.3.secure"=>"yes", "callto.3.oconnection_id"=>"tls:192.168.8.53:5061-192.168.60.152:48422"'
 		|| ', "callto.4"=>"sip/sip:228@118.190.212.112:5060;transport=TCP", "callto.4.secure"=>"no", "callto.4.oconnection_id"=>"tcp:99.229.59.30:5060-188.130.242.162:56502"'
-		|| ', "callto.5"=>"sip/sip:229@1.2.3.4:5060", "callto.5.secure"=>"no"';
-	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller=>+76543210000, called=>5000');
+		|| ', "callto.5"=>"sip/sip:229@1.2.3.4:5060", "callto.5.secure"=>"no"'
+		|| ', "trace"=>"112 115 5000"';
+	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller=>+76543210000, called=>5000, trace => "112 115"');
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
 	END IF;
@@ -54,7 +55,8 @@ BEGIN
 		|| ', "callto.12"=>"sip/sip:227@192.168.60.152:48422;transport=TLS;ob", "callto.12.secure"=>"yes", "callto.12.oconnection_id"=>"tls:192.168.8.53:5061-192.168.60.152:48422"'
 		|| ', "callto.13"=>"|next=5000"'
 		|| ', "callto.14"=>"sip/sip:229@1.2.3.4:5060", "callto.14.secure"=>"no"'
-		|| ', "callto.15"=>"sip/sip:230@1.2.3.4:5060", "callto.15.secure"=>"no"';
+		|| ', "callto.15"=>"sip/sip:230@1.2.3.4:5060", "callto.15.secure"=>"no"'
+		|| ', "trace"=>"5004"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller=>123, called=>5004');
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -88,7 +90,8 @@ BEGIN
 		|| ', "callto.8"=>"sip/sip:229@1.2.3.4:5060"'
 		|| ', "callto.8.secure"=>"no"'
 		|| ', "callto.9"=>"|exec=60000"'
-		|| ', "callto.10"=>"lateroute/266"';
+		|| ', "callto.10"=>"lateroute/266"'
+		|| ', "trace"=>"5001"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller=>+76543210000, called=>5001');
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -101,7 +104,7 @@ DECLARE
 	got HSTORE;
 	exp HSTORE;
 BEGIN
-	exp := '"location"=>"pickup/sip/666"';
+	exp := '"location"=>"pickup/sip/666", "trace"=>"*1"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => *1'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -114,7 +117,7 @@ DECLARE
 	got HSTORE;
 	exp HSTORE;
 BEGIN
-	exp := '"location"=>"lateroute/+79210000002"';
+	exp := '"location"=>"lateroute/+79210000002", "trace"=>"#1"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 222, called => #1'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -139,7 +142,7 @@ DECLARE
 	got HSTORE;
 	exp HSTORE;
 BEGIN
-	exp := '"location"=>"lateroute/+79210000001"';
+	exp := '"location"=>"lateroute/+79210000001", "trace"=>"666"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 223, called => 666'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -152,7 +155,7 @@ DECLARE
 	got HSTORE;
 	exp HSTORE;
 BEGIN
-	exp := '"location"=>"lateroute/6411"';
+	exp := '"location"=>"lateroute/6411", "trace"=>"6411"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 223, called => 6411'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;
@@ -169,7 +172,8 @@ BEGIN
 		||', "callto.1"=>"sip/sip:231@1.2.3.4:5060"'
 		||', "callto.2"=>"sip/sip:232@1.2.3.4:5060"'
 		||', "callto.3"=>"lateroute/6415"'
-		||', "callto.1.secure"=>"no", "callto.2.secure"=>"no"';
+		||', "callto.1.secure"=>"no", "callto.2.secure"=>"no"'
+		||', "trace"=>"5007"';
 	SELECT hstore_agg(HSTORE(field, value)) INTO got FROM route_master('caller => 223, called => 5007'::HSTORE);
 	if got IS NULL OR got <> exp THEN
 		RAISE EXCEPTION 'Got: %, Expected: %', (got - exp)::TEXT, (exp - got)::TEXT;

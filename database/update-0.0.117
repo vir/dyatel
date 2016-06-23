@@ -15,7 +15,6 @@ BEGIN
 	SELECT numtype INTO nt FROM directory WHERE (msg->'called' = num AND NOT is_prefix)
 			OR (substr(msg->'called', 1, length(num)) = num AND is_prefix);
 
-	msg := msg || ('trace => "' || concat_ws(' ', msg->'trace', msg->'called') || '"')::HSTORE;
 -- RAISE NOTICE 'nt: %', nt;
 	CASE nt
 		WHEN 'fictive' THEN
@@ -33,6 +32,7 @@ BEGIN
 				SELECT * FROM callpickup_route(msg) UNION SELECT * FROM incoming_route(msg)
 			) rr;
 	END CASE;
+	res := res || HSTORE('trace', concat_ws(' ', msg->'trace', msg->'called'));
 	RETURN QUERY SELECT * FROM each(res);
 END;
 $$ LANGUAGE PlPgSQL;

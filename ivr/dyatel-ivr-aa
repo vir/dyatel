@@ -86,7 +86,7 @@ use strict;
 use warnings;
 use base qw/ Yate::IVR::FSM /;
 use vars qw( %registry %responses );
-use constant COPYPARAMS => qw/ id caller called billid format formats answered /;
+use constant COPYPARAMS => qw/ id caller called billid format formats answered trace /;
 
 sub new
 {

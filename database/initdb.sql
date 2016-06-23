@@ -1151,6 +1151,7 @@ BEGIN
 				SELECT * FROM callpickup_route(msg) UNION SELECT * FROM incoming_route(msg)
 			) rr;
 	END CASE;
+	res := res || HSTORE('trace', concat_ws(' ', msg->'trace', msg->'called'));
 	RETURN QUERY SELECT * FROM each(res);
 END;
 $$ LANGUAGE PlPgSQL;
