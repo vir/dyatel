@@ -1,3 +1,12 @@
+dyatel (0.0.117) UNRELEASED; urgency=medium
+
+  * Massive routing functions refactoring
+  * Routing trace added to call.route messages
+  * Clean installation fixed
+  * UI: Help link fix
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Fri, 24 Jun 2016 03:00:58 +0300
+
 dyatel (0.0.116) UNRELEASED; urgency=medium
 
   * Added database account to queues.conf
