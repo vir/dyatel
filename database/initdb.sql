@@ -661,16 +661,16 @@ BEGIN
 	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = grpid AND m.enabled
 			AND EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > now())
 			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY random() LIMIT required LOOP
-		cntr := 1;
+		cntr := 0;
 		SELECT * INTO res, cntr FROM regs_route_part(t.num, res, cntr);
 		-- convert hstore to json
-		location := '{"location": "fork"';
+		location := '{"callto": "fork"';
 		FOR k, v IN SELECT * FROM each(res) LOOP
 			location := location || ', "' || k || '": "' || regexp_replace(v, E'([\\"])', E'\\\\\\1', 'g') || '"';
 		END LOOP;
 		location := location || '}';
 		username := t.num;
-		IF cntr > 1 THEN
+		IF cntr > 0 THEN
 			RETURN NEXT;
 			rowcount := rowcount + 1;
 		END IF;

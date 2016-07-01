@@ -1,0 +1,38 @@
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION queues_avail(grpid INTEGER, required INTEGER, cur INTEGER, waiting INTEGER)
+	RETURNS TABLE(location TEXT, username TEXT, maxcall INTEGER, prompt TEXT) AS $$
+DECLARE
+	t RECORD;
+	res HSTORE;
+	cntr INTEGER;
+	rowcount INTEGER DEFAULT 0;
+	k TEXT;
+	v TEXT;
+BEGIN
+	res := ''::HSTORE;
+	FOR t IN SELECT m.num FROM callgrpmembers m LEFT JOIN users u ON u.num = m.num WHERE m.grp = grpid AND m.enabled
+			AND EXISTS(SELECT * FROM regs WHERE userid = u.id AND expires > now())
+			AND 0 = (SELECT COUNT(*) FROM linetracker WHERE uid = u.id) ORDER BY random() LIMIT required LOOP
+		cntr := 0;
+		SELECT * INTO res, cntr FROM regs_route_part(t.num, res, cntr);
+		-- convert hstore to json
+		location := '{"callto": "fork"';
+		FOR k, v IN SELECT * FROM each(res) LOOP
+			location := location || ', "' || k || '": "' || regexp_replace(v, E'([\\"])', E'\\\\\\1', 'g') || '"';
+		END LOOP;
+		location := location || '}';
+		username := t.num;
+		IF cntr > 0 THEN
+			RETURN NEXT;
+			rowcount := rowcount + 1;
+		END IF;
+	END LOOP;
+	INSERT INTO queuestats(grp, required, cur, waiting, found) VALUES (grpid, required, cur, waiting, rowcount);
+END;
+$$ LANGUAGE PlPgSQL;
+
+COMMIT;
+-- vim: ft=sql
+
