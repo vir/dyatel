@@ -1,3 +1,9 @@
+dyatel (0.0.118) UNRELEASED; urgency=medium
+
+  * Queues fixed
+
+ -- Vasily i. Redkin <vir@ctm.ru>  Sun, 03 Jul 2016 09:01:23 +0300
+
 dyatel (0.0.117) UNRELEASED; urgency=medium
 
   * Massive routing functions refactoring
