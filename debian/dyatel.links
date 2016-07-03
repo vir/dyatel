@@ -1,1 +1,3 @@
 /usr/bin/supervisor /usr/bin/start-dyatel
+/usr/share/yate/scripts/queue_in.php /usr/share/dyatel/yatescripts/queue_in.php
+/usr/share/yate/scripts/queue_out.php /usr/share/dyatel/yatescripts/queue_out.php
